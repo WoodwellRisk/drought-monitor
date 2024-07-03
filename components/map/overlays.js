@@ -12,35 +12,8 @@ const sx = {
 }
 
 const Overlays = ({ getters, setters }) => {
-    const {
-        variable,
-        month,
-        clim,
-        colormapName,
-        display,
-        opacity,
-        showOceanMask,
-        showCountriesOutline,
-        showStatesOutline,
-        showLandOutline,
-        showLakes,
-        debug,
-    } = getters
-
-    const {
-        setVariable,
-        setMonth,
-        setClim,
-        setColormapName,
-        setDisplay,
-        setOpacity,
-        setShowOceanMask,
-        setShowCountriesOutline,
-        setShowStatesOutline,
-        setShowLandOutline,
-        setShowLakes,
-        setDebug,
-    } = setters
+    const {showStatesOutline, showCountriesOutline} = getters
+    const {setShowStatesOutline, setShowCountriesOutline} = setters
 
     return (
         <>

@@ -1,9 +1,8 @@
 import { Box } from 'theme-ui'
-import { AxisLabel, Bar, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/charts'
-// import Bar from './bar'
+import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/charts'
+import Bar from './bar'
 import * as d3 from 'd3'
 import { SidebarDivider } from '@carbonplan/layouts'
-import { climRanges } from '../sidebar-options'
 
 const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
 
@@ -18,8 +17,8 @@ const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
         }
     }
 
-    const min = climRanges[variable].min;
-    const max = climRanges[variable].max
+    const min = 0.0
+    const max = 1.0
     const variableRange = [min, max]
 
     if (!regionData.value || !regionData.value[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
@@ -89,6 +88,7 @@ const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
                                 <Bar 
                                   data={plotData} 
                                   color={plotData.map((_, i) => colormap[i])}
+                                  strokeWidth={0.5}
                                 />
                             </Plot>
                         </Chart>

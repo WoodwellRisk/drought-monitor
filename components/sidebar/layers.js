@@ -1,14 +1,16 @@
 import { useCallback, useState } from 'react'
-import { useThemeUI, Box } from 'theme-ui'
+import { useThemeUI, Box, Text } from 'theme-ui'
 import { colormaps, useThemedColormap } from '@carbonplan/colormaps'
 import { Badge, Colorbar, Filter, Tag, Slider } from '@carbonplan/components'
 import { SidebarDivider } from '@carbonplan/layouts'
+import StraightLine from './icons/straight-line'
+import Square from './icons/square'
 import Info from './info'
 
-import {
-  variables, varTitles, varDescriptions, varLayers, climRanges,
-  defaultColors, defaultColormaps, defaultLabels, defaultUnits,
-} from './sidebar-options'
+// import {
+//   variables, varTitles, varDescriptions, varLayers, climRanges,
+//   defaultColors, defaultColormaps, defaultLabels, defaultUnits,
+// } from './sidebar-options'
 
 function Layers({ getters, setters }) {
   const sx = {
@@ -31,14 +33,21 @@ function Layers({ getters, setters }) {
       fontFamily: 'faux',
       letterSpacing: 'faux',
     },
+    data_description: {
+      fontSize: '14px',
+      color: 'primary',
+  },
+    data_source: {
+        mt: 2,
+    }
   }
 
   const {
     display,
-    opacity,
     variable,
-    band,
-    month,
+    year,
+    monthday,
+    time,
     regionData,
     clim,
     colormapName,
@@ -55,39 +64,47 @@ function Layers({ getters, setters }) {
 
   const {
     setDisplay,
-    setOpacity,
     setVariable,
-    setBand,
-    setMonth,
+    setYear,
+    setMonthday,
+    setTime,
     setRegionData,
     setClim,
     setColormapName,
     setShowRegionPicker,
-    setShowCountriesOutline,
-    setShowStatesOutline,
     setShowDrought,
     setShowCoffee,
     setShowCocoa,
     setShowMaize,
   } = setters
 
-  const [varTags, setVarTags] = useState({'Drought': true,})
-  const [varDescription, setVarDescription] = useState(varDescriptions[variable])
-  const [varTitle, setVarTitle] = useState(varTitles['Drought'])
+  const [coffeeLegend, setCoffeeLegend] = useState(showCoffee)
+  const [cocoaLegend, setCocoaLegend] = useState(showCocoa)
+  const [maizeLegend, setMaizeLegend] = useState(showMaize)
 
-  const handleBandChange = useCallback((event) => {
-    if (variables.includes(event.target.innerHTML)) {
-      let tempVar = event.target.innerHTML;
-      setVarTitle(varTitles[tempVar])
-      setVarDescription(varDescriptions[variable])
-      setClim([climRanges[variable].min, climRanges[variable].max])
-      setColormapName(defaultColormaps[variable])
-    }
-  })
+  const droughtColor = 'red'
+  const coffeeColor = 'blue'
+  const cocoaColor = 'orange'
+  const maizeColor = 'green'
 
   const handleDroughtChange = useCallback(() => {
     setShowDrought((prev) => !prev)
     setDisplay((prev) => !prev)
+  })
+
+  const handleCoffeeChange = useCallback(() => {
+    setShowCoffee((prev) => !prev)
+    setCoffeeLegend((prev) => !prev)
+  })
+
+  const handleCocoaChange = useCallback(() => {
+    setShowCocoa((prev) => !prev)
+    setCocoaLegend((prev) => !prev)
+  })
+
+  const handleMaizeChange = useCallback(() => {
+    setShowMaize((prev) => !prev)
+    setMaizeLegend((prev) => !prev)
   })
 
 
@@ -102,30 +119,70 @@ function Layers({ getters, setters }) {
           </Box>
 
           <Box className='var-layers'>
-            <Tag 
-              color='blue' 
-              value={showCoffee} 
-              // onClick={() => setShowCoffee((prev))}
-              sx={{mr:[2], mb:[2], borderColor:'purple', width: 'max-content',}}
-            >
-              Cocoa
-            </Tag>
-            <Tag 
-              color='orange' 
-              value={showCocoa} 
-              // onClick={() => setShowCocoa((prev))}
-              sx={{mr:[2], mb:[2], borderColor:'purple', width: 'max-content',}}
-            >
-              Cocoa
-            </Tag>
-            <Tag 
-              color='green' 
-              value={showMaize} 
-              // onClick={() => setShowMaize((prev))}
-              sx={{mr:[2], mb:[2], borderColor:'purple', width: 'max-content',}}
-            >
-              Maize
-            </Tag>
+            <Box>
+              <Tag 
+                color={coffeeColor} 
+                value={showCoffee} 
+                onClick={handleCoffeeChange}
+                sx={{mr:[2], mb:[2], borderColor: coffeeColor, width: 'max-content',}}
+              >
+                Coffee 
+              </Tag>
+              <Text 
+                color={coffeeColor} 
+                sx={{
+                  mr: 2,
+                  opacity: coffeeLegend == true ? 1.0 : 0.24,
+                }}
+              >
+                <StraightLine />
+              </Text>
+            </Box>
+
+            <Box>
+              <Tag 
+                color={cocoaColor} 
+                value={showCocoa} 
+                onClick={handleCocoaChange}
+                sx={{mr:[2], mb:[2], borderColor: cocoaColor, width: 'max-content',}}
+              >
+                Cocoa
+              </Tag>
+              <Text 
+                color={cocoaColor} 
+                sx={{
+                  mr: 2,
+                  opacity: cocoaLegend == true ? 1.0 : 0.24,
+                }}
+              >
+                -----
+              </Text>
+            </Box>
+
+            <Box>
+              <Tag 
+                color={maizeColor}
+                value={showMaize} 
+                onClick={handleMaizeChange}
+                sx={{mr:[2], mb:[2], borderColor: maizeColor, width: 'max-content',}}
+              >
+                Maize
+              </Tag>
+              <Text 
+                color={maizeColor} 
+                sx={{
+                  ml: -1, 
+                  mr: 2, 
+                  fontSize: 1,
+                  opacity: maizeLegend == true ? 1.0 : 0.24,
+                }}
+              >
+                <Square />
+                <Square />
+                <Square />
+                <Square />
+              </Text>
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -133,14 +190,20 @@ function Layers({ getters, setters }) {
 
       <Box sx={sx.group}>
         <Box as='h2' variant='styles.h4' className='var-subtitle'>
-          {varTitle} <Info>{varDescription}</Info>
+          {'Drought'} <Info>
+            <Box className='layer-description' sx={sx.data_description}>
+              <Box>
+                  Drought
+              </Box>
+            </Box>
+          </Info>
         </Box>
 
         <Tag 
-          color='purple' 
+          color={droughtColor} 
           value={showDrought} 
           onClick={handleDroughtChange}
-          sx={{mr:[2], mb:[4], borderColor:'purple', width: 'max-content',}}>
+          sx={{mr:[2], mb:[4], borderColor: droughtColor, width: 'max-content',}}>
           Drought
         </Tag>
 
@@ -150,26 +213,11 @@ function Layers({ getters, setters }) {
             sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
             width='100%'
             colormap={useThemedColormap(colormapName)}
-            label={defaultLabels[variable]}
-            units={defaultUnits[variable]}
+            label={'Drought'}
+            // units={''}
             clim={[clim[0].toFixed(2), clim[1].toFixed(2)]}
             horizontal
             bottom
-          />
-        </Box>
-
-        <Box sx={{ ...sx.label, }}>
-          <Colorbar
-            sx={{ width: '250px', display: 'inline-block', flexShrink: 1, }}
-            sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
-            width='100%'
-            colormap={hexmap}
-            label={defaultLabels[variable]}
-            units={defaultUnits[variable]}
-            clim={[clim[0].toFixed(2), clim[1].toFixed(2)]}
-            horizontal
-            bottom
-            discrete
           />
         </Box>
 

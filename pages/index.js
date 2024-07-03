@@ -15,19 +15,22 @@ function Index() {
   const { theme } = useThemeUI()
 
   const [display, setDisplay] = useState(true)
-  const [opacity, setOpacity] = useState(1)
   const [variable, setVariable] = useState('drought')
-  const [band, setBand] = useState(2.0)
-  const [month, setMonth] = useState(1)
-  const [colormapName, setColormapName] = useState('warm')
-  const [clim, setClim] = useState([0.0, 0.5])
-  const colormap = useThemedColormap(colormapName)
-  const discreteColormap = useThemedColormap(colormapName, { count: 11 }).slice(1)
+  const [year, setYear] = useState('2003')
+  const [monthday, setMonthday] = useState('03-12')
+  const [time, setTime] = useState(`${year}-${monthday}`)
+  const [clim, setClim] = useState([0.0, 1.0])
+
+  const [colormapName, setColormapName] = useState('redteal')
+  // freeze colormap so that it doesn't change with theme
+  // red will always be > 0.5, blue will always be < 0.5
+  const colormap = useThemedColormap(colormapName).slice(0,).reverse()
+  const discreteColormap = useThemedColormap(colormapName, { count: 13 }).slice(1, 12).reverse()
+
   const hexmap = discreteColormap.map((rgb) => {
       let [r, g, b] = rgb
       return d3.color(`rgb(${r}, ${g}, ${b})`).formatHex()
   })
-  // console.log(hexmap)
 
   const [regionData, setRegionData] = useState({loading: true})
   const [showRegionPicker, setShowRegionPicker] = useState(false)
@@ -45,10 +48,10 @@ function Index() {
 
   const getters = {
     display, 
-    opacity,
     variable,
-    band,
-    month,
+    year,
+    monthday,
+    time,
     regionData,
     clim,
     colormapName,
@@ -65,10 +68,10 @@ function Index() {
 
   const setters = {
     setDisplay, 
-    setOpacity,
     setVariable,
-    setBand,
-    setMonth,
+    setYear,
+    setMonthday,
+    setTime,
     setRegionData,
     setClim,
     setColormapName,

@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import { useThemeUI, Box } from 'theme-ui'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
+// import DashedLine from './dashed-line'
+// import DottedLine from './dotted-line'
 import { Dimmer } from '@carbonplan/components'
 import RegionControls from './region-controls'
 import Ruler from './ruler'
@@ -11,6 +13,10 @@ const Map = ({ getters, setters, mobile }) => {
   const [map, setMap] = useState(null)
   const { theme } = useThemeUI()
 
+  const [opacity, setOpacity] = useState(1)
+  const [showCountriesOutline, setShowCountriesOutline] = useState(false)
+  const [showStatesOutline, setShowStatesOutline] = useState(false)
+
   // https://github.com/mapbox/mapbox-gl-js/blob/2b6915c8004a5b759338f3a7d92fb2882db9dd5c/src/geo/lng_lat.js#L192-L201
   // https://docs.mapbox.com/mapbox-gl-js/example/restrict-bounds/
   const bounds = [
@@ -19,19 +25,17 @@ const Map = ({ getters, setters, mobile }) => {
   ]
 
   const {
-    display, 
-    opacity,
+    display,
     variable,
-    band,
-    month,
+    year,
+    monthday,
+    time,
     regionData,
     clim,
     colormapName,
     colormap,
     hexmap,
     showRegionPicker,
-    showCountriesOutline,
-    showStatesOutline,
     showCoffee,
     showCocoa,
     showMaize,
@@ -39,16 +43,14 @@ const Map = ({ getters, setters, mobile }) => {
 
   const {
     setDisplay,
-    setOpacity,
     setVariable,
-    setBand,
-    setMonth,
+    setYear,
+    setMonthday,
+    setTime,
     setRegionData,
     setClim,
     setColormapName,
     setShowRegionPicker,
-    setShowCountriesOutline,
-    setShowStatesOutline,
     setShowCoffee,
     setShowCocoa,
     setShowMaize,
@@ -75,7 +77,7 @@ const Map = ({ getters, setters, mobile }) => {
 
           {showStatesOutline && (
             <Line
-              color={theme.rawColors.primary}
+              color={theme.colors.primary}
               source={'https://storage.googleapis.com/risk-maps/vector_layers/states'}
               variable={'states'}
               width={1}
@@ -84,7 +86,7 @@ const Map = ({ getters, setters, mobile }) => {
 
           {showCountriesOutline && (
             <Line
-              color={theme.rawColors.primary}
+              color={theme.colors.primary}
               source={'https://storage.googleapis.com/risk-maps/vector_layers/countries'}
               variable={'countries'}
               width={1}
@@ -114,16 +116,17 @@ const Map = ({ getters, setters, mobile }) => {
           {showCoffee && (
             <>
               <Fill
-                source={'https://storage.googleapis.com/drought-monitor/vector/coffee'}
-                variable={'coffee'}
+                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/coffee_mask'}
+                variable={'coffee_mask'}
                 color={theme.rawColors.background}
-                // opacity={}
+                opacity={0.7}
               />
 
               <Line
-                source={'https://storage.googleapis.com/drought-monitor/vector/coffee'}
+                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/coffee'}
                 variable={'coffee'}
-                // color={theme.rawColors.background}
+                color={'black'}
+                width={1}
               />
             </>
           )}
@@ -131,15 +134,18 @@ const Map = ({ getters, setters, mobile }) => {
           {showCocoa && (
             <>
               <Fill
-                source={'https://storage.googleapis.com/drought-monitor/vector/cocoa'}
-                variable={'cocoa'}
+                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/cocoa_mask'}
+                variable={'cocoa_mask'}
                 color={theme.rawColors.background}
-                // opacity={}
+                opacity={0.7}
               />
+
               <Line
-                source={'https://storage.googleapis.com/drought-monitor/vector/cocoa'}
+                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/cocoa'}
                 variable={'cocoa'}
-                // color={theme.rawColors.background}
+                color={'black'}
+                width={1}
+
               />
             </>
           )}
@@ -147,15 +153,17 @@ const Map = ({ getters, setters, mobile }) => {
           {showMaize && (
             <>
               <Fill
-                source={'https://storage.googleapis.com/drought-monitor/vector/maize'}
-                variable={'maize'}
+                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/maize_mask'}
+                variable={'maize_mask'}
                 color={theme.rawColors.background}
-                // opacity={}
+                opacity={0.7}
               />
+
               <Line
-                source={'https://storage.googleapis.com/drought-monitor/vector/maize'}
+                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/maize'}
                 variable={'maize'}
-                // color={theme.rawColors.background}
+                color={'black'}
+                width={1}
               />
             </>
           )}
@@ -163,7 +171,7 @@ const Map = ({ getters, setters, mobile }) => {
           {showRegionPicker && (
             <RegionPicker
               color={theme.colors.primary}
-              backgroundColor={theme.colors.background}
+              backgroundColor={theme.rawColors.background}
               fontFamily={theme.fonts.mono}
               fontSize={'14px'}
               minRadius={1}
@@ -172,16 +180,15 @@ const Map = ({ getters, setters, mobile }) => {
           )}
 
           <Raster
+            key={variable}
             colormap={colormap}
             clim={clim}
             display={display}
             opacity={opacity}
             mode={'texture'}
-            source={
-              `https://storage.googleapis.com/risk-maps/zarr_layers/${variable}.zarr`
-            }
+            source={`https://storage.googleapis.com/risk-maps/drought-monitor/zarr/${variable}.zarr`}
             variable={variable}
-            selector={{band}}
+            selector={{ time }}
             regionOptions={{ setData: setRegionData }}
           />
 
