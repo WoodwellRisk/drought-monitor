@@ -1,16 +1,9 @@
-import { useCallback, useState } from 'react'
-import { useThemeUI, Box, Text } from 'theme-ui'
-import { colormaps, useThemedColormap } from '@carbonplan/colormaps'
-import { Badge, Colorbar, Filter, Tag, Slider } from '@carbonplan/components'
+import { useCallback, useEffect, useState } from 'react'
+import { useThemeUI, Box } from 'theme-ui'
+import { useThemedColormap } from '@carbonplan/colormaps'
+import { Colorbar, Tag, Slider } from '@carbonplan/components'
 import { SidebarDivider } from '@carbonplan/layouts'
-import StraightLine from './icons/straight-line'
-import Square from './icons/square'
 import Info from './info'
-
-// import {
-//   variables, varTitles, varDescriptions, varLayers, climRanges,
-//   defaultColors, defaultColormaps, defaultLabels, defaultUnits,
-// } from './sidebar-options'
 
 function Layers({ getters, setters }) {
   const sx = {
@@ -46,7 +39,7 @@ function Layers({ getters, setters }) {
     display,
     variable,
     year,
-    monthday,
+    monthDay,
     time,
     regionData,
     clim,
@@ -66,7 +59,7 @@ function Layers({ getters, setters }) {
     setDisplay,
     setVariable,
     setYear,
-    setMonthday,
+    setMonthDay,
     setTime,
     setRegionData,
     setClim,
@@ -78,14 +71,35 @@ function Layers({ getters, setters }) {
     setShowMaize,
   } = setters
 
-  const [coffeeLegend, setCoffeeLegend] = useState(showCoffee)
-  const [cocoaLegend, setCocoaLegend] = useState(showCocoa)
-  const [maizeLegend, setMaizeLegend] = useState(showMaize)
+  const monthDayValues = [
+    '01-01', '01-15', '01-29', '02-12', '02-26', '03-12', '03-26', '04-09',
+    '04-23', '05-07', '05-21', '06-04','06-18', '07-02', '07-16', '07-30',
+    '08-13', '08-27', '09-10', '09-24', '10-08', '10-22', '11-05', '11-19', '12-03', '12-17'
+  ]
+  const [monthDayArray, setMonthDayArray] = useState(monthDayValues)
+  const [monthDayIdx, setMonthDayIdx] = useState(0)
 
-  const droughtColor = 'red'
-  const coffeeColor = 'blue'
-  const cocoaColor = 'orange'
-  const maizeColor = 'green'
+  useEffect(() => {
+    setMonthDay(monthDayValues[monthDayIdx])
+  }, [monthDayIdx])
+
+  useEffect(() => {
+    if(year == '2003') {
+      setMonthDayArray(monthDayValues.slice(5,))
+    } else if (year == '2024') {
+      setMonthDayArray(monthDayValues.slice(0,11))
+    } else {
+      setMonthDayArray(monthDayValues)
+    }
+  }, [year])
+
+  // useEffect(() => {
+  //   if(year == '2024') {
+  //     if(monthDayMax)
+  //   } else {
+  //     setTime(`${year}-${monthDay}`)
+  //   }
+  // }, [year, monthDay])
 
   const handleDroughtChange = useCallback(() => {
     setShowDrought((prev) => !prev)
@@ -93,20 +107,34 @@ function Layers({ getters, setters }) {
   })
 
   const handleCoffeeChange = useCallback(() => {
+    if(showCocoa) {
+      setShowCocoa(false)
+    }
+    if(showMaize) {
+      setShowMaize(false)
+    }
     setShowCoffee((prev) => !prev)
-    setCoffeeLegend((prev) => !prev)
   })
 
   const handleCocoaChange = useCallback(() => {
+    if(showCoffee) {
+      setShowCoffee(false)
+    }
+    if(showMaize) {
+      setShowMaize(false)
+    }
     setShowCocoa((prev) => !prev)
-    setCocoaLegend((prev) => !prev)
   })
 
   const handleMaizeChange = useCallback(() => {
+    if(showCoffee) {
+      setShowCoffee(false)
+    }
+    if(showCocoa) {
+      setShowCocoa(false)
+    }
     setShowMaize((prev) => !prev)
-    setMaizeLegend((prev) => !prev)
   })
-
 
   return (
     <>
@@ -119,70 +147,33 @@ function Layers({ getters, setters }) {
           </Box>
 
           <Box className='var-layers'>
-            <Box>
               <Tag 
-                color={coffeeColor} 
+                color={'blue'} 
                 value={showCoffee} 
                 onClick={handleCoffeeChange}
-                sx={{mr:[2], mb:[2], borderColor: coffeeColor, width: 'max-content',}}
+                sx={{mr:[2], mb:[2], borderColor: 'blue', width: 'max-content',}}
               >
                 Coffee 
               </Tag>
-              <Text 
-                color={coffeeColor} 
-                sx={{
-                  mr: 2,
-                  opacity: coffeeLegend == true ? 1.0 : 0.24,
-                }}
-              >
-                <StraightLine />
-              </Text>
-            </Box>
 
-            <Box>
               <Tag 
-                color={cocoaColor} 
+                color={'orange'} 
                 value={showCocoa} 
                 onClick={handleCocoaChange}
-                sx={{mr:[2], mb:[2], borderColor: cocoaColor, width: 'max-content',}}
+                sx={{mr:[2], mb:[2], borderColor: 'orange', width: 'max-content',}}
               >
                 Cocoa
               </Tag>
-              <Text 
-                color={cocoaColor} 
-                sx={{
-                  mr: 2,
-                  opacity: cocoaLegend == true ? 1.0 : 0.24,
-                }}
-              >
-                -----
-              </Text>
-            </Box>
 
-            <Box>
               <Tag 
-                color={maizeColor}
+                color={'green'}
                 value={showMaize} 
                 onClick={handleMaizeChange}
-                sx={{mr:[2], mb:[2], borderColor: maizeColor, width: 'max-content',}}
+                sx={{mr:[2], mb:[2], borderColor: 'green', width: 'max-content',}}
               >
                 Maize
               </Tag>
-              <Text 
-                color={maizeColor} 
-                sx={{
-                  ml: -1, 
-                  mr: 2, 
-                  fontSize: 1,
-                  opacity: maizeLegend == true ? 1.0 : 0.24,
-                }}
-              >
-                <Square />
-                <Square />
-                <Square />
-                <Square />
-              </Text>
-            </Box>
+
           </Box>
         </Box>
       </Box>
@@ -200,10 +191,10 @@ function Layers({ getters, setters }) {
         </Box>
 
         <Tag 
-          color={droughtColor} 
+          color={'red'} 
           value={showDrought} 
           onClick={handleDroughtChange}
-          sx={{mr:[2], mb:[4], borderColor: droughtColor, width: 'max-content',}}>
+          sx={{mr:[2], mb:[4], borderColor: 'red', width: 'max-content',}}>
           Drought
         </Tag>
 
@@ -221,38 +212,14 @@ function Layers({ getters, setters }) {
           />
         </Box>
 
-        {/* <Box sx={{ ...sx.label, mt: [4] }}>
-          <Box sx={sx.label}>Month</Box>
-          <Slider
-            min={1}
-            max={12}
-            step={1}
-            sx={{ width: '175px', display: 'inline-block' }}
-            value={month}
-            onChange={(e) => setMonth(parseFloat(e.target.value))}
-          />
-          <Badge
-            sx={{
-              bg: 'primary',
-              color: 'background',
-              display: 'inline-block',
-              position: 'relative',
-              left: [3],
-              top: [1],
-            }}
-          >
-            {month.toFixed(0)}
-          </Badge>
-        </Box> */}
-
-        {/* <Box sx={{ ...sx.label, mt: [4] }}>
-          <Box sx={sx.label}>Month</Box>
+        <Box sx={{ ...sx.label, mt: [4] }}>
+          <Box sx={sx.label}>Year</Box>
           <Slider
             sx={{ mt: [3], mb: [3] }}
-            value={month}
-            onChange={(e) => setMonth(parseFloat(e.target.value))}
-            min={1}
-            max={12}
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            min={2003}
+            max={2024}
             step={1}
           />
 
@@ -270,7 +237,7 @@ function Layers({ getters, setters }) {
                 float: 'left',
               }}
             >
-              1
+              2003
             </Box>
 
             <Box
@@ -285,7 +252,7 @@ function Layers({ getters, setters }) {
                 fontSize: [1],
               }}
             >
-              {month}
+              {year}
             </Box>
 
             <Box
@@ -297,10 +264,67 @@ function Layers({ getters, setters }) {
                 display: 'inline-block',
               }}
             >
-              12
+              2024
             </Box>
           </Box>
-        </Box> */}
+        </Box>
+
+        <Box sx={{ ...sx.label, mt: [4] }}>
+          <Box sx={sx.label}>Month and day</Box>
+          <Slider
+            sx={{ mt: [3], mb: [3] }}
+            value={monthDayIdx}
+            onChange={(e) => setMonthDayIdx(e.target.value)}
+            min={0}
+            max={monthDayArray.length - 1}
+            step={1}
+          />
+
+          <Box
+            sx={{
+              textAlign: 'center',
+            }}
+          >
+            <Box
+              sx={{
+                fontFamily: 'mono',
+                letterSpacing: 'mono',
+                fontSize: [1],
+                display: 'inline-block',
+                float: 'left',
+              }}
+            >
+              {monthDayArray[0]}
+            </Box>
+
+            <Box
+              sx={{
+                fontFamily: 'mono',
+                letterSpacing: 'mono',
+                display: 'inline-block',
+                ml: 'auto',
+                mr: 'auto',
+                color: 'secondary',
+                transition: '0.2s',
+                fontSize: [1],
+              }}
+            >
+              {monthDayArray[monthDayIdx]}
+            </Box>
+
+            <Box
+              sx={{
+                fontFamily: 'mono',
+                letterSpacing: 'mono',
+                fontSize: [1],
+                float: 'right',
+                display: 'inline-block',
+              }}
+            >
+              {monthDayArray[monthDayArray.length - 1]}
+            </Box>
+          </Box>
+        </Box>
 
       </Box>
     </>

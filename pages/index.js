@@ -17,8 +17,8 @@ function Index() {
   const [display, setDisplay] = useState(true)
   const [variable, setVariable] = useState('drought')
   const [year, setYear] = useState('2003')
-  const [monthday, setMonthday] = useState('03-12')
-  const [time, setTime] = useState(`${year}-${monthday}`)
+  const [monthDay, setMonthDay] = useState('03-12')
+  const [time, setTime] = useState(`${year}-${monthDay}`)
   const [clim, setClim] = useState([0.0, 1.0])
 
   const [colormapName, setColormapName] = useState('redteal')
@@ -50,7 +50,7 @@ function Index() {
     display, 
     variable,
     year,
-    monthday,
+    monthDay,
     time,
     regionData,
     clim,
@@ -70,7 +70,7 @@ function Index() {
     setDisplay, 
     setVariable,
     setYear,
-    setMonthday,
+    setMonthDay,
     setTime,
     setRegionData,
     setClim,
