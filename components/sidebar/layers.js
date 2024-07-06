@@ -76,6 +76,10 @@ function Layers({ getters, setters }) {
     '04-23', '05-07', '05-21', '06-04','06-18', '07-02', '07-16', '07-30',
     '08-13', '08-27', '09-10', '09-24', '10-08', '10-22', '11-05', '11-19', '12-03', '12-17'
   ]
+
+  // https://javascript.info/date
+  console.log(" '2017-01-26' < '2017-01-26' ")
+  console.log(new Date("2017-01-26") < new Date("2017-12-26"))
   const [monthDayArray, setMonthDayArray] = useState(monthDayValues)
   const [monthDayIdx, setMonthDayIdx] = useState(0)
 
@@ -212,7 +216,7 @@ function Layers({ getters, setters }) {
           />
         </Box>
 
-        <Box sx={{ ...sx.label, mt: [4] }}>
+        {/* <Box sx={{ ...sx.label, mt: [4] }}>
           <Box sx={sx.label}>Year</Box>
           <Slider
             sx={{ mt: [3], mb: [3] }}
@@ -324,7 +328,7 @@ function Layers({ getters, setters }) {
               {monthDayArray[monthDayArray.length - 1]}
             </Box>
           </Box>
-        </Box>
+        </Box> */}
 
       </Box>
     </>
