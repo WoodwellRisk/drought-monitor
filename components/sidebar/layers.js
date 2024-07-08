@@ -71,52 +71,19 @@ function Layers({ getters, setters }) {
     setShowMaize,
   } = setters
 
+    // https://javascript.info/date
+  // console.log(" '01-01' < '03-12' ")
+  // console.log(new Date("2003-01-01") < new Date("2003-03-12"))
   const monthDayValues = [
     '01-01', '01-15', '01-29', '02-12', '02-26', '03-12', '03-26', '04-09', '04-23', 
     '05-07', '05-21', '06-04','06-18', '07-02', '07-16', '07-30', '08-13', '08-27',
     '09-10', '09-24', '10-08', '10-22', '11-05', '11-19', '12-03', '12-17'
   ]
 
-  // https://javascript.info/date
-  // console.log(" '01-01' < '03-12' ")
-  // console.log(new Date("2003-01-01") < new Date("2003-03-12"))
-  const [monthDayArray, setMonthDayArray] = useState(monthDayValues)
-  const [monthDayIdx, setMonthDayIdx] = useState(0)
+  const [monthDayIdx, setMonthDayIdx] = useState(5)
+  const [monthDayMin, setMonthDayMin] = useState(5)
+  const [monthDayMax, setMonthDayMax] = useState(monthDayValues.length - 1)
 
-  const handleYearChange = (event) => {
-    setYear(event.target.value)
-  }
-
-  useEffect(() => {
-    if(year == '2003') {
-      setMonthDayArray(monthDayValues.slice(5,))
-      // if(new Date(`${year}-${monthDay}`) < new Date(`${year}-03-12`)) {
-      //   setMonthDay('03-12')
-      // }
-      // setTime(`${year}-${monthDay}`)
-    } else if (year == '2024') {
-      setMonthDayArray(monthDayValues.slice(0,11))
-      // if(new Date(`${year}-${monthDay}`) > new Date(`${year}-05-21`)) {
-      //   setMonthDay('05-21')
-      // }
-      // setTime(`${year}-${monthDay}`)
-    } else {
-      setMonthDayArray(monthDayValues)
-      // setTime(`${year}-${monthDay}`)
-    }
-  }, [year])
-
-  const handleMonthDayChange = (event) => {
-    setMonthDay(event.target.value)
-  }
-
-  useEffect(() => {
-    setMonthDay(monthDayValues[monthDayIdx])
-  }, [monthDayIdx])
-
-  useEffect(() => {
-    console.log(`${year}-${monthDay}`)
-  }, [year, monthDay])
 
   const handleDroughtChange = useCallback(() => {
     setShowDrought((prev) => !prev)
@@ -152,6 +119,51 @@ function Layers({ getters, setters }) {
     }
     setShowMaize((prev) => !prev)
   })
+
+  const handleYearChange = (event) => {
+    setYear(event.target.value)
+  }
+
+  useEffect(() => {
+    if(year == '2003') {
+      if(monthDayIdx < 5) {
+        setMonthDayIdx(5)
+      } 
+      setMonthDayMin(5)
+      setMonthDayMax(monthDayValues.length - 1)
+    } else if (year == '2024') {
+      if(monthDayIdx > 10) {
+        setMonthDayIdx(10)
+      } 
+      setMonthDayMin(0)
+      setMonthDayMax(10)
+    } else {
+      setMonthDayMin(0)
+      setMonthDayMax(monthDayValues.length - 1)
+    }
+  }, [year])
+
+  const handleMonthDayChange = (event) => {
+    setMonthDayIdx(event.target.value)
+  }
+
+  useEffect(() => {
+    setMonthDay(monthDayValues[monthDayIdx])
+  }, [monthDayIdx])
+
+  useEffect(() => {
+    if(year == '2003' && (new Date(`${year}-${monthDay}`) < new Date('2003-03-12'))) {
+      setTime('2003-03-12')
+    } else if (year == '2024' && (new Date(`${year}-${monthDay}`) > new Date('2024-05-21'))) {
+      setTime('2024-05-21')
+    } else {
+      setTime(`${year}-${monthDay}`)
+    }
+  }, [year, monthDay])
+
+  // useEffect(() => {
+  //   console.log(time)
+  // }, [time])
 
   return (
     <>
@@ -201,8 +213,8 @@ function Layers({ getters, setters }) {
           {'Drought Monitor'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
-                  A value of 50 is considered normal conditions (white or black, depending on the theme), whereas values below 50 show areas where water stress is high.
-                  Values above 50 show areas with wetter-than-normal conditions.
+                Near-real time monitor of moisture anomalies. Anomalies are measured as water balance percentiles, where values close to 50 represent normal conditions. 
+                Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a biweekly basis, from 2003 to present.
               </Box>
             </Box>
           </Info>
@@ -223,7 +235,6 @@ function Layers({ getters, setters }) {
             width='100%'
             colormap={useThemedColormap(colormapName)}
             label={'percentile'}
-            // units={''}
             clim={[0.0, 100.0]}
             horizontal
             bottom
@@ -292,9 +303,9 @@ function Layers({ getters, setters }) {
           <Slider
             sx={{ mt: [3], mb: [3] }}
             value={monthDayIdx}
-            onChange={(e) => setMonthDayIdx(e.target.value)}
-            min={0}
-            max={monthDayArray.length - 1}
+            onChange={handleMonthDayChange}
+            min={monthDayMin}
+            max={monthDayMax}
             step={1}
           />
 
@@ -312,7 +323,7 @@ function Layers({ getters, setters }) {
                 float: 'left',
               }}
             >
-              {monthDayArray[0]}
+              {monthDayValues[monthDayMin]}
             </Box>
 
             <Box
@@ -327,7 +338,7 @@ function Layers({ getters, setters }) {
                 fontSize: [1],
               }}
             >
-              {monthDayArray[monthDayIdx]}
+              {monthDayValues[monthDayIdx]}
             </Box>
 
             <Box
@@ -339,7 +350,7 @@ function Layers({ getters, setters }) {
                 display: 'inline-block',
               }}
             >
-              {monthDayArray[monthDayArray.length - 1]}
+              {monthDayValues[monthDayMax]}
             </Box>
           </Box>
         </Box>

@@ -8,7 +8,7 @@
 
 ## Processing steps
 ### Vector data
-All `SHP` files were converted to `GeoJSON` format in [GeoPandas](https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.to_file.html). From there, we used [`Tippecanoe`](https://github.com/mapbox/tippecanoe) to convert the `GeoJSON` files to Mapbox `.mbtiles` format and used the Mapbox tool [`mbutil`](https://github.com/mapbox/mbutil) to convert those tiles to `.pbf` format. 
+All `GeoPackage` files were converted to `GeoJSON` format in [GeoPandas](https://geopandas.org/en/stable/docs/reference/api/geopandas.GeoDataFrame.to_file.html). From there, we used [`Tippecanoe`](https://github.com/mapbox/tippecanoe) to convert the `GeoJSON` files to Mapbox `.mbtiles` format and used the Mapbox tool [`mbutil`](https://github.com/mapbox/mbutil) to convert those tiles to `.pbf` format. 
 
 ### Raster data
 For back-end data analysis/transformation of `NetCDF` and `TIF` files, we used Python and R. Those rasters were then converted to Zarr pyramids using CarbonPlan's [ndpyramid](https://github.com/carbonplan/ndpyramid/tree/main) package.

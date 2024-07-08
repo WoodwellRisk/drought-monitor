@@ -34,9 +34,6 @@ function Index() {
 
   const [regionData, setRegionData] = useState({loading: true})
   const [showRegionPicker, setShowRegionPicker] = useState(false)
-  const [showCountriesOutline, setShowCountriesOutline] = useState(false)
-  const [showStatesOutline, setShowStatesOutline] = useState(false)
-
   const [showDrought, setShowDrought] = useState(true)
   const [showCoffee, setShowCoffee] = useState(false)
   const [showCocoa, setShowCocoa] = useState(false)
@@ -58,8 +55,6 @@ function Index() {
     colormap,
     hexmap,
     showRegionPicker,
-    showCountriesOutline,
-    showStatesOutline,
     showDrought,
     showCoffee,
     showCocoa,
@@ -76,8 +71,6 @@ function Index() {
     setClim,
     setColormapName,
     setShowRegionPicker,
-    setShowCountriesOutline,
-    setShowStatesOutline,
     setShowDrought,
     setShowCoffee,
     setShowCocoa,

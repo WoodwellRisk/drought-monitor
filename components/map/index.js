@@ -71,14 +71,14 @@ const Map = ({ getters, setters, mobile }) => {
       <MapContainer zoom={1} maxZoom={8} center={[-40, 40]} maxBounds={bounds} >
             <Fill
               color={theme.rawColors.background}
-              source={'https://storage.googleapis.com/risk-maps/vector_layers/ocean'}
+              source={'https://storage.googleapis.com/drought-monitor/vector/ocean'}
               variable={'ocean'}
             />
 
           {showStatesOutline && (
             <Line
-              color={theme.colors.primary}
-              source={'https://storage.googleapis.com/risk-maps/vector_layers/states'}
+              color={theme.rawColors.primary}
+              source={'https://storage.googleapis.com/drought-monitor/vector/states'}
               variable={'states'}
               width={1}
             />
@@ -86,8 +86,8 @@ const Map = ({ getters, setters, mobile }) => {
 
           {showCountriesOutline && (
             <Line
-              color={theme.colors.primary}
-              source={'https://storage.googleapis.com/risk-maps/vector_layers/countries'}
+              color={theme.rawColors.primary}
+              source={'https://storage.googleapis.com/drought-monitor/vector/countries'}
               variable={'countries'}
               width={1}
             />
@@ -95,20 +95,20 @@ const Map = ({ getters, setters, mobile }) => {
 
             <Fill
               color={theme.rawColors.background}
-              source={'https://storage.googleapis.com/risk-maps/vector_layers/lakes'}
+              source={'https://storage.googleapis.com/drought-monitor/vector/lakes'}
               variable={'lakes'}
             />
 
             <Line
               color={theme.rawColors.primary}
-              source={'https://storage.googleapis.com/risk-maps/vector_layers/lakes'}
+              source={'https://storage.googleapis.com/drought-monitor/vector/lakes'}
               variable={'lakes'}
               width={1}
             />
 
             <Line
               color={theme.rawColors.primary}
-              source={'https://storage.googleapis.com/risk-maps/vector_layers/land'}
+              source={'https://storage.googleapis.com/drought-monitor/vector/land'}
               variable={'land'}
               width={1}
             />
@@ -116,14 +116,14 @@ const Map = ({ getters, setters, mobile }) => {
           {showCoffee && (
             <>
               <Fill
-                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/coffee_mask'}
+                source={'https://storage.googleapis.com/drought-monitor/vector/coffee_mask'}
                 variable={'coffee_mask'}
                 color={theme.rawColors.background}
                 opacity={0.7}
               />
 
               <Line
-                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/coffee'}
+                source={'https://storage.googleapis.com/drought-monitor/vector/coffee'}
                 variable={'coffee'}
                 color={'black'}
                 width={1}
@@ -134,14 +134,14 @@ const Map = ({ getters, setters, mobile }) => {
           {showCocoa && (
             <>
               <Fill
-                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/cocoa_mask'}
+                source={'https://storage.googleapis.com/drought-monitor/vector/cocoa_mask'}
                 variable={'cocoa_mask'}
                 color={theme.rawColors.background}
                 opacity={0.7}
               />
 
               <Line
-                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/cocoa'}
+                source={'https://storage.googleapis.com/drought-monitor/vector/cocoa'}
                 variable={'cocoa'}
                 color={'black'}
                 width={1}
@@ -153,14 +153,14 @@ const Map = ({ getters, setters, mobile }) => {
           {showMaize && (
             <>
               <Fill
-                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/maize_mask'}
+                source={'https://storage.googleapis.com/drought-monitor/vector/maize_mask'}
                 variable={'maize_mask'}
                 color={theme.rawColors.background}
                 opacity={0.7}
               />
 
               <Line
-                source={'https://storage.googleapis.com/risk-maps/drought-monitor/vector/maize'}
+                source={'https://storage.googleapis.com/drought-monitor/vector/maize'}
                 variable={'maize'}
                 color={'black'}
                 width={1}
@@ -186,7 +186,7 @@ const Map = ({ getters, setters, mobile }) => {
             display={display}
             opacity={opacity}
             mode={'texture'}
-            source={`https://storage.googleapis.com/risk-maps/drought-monitor/zarr/${variable}.zarr`}
+            source={`https://storage.googleapis.com/drought-monitor/zarr/${variable}.zarr`}
             variable={variable}
             selector={{ time }}
             regionOptions={{ setData: setRegionData }}
@@ -194,7 +194,10 @@ const Map = ({ getters, setters, mobile }) => {
 
           {!mobile && (<Ruler />)}
           <RegionControls showRegionPicker={showRegionPicker} setShowRegionPicker={setShowRegionPicker} />
-          <Overlays getters={getters} setters={setters} />
+          <Overlays 
+            getters={{showStatesOutline, showCountriesOutline}} 
+            setters={{setShowStatesOutline, setShowCountriesOutline}}
+          />
 
       </MapContainer>
 
