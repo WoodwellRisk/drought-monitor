@@ -98,7 +98,7 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
         <Menu visible={showMenu} /> 
 
         <Box onClick={toggleAbout} sx={sx['expand-section']} >
-          ABOUT THIS SITE <Text sx={sx.arrow}>→</Text>
+          HOW TO USE THIS SITE <Text sx={sx.arrow}>→</Text>
         </Box>
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
