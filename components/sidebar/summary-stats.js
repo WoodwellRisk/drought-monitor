@@ -1,7 +1,4 @@
 import { Box } from 'theme-ui'
-import { useMemo } from 'react'
-import { SidebarDivider } from '@carbonplan/layouts'
-import { filter } from 'd3-array'
 
 const AverageDisplay = ({ variable, data }) => {
 
@@ -36,7 +33,7 @@ const AverageDisplay = ({ variable, data }) => {
     )
   }
   
-  const SummaryStats = ({variable, regionData, showRegionPicker}) => {    
+  const SummaryStats = ({variable, regionData}) => {    
 
     return (
       <Box
@@ -48,7 +45,7 @@ const AverageDisplay = ({ variable, data }) => {
             pr: [0, 1, 1, 1,],
         }}
       > 
-        {showRegionPicker && regionData?.value && (
+        {regionData?.value && (
           <AverageDisplay variable={variable} data={regionData} />
         )}
       </Box>

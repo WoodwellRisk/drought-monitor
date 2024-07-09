@@ -86,6 +86,14 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
       transition: 'transform 0.2s',
       transform: showAbout ? 'scaleX(-1)' : 'scaleX(1)',
     },
+    stats: {
+      mb: [5],
+      mx: 'auto',
+      // pl: [0, 4, 5, 6],
+      // pr: [0, 1, 1, 1,],
+      width: '100%',
+      height: '250px',
+    }
   }
 
   const [showMenu, setShowMenu] = useState(false)
@@ -105,8 +113,13 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
         <Layers getters={getters} setters={setters} />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        <SummaryStats variable={variable} regionData={regionData} showRegionPicker={showRegionPicker} />
-        <BarChart variable={variable} regionData={regionData} colormap={hexmap} showRegionPicker={showRegionPicker} />
+        {showRegionPicker && (
+          <Box sx={{ ...sx.stats }}>
+            <SummaryStats variable={variable} regionData={regionData} />
+            <BarChart variable={variable} regionData={regionData} colormap={hexmap} />
+            <SidebarDivider sx={{ width: '100%', my: 4 }} />
+          </Box>
+        )}
 
         <Footer />
       </Box>

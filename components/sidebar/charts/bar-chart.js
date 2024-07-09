@@ -2,7 +2,6 @@ import { Box } from 'theme-ui'
 import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/charts'
 import Bar from './bar'
 import * as d3 from 'd3'
-import { SidebarDivider } from '@carbonplan/layouts'
 
 const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
 
@@ -74,29 +73,22 @@ const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
     const xMax = max + binWidth;
 
     return (
-        <>
-            {showRegionPicker && (
-                <>
-                    <Box sx={{ ...sx.chart }} className='chart-container'>
-                        <Chart x={[xMin, xMax]} y={[0, 100]} padding={{ left: 50, top: 0 }} >
-                            <Grid vertical horizontal />
-                            <Ticks left bottom />
-                            <TickLabels left bottom />
-                            <AxisLabel left >Percent</AxisLabel>
-                            <AxisLabel bottom>Bins</AxisLabel>
-                            <Plot>
-                                <Bar 
-                                  data={plotData} 
-                                  color={plotData.map((_, i) => colormap[i])}
-                                  strokeWidth={0.5}
-                                />
-                            </Plot>
-                        </Chart>
-                    </Box>
-                    <SidebarDivider sx={{ width: '100%', my: 4 }} />
-                </>
-            )}
-        </>
+        <Box sx={{ ...sx.chart }} className='chart-container'>
+            <Chart x={[xMin, xMax]} y={[0, 100]} padding={{ left: 50, top: 0 }} >
+                <Grid vertical horizontal />
+                <Ticks left bottom />
+                <TickLabels left bottom />
+                <AxisLabel left >Percent</AxisLabel>
+                <AxisLabel bottom>Bins</AxisLabel>
+                <Plot>
+                    <Bar
+                        data={plotData}
+                        color={plotData.map((_, i) => colormap[i])}
+                        strokeWidth={0.5}
+                    />
+                </Plot>
+            </Chart>
+        </Box>
     )
 }
 

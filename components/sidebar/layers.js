@@ -244,7 +244,7 @@ function Layers({ getters, setters }) {
         <Box sx={{ ...sx.label, mt: [4] }}>
           <Box sx={sx.label}>Year</Box>
           <Slider
-            sx={{ mt: [3], mb: [3] }}
+            sx={{ mt: [3], mb: [2] }}
             value={year}
             onChange={handleYearChange}
             min={2003}
@@ -301,7 +301,7 @@ function Layers({ getters, setters }) {
         <Box sx={{ ...sx.label, mt: [4] }}>
           <Box sx={sx.label}>Month and day</Box>
           <Slider
-            sx={{ mt: [3], mb: [3] }}
+            sx={{ mt: [3], mb: [2] }}
             value={monthDayIdx}
             onChange={handleMonthDayChange}
             min={monthDayMin}
