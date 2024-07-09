@@ -19,16 +19,15 @@ const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
     const min = 0.0
     const max = 1.0
     const variableRange = [min, max]
+    let graphData = []
+    const placeHolderData = [
+        [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
 
     if (!regionData.value || !regionData.value[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
         return
     }
-
-    let lat = regionData.value.coordinates.lat;
-    let lon = regionData.value.coordinates.lon;
-    let graphData = []
-    let graphLat = []
-    let graphLon = []
 
     regionData.value[variable].forEach(function (element, idx) {
         if (element !== 9.969209968386869e36) {
@@ -39,9 +38,6 @@ const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
             } else {
                 graphData.push(element);
             }
-
-            graphLat.push(lat[idx]);
-            graphLon.push(lon[idx]);
         }
     });
     let dataCount = graphData.length
@@ -68,9 +64,9 @@ const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
 
     // https://stackoverflow.com/questions/22015684/zip-arrays-in-javascript
     const zip = (x, y) => Array.from(Array(x.length), (_, i) => [x[i], y[i]]);
-    let plotData = zip(binEdges, percentages);
-    const xMin = min - binWidth;
-    const xMax = max + binWidth;
+    let plotData = zip(binEdges.map((edge) => edge * 100), percentages);
+    const xMin = (min - binWidth) * 100;
+    const xMax = (max + binWidth) * 100;
 
     return (
         <Box sx={{ ...sx.chart }} className='chart-container'>
@@ -79,7 +75,7 @@ const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
                 <Ticks left bottom />
                 <TickLabels left bottom />
                 <AxisLabel left >Percent</AxisLabel>
-                <AxisLabel bottom>Bins</AxisLabel>
+                <AxisLabel bottom>Percentile</AxisLabel>
                 <Plot>
                     <Bar
                         data={plotData}

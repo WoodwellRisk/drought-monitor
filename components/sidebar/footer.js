@@ -8,27 +8,31 @@ import { SidebarDivider } from '@carbonplan/layouts'
 
 const sx = {
     code: {
-        bg: 'muted', 
+        bg: 'muted',
         fontFamily: 'Monaco, Menlo, Consolas, Courier New, monospace !important',
     }
 }
 
-const Footer = () => {
-  return (
-    <>
-        <Box  sx={{
-            px: [0, 4, 5, 6],
-            pt: [0, 0, 0, 0],
-            pb: [4],
-            mb: [1],
-            fontSize: [1, 1, 1, 2],
-            fontFamily: 'body',
-            lineHeight: 'body',
-            cursor: 'pointer',
-            transition: 'background-color 0.15s',
-            '@media (hover: hover) and (pointer: fine)': {
-                '&:hover': { bg: alpha('muted', 0.25) },
-            },
+const Footer = ({ showRegionPicker }) => {
+    return (
+        <>
+            {showRegionPicker && (
+                <SidebarDivider sx={{ width: '100%', mt: 2}} />
+            )}
+            <Box sx={{
+                px: [0, 4, 4, 0],
+                pt: [0, 0, 0, 0],
+                pb: [4],
+                mb: [1],
+                mt: [2],
+                fontSize: [1, 1, 1, 2],
+                fontFamily: 'body',
+                lineHeight: 'body',
+                cursor: 'pointer',
+                transition: 'background-color 0.15s',
+                '@media (hover: hover) and (pointer: fine)': {
+                    '&:hover': { bg: alpha('muted', 0.25) },
+                },
             }}>
                 <Box>
                     This site's interface and functionality rely heavily on code developed by <Link href='https://carbonplan.org/' target='_blank'>CarbonPlan</Link>.{' '}
@@ -37,10 +41,10 @@ const Footer = () => {
                     and <Link href='https://github.com/carbonplan/layouts' target='_blank'><Text sx={sx.code}>layouts</Text></Link>{' '} libraries.
                     You can read more about CarbonPlan's research and software development work <Link href="https://carbonplan.org/research" target="_blank">here</Link>.
                 </Box>
-        </Box>
-    
-    </>
-  )
+            </Box>
+
+        </>
+    )
 }
 
 export default Footer

@@ -3,7 +3,20 @@ import { Box } from 'theme-ui'
 const AverageDisplay = ({ variable, data }) => {
 
     if (!data.value || !data.value[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
-      return
+      return (
+          <Box
+          sx={{
+            ml: [2],
+            mt: [0],
+            fontFamily: 'mono',
+            letterSpacing: 'mono',
+            textTransform: 'uppercase',
+
+          }}
+        >
+          {''}
+        </Box>
+      )
     }
   
     let result
@@ -14,7 +27,7 @@ const AverageDisplay = ({ variable, data }) => {
     } else {
       const average =
         filteredData.reduce((a, b) => a + b, 0) / filteredData.length
-        result = `Average: ${average.toFixed(2)}`
+        result = `Average: ${(average * 100).toFixed(2)}`
     }
   
     return (
