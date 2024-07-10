@@ -24,8 +24,8 @@ function Index() {
   const [colormapName, setColormapName] = useState('redteal')
   // freeze colormap so that it doesn't change with theme
   // red will always be > 0.5, blue will always be < 0.5
-  const colormap = useThemedColormap(colormapName).slice(0,).reverse()
-  const discreteColormap = useThemedColormap(colormapName, { count: 13 }).slice(1, 12).reverse()
+  const colormap = useThemedColormap(colormapName).slice(0,)
+  const discreteColormap = useThemedColormap(colormapName, { count: 13 }).slice(1, 12)
 
   const hexmap = discreteColormap.map((rgb) => {
       let [r, g, b] = rgb

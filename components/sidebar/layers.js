@@ -233,11 +233,13 @@ function Layers({ getters, setters }) {
             sx={{ width: '250px', display: 'inline-block', flexShrink: 1, }}
             sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
             width='100%'
-            colormap={useThemedColormap(colormapName)}
+            colormap={useThemedColormap('redteal')}
+            // colormap={hexmap}
             label={'percentile'}
             clim={[0.0, 100.0]}
             horizontal
             bottom
+            // discrete
           />
         </Box>
 
