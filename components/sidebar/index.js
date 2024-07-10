@@ -117,11 +117,10 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
           <Box sx={{ ...sx.stats }}>
             <SummaryStats variable={variable} regionData={regionData} />
             <BarChart variable={variable} regionData={regionData} colormap={hexmap} />
-            <SidebarDivider sx={{ width: '100%', my: 4 }} />
           </Box>
         )}
 
-        <Footer />
+        <Footer showRegionPicker={showRegionPicker} />
       </Box>
 
     </Box>

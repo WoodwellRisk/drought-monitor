@@ -29,9 +29,9 @@ function Layers({ getters, setters }) {
     data_description: {
       fontSize: '14px',
       color: 'primary',
-  },
+    },
     data_source: {
-        mt: 2,
+      mt: 2,
     }
   }
 
@@ -71,19 +71,24 @@ function Layers({ getters, setters }) {
     setShowMaize,
   } = setters
 
-    // https://javascript.info/date
+  // https://javascript.info/date
   // console.log(" '01-01' < '03-12' ")
   // console.log(new Date("2003-01-01") < new Date("2003-03-12"))
   const monthDayValues = [
-    '01-01', '01-15', '01-29', '02-12', '02-26', '03-12', '03-26', '04-09', '04-23', 
-    '05-07', '05-21', '06-04','06-18', '07-02', '07-16', '07-30', '08-13', '08-27',
+    '01-01', '01-15', '01-29', '02-12', '02-26', '03-12', '03-26', '04-09', '04-23',
+    '05-07', '05-21', '06-04', '06-18', '07-02', '07-16', '07-30', '08-13', '08-27',
     '09-10', '09-24', '10-08', '10-22', '11-05', '11-19', '12-03', '12-17'
   ]
 
   const [monthDayIdx, setMonthDayIdx] = useState(5)
   const [monthDayMin, setMonthDayMin] = useState(5)
   const [monthDayMax, setMonthDayMax] = useState(monthDayValues.length - 1)
-
+  // we want to disable the slider update until the user is done sliding
+  // so we need to create a few hooks that update the slider display, but don't change 
+  // the actual time values until the onMouseUp event is called
+  const [sliding, setSliding] = useState(false)
+  const [sliderYear, setSliderYear] = useState(year)
+  const [sliderMonthDayIdx, setSliderMonthDayIdx] = useState(monthDayIdx)
 
   const handleDroughtChange = useCallback(() => {
     setShowDrought((prev) => !prev)
@@ -91,50 +96,51 @@ function Layers({ getters, setters }) {
   })
 
   const handleCoffeeChange = useCallback(() => {
-    if(showCocoa) {
+    if (showCocoa) {
       setShowCocoa(false)
     }
-    if(showMaize) {
+    if (showMaize) {
       setShowMaize(false)
     }
     setShowCoffee((prev) => !prev)
   })
 
   const handleCocoaChange = useCallback(() => {
-    if(showCoffee) {
+    if (showCoffee) {
       setShowCoffee(false)
     }
-    if(showMaize) {
+    if (showMaize) {
       setShowMaize(false)
     }
     setShowCocoa((prev) => !prev)
   })
 
   const handleMaizeChange = useCallback(() => {
-    if(showCoffee) {
+    if (showCoffee) {
       setShowCoffee(false)
     }
-    if(showCocoa) {
+    if (showCocoa) {
       setShowCocoa(false)
     }
     setShowMaize((prev) => !prev)
   })
 
   const handleYearChange = (event) => {
-    setYear(event.target.value)
+    
+    setSliderYear(event.target.value)
   }
 
   useEffect(() => {
-    if(year == '2003') {
-      if(monthDayIdx < 5) {
+    if (year == '2003') {
+      if (monthDayIdx < 5) {
         setMonthDayIdx(5)
-      } 
+      }
       setMonthDayMin(5)
       setMonthDayMax(monthDayValues.length - 1)
     } else if (year == '2024') {
-      if(monthDayIdx > 10) {
+      if (monthDayIdx > 10) {
         setMonthDayIdx(10)
-      } 
+      }
       setMonthDayMin(0)
       setMonthDayMax(10)
     } else {
@@ -144,7 +150,7 @@ function Layers({ getters, setters }) {
   }, [year])
 
   const handleMonthDayChange = (event) => {
-    setMonthDayIdx(event.target.value)
+    setSliderMonthDayIdx(event.target.value)
   }
 
   useEffect(() => {
@@ -152,7 +158,7 @@ function Layers({ getters, setters }) {
   }, [monthDayIdx])
 
   useEffect(() => {
-    if(year == '2003' && (new Date(`${year}-${monthDay}`) < new Date('2003-03-12'))) {
+    if (year == '2003' && (new Date(`${year}-${monthDay}`) < new Date('2003-03-12'))) {
       setTime('2003-03-12')
     } else if (year == '2024' && (new Date(`${year}-${monthDay}`) > new Date('2024-05-21'))) {
       setTime('2024-05-21')
@@ -161,9 +167,20 @@ function Layers({ getters, setters }) {
     }
   }, [year, monthDay])
 
-  // useEffect(() => {
-  //   console.log(time)
-  // }, [time])
+  // this was modified from : https://github.com/carbonplan/ncview-js/blob/199ba7a2f662053f9280a871ba009b536a36424e/components/selector/slider.js#L129
+  const handleMouseDown = useCallback(() => {
+    setSliding(true)
+  }, [sliderYear, sliderMonthDayIdx])
+
+  const handleMouseUpYear = useCallback(() => {
+    setSliding(false)
+    setYear(sliderYear)
+  }, [sliderYear])
+
+  const handleMouseUpMonthDay = useCallback(() => {
+    setSliding(false)
+    setMonthDayIdx(sliderMonthDayIdx)
+  }, [sliderMonthDayIdx])
 
   return (
     <>
@@ -176,32 +193,32 @@ function Layers({ getters, setters }) {
           </Box>
 
           <Box className='var-layers'>
-              <Tag 
-                color={'blue'} 
-                value={showCoffee} 
-                onClick={handleCoffeeChange}
-                sx={{mr:[2], mb:[2], borderColor: 'blue', width: 'max-content',}}
-              >
-                Coffee 
-              </Tag>
+            <Tag
+              color={'blue'}
+              value={showCoffee}
+              onClick={handleCoffeeChange}
+              sx={{ mr: [2], mb: [2], borderColor: 'blue', width: 'max-content', }}
+            >
+              Coffee
+            </Tag>
 
-              <Tag 
-                color={'orange'} 
-                value={showCocoa} 
-                onClick={handleCocoaChange}
-                sx={{mr:[2], mb:[2], borderColor: 'orange', width: 'max-content',}}
-              >
-                Cocoa
-              </Tag>
+            <Tag
+              color={'orange'}
+              value={showCocoa}
+              onClick={handleCocoaChange}
+              sx={{ mr: [2], mb: [2], borderColor: 'orange', width: 'max-content', }}
+            >
+              Cocoa
+            </Tag>
 
-              <Tag 
-                color={'green'}
-                value={showMaize} 
-                onClick={handleMaizeChange}
-                sx={{mr:[2], mb:[2], borderColor: 'green', width: 'max-content',}}
-              >
-                Maize
-              </Tag>
+            <Tag
+              color={'green'}
+              value={showMaize}
+              onClick={handleMaizeChange}
+              sx={{ mr: [2], mb: [2], borderColor: 'green', width: 'max-content', }}
+            >
+              Maize
+            </Tag>
 
           </Box>
         </Box>
@@ -213,18 +230,18 @@ function Layers({ getters, setters }) {
           {'Drought Monitor'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
-                Near-real time monitor of moisture anomalies. Anomalies are measured as water balance percentiles, where values close to 50 represent normal conditions. 
+                Near-real time monitor of moisture anomalies. Anomalies are measured as water balance percentiles, where values close to 50 represent normal conditions.
                 Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a biweekly basis, from 2003 to present.
               </Box>
             </Box>
           </Info>
         </Box>
 
-        <Tag 
-          color={'red'} 
-          value={showDrought} 
+        <Tag
+          color={'red'}
+          value={showDrought}
           onClick={handleDroughtChange}
-          sx={{mr:[2], mb:[4], borderColor: 'red', width: 'max-content',}}>
+          sx={{ mr: [2], mb: [4], borderColor: 'red', width: 'max-content', }}>
           Water balance
         </Tag>
 
@@ -241,12 +258,28 @@ function Layers({ getters, setters }) {
           />
         </Box>
 
+        {/* <Box sx={{ ...sx.label, }}>
+          <Colorbar
+            sx={{ width: '250px', display: 'inline-block', flexShrink: 1, }}
+            sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
+            width='100%'
+            colormap={hexmap}
+            label={'percentile'}
+            clim={[0.0, 100.0]}
+            horizontal
+            bottom
+            discrete
+          />
+        </Box> */}
+
         <Box sx={{ ...sx.label, mt: [4] }}>
           <Box sx={sx.label}>Year</Box>
           <Slider
             sx={{ mt: [3], mb: [2] }}
-            value={year}
+            value={sliderYear}
             onChange={handleYearChange}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUpYear}
             min={2003}
             max={2024}
             step={1}
@@ -281,7 +314,7 @@ function Layers({ getters, setters }) {
                 fontSize: [1],
               }}
             >
-              {year}
+              {sliderYear}
             </Box>
 
             <Box
@@ -302,8 +335,10 @@ function Layers({ getters, setters }) {
           <Box sx={sx.label}>Month and day</Box>
           <Slider
             sx={{ mt: [3], mb: [2] }}
-            value={monthDayIdx}
+            value={sliderMonthDayIdx}
             onChange={handleMonthDayChange}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUpMonthDay}
             min={monthDayMin}
             max={monthDayMax}
             step={1}
@@ -338,7 +373,7 @@ function Layers({ getters, setters }) {
                 fontSize: [1],
               }}
             >
-              {monthDayValues[monthDayIdx]}
+              {monthDayValues[sliderMonthDayIdx]}
             </Box>
 
             <Box
