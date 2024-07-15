@@ -167,7 +167,7 @@ function Layers({ getters, setters }) {
 
   return (
     <>
-      <Box sx={sx.group}>
+      {/* <Box sx={sx.group}>
         <Box sx={{ mt: -3 }} className='var-container'>
           <Box as='h2' variant='styles.h4' className='var-title'>
             Crops <Info>
@@ -202,11 +202,10 @@ function Layers({ getters, setters }) {
               >
                 Maize
               </Tag>
-
           </Box>
         </Box>
       </Box>
-      <SidebarDivider sx={{ width: '100%', my: 4 }} />
+      <SidebarDivider sx={{ width: '100%', my: 4 }} /> */}
 
       <Box sx={sx.group}>
         <Box as='h2' variant='styles.h4' className='var-subtitle'>
