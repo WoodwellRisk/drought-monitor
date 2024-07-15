@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useThemeUI, Box } from 'theme-ui'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 // import DashedLine from './dashed-line'
@@ -36,9 +36,15 @@ const Map = ({ getters, setters, mobile }) => {
     colormap,
     hexmap,
     showRegionPicker,
-    showCoffee,
+    crops,
+    cropLayer,
+    cropValues,
     showCocoa,
+    showCoffee,
+    showCotton,
     showMaize,
+    showSugar,
+    showWheat,
   } = getters
 
   const {
@@ -51,9 +57,14 @@ const Map = ({ getters, setters, mobile }) => {
     setClim,
     setColormapName,
     setShowRegionPicker,
-    setShowCoffee,
+    setCropLayer,
+    setCropValues,
     setShowCocoa,
+    setShowCoffee,
+    setShowCotton,
     setShowMaize,
+    setShowSugar,
+    setShowWheat
   } = setters
 
   const sx = {
@@ -67,141 +78,201 @@ const Map = ({ getters, setters, mobile }) => {
   }
 
   return (
-    <Box ref={container} sx={{flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': {outline: 'none', },}} >
+    <Box ref={container} sx={{ flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
       <MapContainer zoom={1} maxZoom={8} center={[-40, 40]} maxBounds={bounds} >
-            <Fill
-              color={theme.rawColors.background}
-              source={'https://storage.googleapis.com/drought-monitor/vector/ocean'}
-              variable={'ocean'}
-            />
+        <Fill
+          color={theme.rawColors.background}
+          source={'https://storage.googleapis.com/drought-monitor/vector/ocean'}
+          variable={'ocean'}
+        />
 
-          {showStatesOutline && (
-            <Line
-              color={theme.rawColors.primary}
-              source={'https://storage.googleapis.com/drought-monitor/vector/states'}
-              variable={'states'}
-              width={1}
-            />
-          )}
-
-          {showCountriesOutline && (
-            <Line
-              color={theme.rawColors.primary}
-              source={'https://storage.googleapis.com/drought-monitor/vector/countries'}
-              variable={'countries'}
-              width={1}
-            />
-          )}
-
-            <Fill
-              color={theme.rawColors.background}
-              source={'https://storage.googleapis.com/drought-monitor/vector/lakes'}
-              variable={'lakes'}
-            />
-
-            <Line
-              color={theme.rawColors.primary}
-              source={'https://storage.googleapis.com/drought-monitor/vector/lakes'}
-              variable={'lakes'}
-              width={1}
-            />
-
-            <Line
-              color={theme.rawColors.primary}
-              source={'https://storage.googleapis.com/drought-monitor/vector/land'}
-              variable={'land'}
-              width={1}
-            />
-
-          {showCoffee && (
-            <>
-              <Fill
-                source={'https://storage.googleapis.com/drought-monitor/vector/coffee_mask'}
-                variable={'coffee_mask'}
-                color={theme.rawColors.background}
-                opacity={0.7}
-              />
-
-              <Line
-                source={'https://storage.googleapis.com/drought-monitor/vector/coffee'}
-                variable={'coffee'}
-                color={'black'}
-                width={1}
-              />
-            </>
-          )}
-
-          {showCocoa && (
-            <>
-              <Fill
-                source={'https://storage.googleapis.com/drought-monitor/vector/cocoa_mask'}
-                variable={'cocoa_mask'}
-                color={theme.rawColors.background}
-                opacity={0.7}
-              />
-
-              <Line
-                source={'https://storage.googleapis.com/drought-monitor/vector/cocoa'}
-                variable={'cocoa'}
-                color={'black'}
-                width={1}
-
-              />
-            </>
-          )}
-
-          {showMaize && (
-            <>
-              <Fill
-                source={'https://storage.googleapis.com/drought-monitor/vector/maize_mask'}
-                variable={'maize_mask'}
-                color={theme.rawColors.background}
-                opacity={0.7}
-              />
-
-              <Line
-                source={'https://storage.googleapis.com/drought-monitor/vector/maize'}
-                variable={'maize'}
-                color={'black'}
-                width={1}
-              />
-            </>
-          )}
-
-          {showRegionPicker && (
-            <RegionPicker
-              color={theme.colors.primary}
-              backgroundColor={theme.rawColors.background}
-              fontFamily={theme.fonts.mono}
-              fontSize={'14px'}
-              minRadius={1}
-              maxRadius={1500}
-            />
-          )}
-
-          <Raster
-            key={variable}
-            colormap={colormap}
-            clim={clim}
-            display={display}
-            opacity={opacity}
-            mode={'texture'}
-            source={`https://storage.googleapis.com/drought-monitor/zarr/${variable}.zarr`}
-            variable={variable}
-            selector={{ time }}
-            regionOptions={{ setData: setRegionData }}
+        {showStatesOutline && (
+          <Line
+            color={theme.rawColors.primary}
+            source={'https://storage.googleapis.com/drought-monitor/vector/states'}
+            variable={'states'}
+            width={1}
           />
+        )}
 
-          {!mobile && (<Ruler />)}
-          <RegionControls showRegionPicker={showRegionPicker} setShowRegionPicker={setShowRegionPicker} />
-          <Overlays 
-            getters={{showStatesOutline, showCountriesOutline}} 
-            setters={{setShowStatesOutline, setShowCountriesOutline}}
+        {showCountriesOutline && (
+          <Line
+            color={theme.rawColors.primary}
+            source={'https://storage.googleapis.com/drought-monitor/vector/countries'}
+            variable={'countries'}
+            width={1}
           />
+        )}
+
+        <Fill
+          color={theme.rawColors.background}
+          source={'https://storage.googleapis.com/drought-monitor/vector/lakes'}
+          variable={'lakes'}
+        />
+
+        <Line
+          color={theme.rawColors.primary}
+          source={'https://storage.googleapis.com/drought-monitor/vector/lakes'}
+          variable={'lakes'}
+          width={1}
+        />
+
+        <Line
+          color={theme.rawColors.primary}
+          source={'https://storage.googleapis.com/drought-monitor/vector/land'}
+          variable={'land'}
+          width={1}
+        />
+
+
+        {showCocoa && (
+          <>
+            <Fill
+              source={'https://storage.googleapis.com/drought-monitor/vector/cocoa_mask'}
+              variable={'cocoa_mask'}
+              color={theme.rawColors.background}
+              opacity={0.7}
+            />
+
+            <Line
+              source={'https://storage.googleapis.com/drought-monitor/vector/cocoa'}
+              variable={'cocoa'}
+              color={'black'}
+              width={1}
+
+            />
+          </>
+        )}
+
+        {showCoffee && (
+          <>
+            <Fill
+              source={'https://storage.googleapis.com/drought-monitor/vector/coffee_mask'}
+              variable={'coffee_mask'}
+              color={theme.rawColors.background}
+              opacity={0.7}
+            />
+
+            <Line
+              source={'https://storage.googleapis.com/drought-monitor/vector/coffee'}
+              variable={'coffee'}
+              color={'black'}
+              width={1}
+
+            />
+          </>
+        )}
+
+        {showCotton && (
+          <>
+            <Fill
+              source={'https://storage.googleapis.com/drought-monitor/vector/cotton_mask'}
+              variable={'cotton_mask'}
+              color={theme.rawColors.background}
+              opacity={0.7}
+            />
+
+            <Line
+              source={'https://storage.googleapis.com/drought-monitor/vector/cotton'}
+              variable={'cotton'}
+              color={'black'}
+              width={1}
+
+            />
+          </>
+        )}
+
+        {showMaize && (
+          <>
+            <Fill
+              source={'https://storage.googleapis.com/drought-monitor/vector/maize_mask'}
+              variable={'maize_mask'}
+              color={theme.rawColors.background}
+              opacity={0.7}
+            />
+
+            <Line
+              source={'https://storage.googleapis.com/drought-monitor/vector/maize'}
+              variable={'maize'}
+              color={'black'}
+              width={1}
+
+            />
+          </>
+        )}
+
+        {showSugar && (
+          <>
+            <Fill
+              source={'https://storage.googleapis.com/drought-monitor/vector/sugar_mask'}
+              variable={'sugar_mask'}
+              color={theme.rawColors.background}
+              opacity={0.7}
+            />
+
+            <Line
+              source={'https://storage.googleapis.com/drought-monitor/vector/sugar'}
+              variable={'sugar'}
+              color={'black'}
+              width={1}
+
+            />
+          </>
+        )}
+
+        {showWheat && (
+          <>
+            <Fill
+              source={'https://storage.googleapis.com/drought-monitor/vector/wheat_mask'}
+              variable={'wheat_mask'}
+              color={theme.rawColors.background}
+              opacity={0.7}
+            />
+
+            <Line
+              source={'https://storage.googleapis.com/drought-monitor/vector/wheat'}
+              variable={'wheat'}
+              color={'black'}
+              width={1}
+
+            />
+          </>
+        )}
+
+        {showRegionPicker && (
+          <RegionPicker
+            color={theme.colors.primary}
+            backgroundColor={theme.rawColors.background}
+            fontFamily={theme.fonts.mono}
+            fontSize={'14px'}
+            minRadius={1}
+            maxRadius={1500}
+          />
+        )}
+
+        <Raster
+          key={variable}
+          colormap={colormap}
+          clim={clim}
+          display={display}
+          opacity={opacity}
+          mode={'texture'}
+          source={`https://storage.googleapis.com/drought-monitor/zarr/${variable}.zarr`}
+          variable={variable}
+          selector={{ time }}
+          regionOptions={{ setData: setRegionData }}
+        />
+
+        {!mobile && (<Ruler />)}
+        <RegionControls showRegionPicker={showRegionPicker} setShowRegionPicker={setShowRegionPicker} />
+        <Overlays
+          getters={{ showStatesOutline, showCountriesOutline }}
+          setters={{ setShowStatesOutline, setShowCountriesOutline }}
+        />
 
       </MapContainer>
 
-      {!mobile && (<Dimmer 
+      {!mobile && (<Dimmer
         sx={{
           display: ['initial', 'initial', 'initial', 'initial'],
           position: 'absolute',

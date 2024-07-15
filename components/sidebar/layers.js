@@ -29,9 +29,9 @@ function Layers({ getters, setters }) {
     data_description: {
       fontSize: '14px',
       color: 'primary',
-  },
+    },
     data_source: {
-        mt: 2,
+      mt: 2,
     }
   }
 
@@ -47,12 +47,16 @@ function Layers({ getters, setters }) {
     colormap,
     hexmap,
     showRegionPicker,
-    showCountriesOutline,
-    showStatesOutline,
     showDrought,
-    showCoffee,
+    crops,
+    cropLayer,
+    cropValues,
     showCocoa,
+    showCoffee,
+    showCotton,
     showMaize,
+    showSugar,
+    showWheat,
   } = getters
 
   const {
@@ -66,17 +70,22 @@ function Layers({ getters, setters }) {
     setColormapName,
     setShowRegionPicker,
     setShowDrought,
-    setShowCoffee,
+    setCropLayer,
+    setCropValues,
     setShowCocoa,
+    setShowCoffee,
+    setShowCotton,
     setShowMaize,
+    setShowSugar,
+    setShowWheat
   } = setters
 
-    // https://javascript.info/date
+  // https://javascript.info/date
   // console.log(" '01-01' < '03-12' ")
   // console.log(new Date("2003-01-01") < new Date("2003-03-12"))
   const monthDayValues = [
-    '01-01', '01-15', '01-29', '02-12', '02-26', '03-12', '03-26', '04-09', '04-23', 
-    '05-07', '05-21', '06-04','06-18', '07-02', '07-16', '07-30', '08-13', '08-27',
+    '01-01', '01-15', '01-29', '02-12', '02-26', '03-12', '03-26', '04-09', '04-23',
+    '05-07', '05-21', '06-04', '06-18', '07-02', '07-16', '07-30', '08-13', '08-27',
     '09-10', '09-24', '10-08', '10-22', '11-05', '11-19', '12-03', '12-17'
   ]
 
@@ -84,57 +93,52 @@ function Layers({ getters, setters }) {
   const [monthDayMin, setMonthDayMin] = useState(5)
   const [monthDayMax, setMonthDayMax] = useState(monthDayValues.length - 1)
 
-
   const handleDroughtChange = useCallback(() => {
     setShowDrought((prev) => !prev)
     setDisplay((prev) => !prev)
   })
 
-  const handleCoffeeChange = useCallback(() => {
-    if(showCocoa) {
-      setShowCocoa(false)
+  const handleCropClick = (event) => {
+    let cropName = event.target.id.slice(4,); // example: tag-coffee -> coffee
+    if (cropLayer == cropName) { // this would mean that a user is un-clicking a tag of the same name
+      setCropLayer("")
+      if (cropName != "") {
+        setCropValues({ ...cropValues, [`${cropName}`]: false })
+      }
+    } else { // else change between tags
+      if (cropLayer == "") {
+        setCropValues({ ...cropValues, [`${cropName}`]: true })
+      } else {
+        setCropValues({ ...cropValues, [`${cropLayer}`]: false, [`${cropName}`]: true })
+      }
+      setCropLayer(cropName)
     }
-    if(showMaize) {
-      setShowMaize(false)
-    }
-    setShowCoffee((prev) => !prev)
-  })
+  }
 
-  const handleCocoaChange = useCallback(() => {
-    if(showCoffee) {
-      setShowCoffee(false)
-    }
-    if(showMaize) {
-      setShowMaize(false)
-    }
-    setShowCocoa((prev) => !prev)
-  })
-
-  const handleMaizeChange = useCallback(() => {
-    if(showCoffee) {
-      setShowCoffee(false)
-    }
-    if(showCocoa) {
-      setShowCocoa(false)
-    }
-    setShowMaize((prev) => !prev)
-  })
+  useEffect(() => {
+    setShowCocoa(cropValues['cocoa'])
+    setShowCoffee(cropValues['coffee'])
+    setShowCotton(cropValues['cotton'])
+    setShowMaize(cropValues['maize'])
+    setShowSugar(cropValues['sugar'])
+    setShowWheat(cropValues['wheat'])
+  }, [cropValues])
 
   const handleYearChange = (event) => {
     setYear(event.target.value)
   }
 
   useEffect(() => {
-    if(year == '2003') {
-      if(monthDayIdx < 5) {
+    if (year == '2003') {
+      if (monthDayIdx < 5) {
         setMonthDayIdx(5)
-      } 
+      }
       setMonthDayMin(5)
       setMonthDayMax(monthDayValues.length - 1)
     } else if (year == '2024') {
-      if(monthDayIdx > 10) {
+      if (monthDayIdx > 10) {
         setMonthDayIdx(10)
-      } 
+      }
       setMonthDayMin(0)
       setMonthDayMax(10)
     } else {
@@ -152,7 +156,7 @@ function Layers({ getters, setters }) {
   }, [monthDayIdx])
 
   useEffect(() => {
-    if(year == '2003' && (new Date(`${year}-${monthDay}`) < new Date('2003-03-12'))) {
+    if (year == '2003' && (new Date(`${year}-${monthDay}`) < new Date('2003-03-12'))) {
       setTime('2003-03-12')
     } else if (year == '2024' && (new Date(`${year}-${monthDay}`) > new Date('2024-05-21'))) {
       setTime('2024-05-21')
@@ -161,13 +165,9 @@ function Layers({ getters, setters }) {
     }
   }, [year, monthDay])
 
-  // useEffect(() => {
-  //   console.log(time)
-  // }, [time])
-
   return (
     <>
-      {/* <Box sx={sx.group}>
+      <Box sx={sx.group}>
         <Box sx={{ mt: -3 }} className='var-container'>
           <Box as='h2' variant='styles.h4' className='var-title'>
             Crops <Info>
@@ -176,54 +176,43 @@ function Layers({ getters, setters }) {
           </Box>
 
           <Box className='var-layers'>
-              <Tag 
-                color={'blue'} 
-                value={showCoffee} 
-                onClick={handleCoffeeChange}
-                sx={{mr:[2], mb:[2], borderColor: 'blue', width: 'max-content',}}
-              >
-                Coffee 
-              </Tag>
-
-              <Tag 
-                color={'orange'} 
-                value={showCocoa} 
-                onClick={handleCocoaChange}
-                sx={{mr:[2], mb:[2], borderColor: 'orange', width: 'max-content',}}
-              >
-                Cocoa
-              </Tag>
-
-              <Tag 
-                color={'green'}
-                value={showMaize} 
-                onClick={handleMaizeChange}
-                sx={{mr:[2], mb:[2], borderColor: 'green', width: 'max-content',}}
-              >
-                Maize
-              </Tag>
+            {crops.map((crop) => {
+              return (
+                <Tag
+                  key={crop}
+                  id={`tag-${crop}`}
+                  color={'primary'}
+                  value={cropValues[crop]}
+                  onClick={handleCropClick}
+                  sx={{ mr: [2], mb: [2], borderColor: 'primary', width: 'max-content', }}
+                >
+                  {crop}
+                </Tag>
+              )
+            }
+            )}
           </Box>
         </Box>
       </Box>
-      <SidebarDivider sx={{ width: '100%', my: 4 }} /> */}
+      <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
       <Box sx={sx.group}>
         <Box as='h2' variant='styles.h4' className='var-subtitle'>
           {'Drought Monitor'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
-                Near-real time monitor of moisture anomalies. Anomalies are measured as water balance percentiles, where values close to 50 represent normal conditions. 
+                Near-real time monitor of moisture anomalies. Anomalies are measured as water balance percentiles, where values close to 50 represent normal conditions.
                 Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a biweekly basis, from 2003 to present.
               </Box>
             </Box>
           </Info>
         </Box>
 
-        <Tag 
-          color={'red'} 
-          value={showDrought} 
+        <Tag
+          color={'red'}
+          value={showDrought}
           onClick={handleDroughtChange}
-          sx={{mr:[2], mb:[4], borderColor: 'red', width: 'max-content',}}>
+          sx={{ mr: [2], mb: [4], borderColor: 'red', width: 'max-content', }}>
           Water balance
         </Tag>
 
@@ -238,7 +227,7 @@ function Layers({ getters, setters }) {
             clim={[0.0, 100.0]}
             horizontal
             bottom
-            // discrete
+          // discrete
           />
         </Box>
 

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Box, Flex, useThemeUI} from 'theme-ui'
+import { useEffect, useState } from 'react'
+import { Flex, useThemeUI} from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import Sidebar from '../sidebar'
 import About from '../sidebar/about'
@@ -20,24 +20,37 @@ function Desktop() {
   const [monthDay, setMonthDay] = useState('03-12')
   const [time, setTime] = useState(`${year}-${monthDay}`)
   const [clim, setClim] = useState([0.0, 1.0])
-
+  const [regionData, setRegionData] = useState({loading: true})
+  const [showRegionPicker, setShowRegionPicker] = useState(false)
   const [colormapName, setColormapName] = useState('redteal')
   // freeze colormap so that it doesn't change with theme
   // red will always be > 0.5, blue will always be < 0.5
   const colormap = useThemedColormap(colormapName).slice(0,)
   const discreteColormap = useThemedColormap(colormapName, { count: 13 }).slice(1, 12)
-
   const hexmap = discreteColormap.map((rgb) => {
       let [r, g, b] = rgb
       return d3.color(`rgb(${r}, ${g}, ${b})`).formatHex()
   })
 
-  const [regionData, setRegionData] = useState({loading: true})
-  const [showRegionPicker, setShowRegionPicker] = useState(false)
+  const crops = ["cocoa", "coffee", "cotton", "maize", "sugar", "wheat"]
+  const defaultCropValues = {
+    "cocoa": false, 
+    "coffee": false, 
+    "cotton": false, 
+     "maize": false, 
+     "sugar": false, 
+     "wheat": false 
+  }
+  const [cropLayer, setCropLayer] = useState("")
+  const [cropValues, setCropValues] = useState(defaultCropValues)
   const [showDrought, setShowDrought] = useState(true)
-  const [showCoffee, setShowCoffee] = useState(false)
-  const [showCocoa, setShowCocoa] = useState(false)
-  const [showMaize, setShowMaize] = useState(false)
+  const [showCocoa, setShowCocoa] = useState(true)
+  const [showCoffee, setShowCoffee] = useState(true)
+  const [showCotton, setShowCotton] = useState(true)
+  const [showMaize, setShowMaize] = useState(true)
+  const [showSugar, setShowSugar] = useState(true)
+  const [showWheat, setShowWheat] = useState(true)
+
 
   const getters = {
     display, 
@@ -52,9 +65,15 @@ function Desktop() {
     hexmap,
     showRegionPicker,
     showDrought,
-    showCoffee,
+    crops,
+    cropLayer,
+    cropValues,
     showCocoa,
+    showCoffee,
+    showCotton,
     showMaize,
+    showSugar,
+    showWheat,
   };
 
   const setters = {
@@ -68,9 +87,14 @@ function Desktop() {
     setColormapName,
     setShowRegionPicker,
     setShowDrought,
-    setShowCoffee,
+    setCropLayer,
+    setCropValues,
     setShowCocoa,
+    setShowCoffee,
+    setShowCotton,
     setShowMaize,
+    setShowSugar,
+    setShowWheat,
   };
 
   return (
