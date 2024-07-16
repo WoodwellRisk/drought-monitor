@@ -47,12 +47,11 @@ function Layers({ getters, setters }) {
     colormap,
     hexmap,
     showRegionPicker,
-    showCountriesOutline,
-    showStatesOutline,
     showDrought,
-    showCoffee,
-    showCocoa,
-    showMaize,
+    crops,
+    cropLayer,
+    showCropLayer,
+    cropValues,
   } = getters
 
   const {
@@ -66,9 +65,9 @@ function Layers({ getters, setters }) {
     setColormapName,
     setShowRegionPicker,
     setShowDrought,
-    setShowCoffee,
-    setShowCocoa,
-    setShowMaize,
+    setCropLayer,
+    setShowCropLayer,
+    setCropValues,
   } = setters
 
   // https://javascript.info/date
@@ -95,35 +94,24 @@ function Layers({ getters, setters }) {
     setDisplay((prev) => !prev)
   })
 
-  const handleCoffeeChange = useCallback(() => {
-    if (showCocoa) {
-      setShowCocoa(false)
+  const handleCropClick = (event) => {
+    let cropName = event.target.id.slice(4,); // example: tag-coffee -> coffee
+    if (cropLayer == cropName) { // this would mean that a user is un-clicking a tag of the same name
+      setCropLayer("")
+      if (cropName != "") {
+        setCropValues({ ...cropValues, [`${cropName}`]: false })
+      }
+      setShowCropLayer({})
+    } else { // else change between tags
+      if (cropLayer == "") {
+        setCropValues({ ...cropValues, [`${cropName}`]: true })
+      } else {
+        setCropValues({ ...cropValues, [`${cropLayer}`]: false, [`${cropName}`]: true })
+      }
+      setCropLayer(cropName)
+      setShowCropLayer({show: cropLayer})
     }
-    if (showMaize) {
-      setShowMaize(false)
-    }
-    setShowCoffee((prev) => !prev)
-  })
-
-  const handleCocoaChange = useCallback(() => {
-    if (showCoffee) {
-      setShowCoffee(false)
-    }
-    if (showMaize) {
-      setShowMaize(false)
-    }
-    setShowCocoa((prev) => !prev)
-  })
-
-  const handleMaizeChange = useCallback(() => {
-    if (showCoffee) {
-      setShowCoffee(false)
-    }
-    if (showCocoa) {
-      setShowCocoa(false)
-    }
-    setShowMaize((prev) => !prev)
-  })
+  }
 
   const handleYearChange = (event) => {
     
@@ -193,33 +181,21 @@ function Layers({ getters, setters }) {
           </Box>
 
           <Box className='var-layers'>
-            <Tag
-              color={'blue'}
-              value={showCoffee}
-              onClick={handleCoffeeChange}
-              sx={{ mr: [2], mb: [2], borderColor: 'blue', width: 'max-content', }}
-            >
-              Coffee
-            </Tag>
-
-            <Tag
-              color={'orange'}
-              value={showCocoa}
-              onClick={handleCocoaChange}
-              sx={{ mr: [2], mb: [2], borderColor: 'orange', width: 'max-content', }}
-            >
-              Cocoa
-            </Tag>
-
-            <Tag
-              color={'green'}
-              value={showMaize}
-              onClick={handleMaizeChange}
-              sx={{ mr: [2], mb: [2], borderColor: 'green', width: 'max-content', }}
-            >
-              Maize
-            </Tag>
-
+            {crops.map((crop) => {
+              return (
+                <Tag
+                  key={crop}
+                  id={`tag-${crop}`}
+                  color={'primary'}
+                  value={cropValues[crop]}
+                  onClick={handleCropClick}
+                  sx={{ mr: [2], mb: [2], borderColor: 'primary', width: 'max-content', }}
+                >
+                  {crop}
+                </Tag>
+              )
+            }
+            )}
           </Box>
         </Box>
       </Box>
@@ -250,11 +226,13 @@ function Layers({ getters, setters }) {
             sx={{ width: '250px', display: 'inline-block', flexShrink: 1, }}
             sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
             width='100%'
-            colormap={useThemedColormap(colormapName)}
+            colormap={useThemedColormap('redteal')}
+            // colormap={hexmap}
             label={'percentile'}
             clim={[0.0, 100.0]}
             horizontal
             bottom
+          // discrete
           />
         </Box>
 

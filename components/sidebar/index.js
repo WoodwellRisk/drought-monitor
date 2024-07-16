@@ -22,10 +22,10 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
     colormap,
     hexmap,
     showRegionPicker,
+    crops,
+    cropLayer, 
+    cropValues,
     showDrought,
-    showCoffee,
-    showCocoa,
-    showMaize,
   } = getters
 
   const {
@@ -38,10 +38,9 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
     setClim,
     setColormapName,
     setShowRegionPicker,
+    setCropLayer,
+    setCropValues,
     setShowDrought,
-    setShowCoffee,
-    setShowCocoa,
-    setShowMaize,
   } = setters
   
   const sx = {

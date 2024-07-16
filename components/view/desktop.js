@@ -1,13 +1,85 @@
-import { useState } from 'react'
-import { Flex } from 'theme-ui'
+import { useEffect, useState } from 'react'
+import { Flex, useThemeUI} from 'theme-ui'
+import { useThemedColormap } from '@carbonplan/colormaps'
 import Sidebar from '../sidebar'
 import About from '../sidebar/about'
 import Map from '../map'
 import Loading from './loading'
 
-function Desktop({ getters, setters }) {
+import * as d3 from 'd3'
+
+function Desktop() {
   const [showAbout, setShowAbout] = useState(false)
   const toggleAbout = () => setShowAbout(!showAbout)
+
+  const { theme } = useThemeUI()
+
+  const [display, setDisplay] = useState(true)
+  const [variable, setVariable] = useState('drought')
+  const [year, setYear] = useState('2003')
+  const [monthDay, setMonthDay] = useState('03-12')
+  const [time, setTime] = useState(`${year}-${monthDay}`)
+  const [clim, setClim] = useState([0.0, 1.0])
+  const [regionData, setRegionData] = useState({loading: true})
+  const [showRegionPicker, setShowRegionPicker] = useState(false)
+  const [colormapName, setColormapName] = useState('redteal')
+  // freeze colormap so that it doesn't change with theme
+  // red will always be > 0.5, blue will always be < 0.5
+  const colormap = useThemedColormap(colormapName).slice(0,)
+  const discreteColormap = useThemedColormap(colormapName, { count: 13 }).slice(1, 12)
+  const hexmap = discreteColormap.map((rgb) => {
+      let [r, g, b] = rgb
+      return d3.color(`rgb(${r}, ${g}, ${b})`).formatHex()
+  })
+
+  const crops = ["cocoa", "coffee", "cotton", "maize", "sugar", "wheat"]
+  const defaultCropValues = {
+    "cocoa": false, 
+    "coffee": false, 
+    "cotton": false, 
+     "maize": false, 
+     "sugar": false, 
+     "wheat": false 
+  }
+  const [cropLayer, setCropLayer] = useState("")
+  const [cropValues, setCropValues] = useState(defaultCropValues)
+  const [showCropLayer, setShowCropLayer] = useState([{}])
+  const [showDrought, setShowDrought] = useState(true)
+
+  const getters = {
+    display, 
+    variable,
+    year,
+    monthDay,
+    time,
+    regionData,
+    clim,
+    colormapName,
+    colormap,
+    hexmap,
+    showRegionPicker,
+    showDrought,
+    crops,
+    cropLayer,
+    showCropLayer,
+    cropValues,
+  };
+
+  const setters = {
+    setDisplay, 
+    setVariable,
+    setYear,
+    setMonthDay,
+    setTime,
+    setRegionData,
+    setClim,
+    setColormapName,
+    setShowRegionPicker,
+    setShowDrought,
+    setCropLayer,
+    setShowCropLayer,
+    setCropValues,
+  };
 
   return (
     <Flex
