@@ -48,14 +48,8 @@ function Mobile({ expanded }) {
   }
   const [cropLayer, setCropLayer] = useState(null)
   const [cropValues, setCropValues] = useState(defaultCropValues)
-  const [showCropLayer, setShowCropLayer] = useState({show: false})
+  const [showCropLayer, setShowCropLayer] = useState({})
   const [showDrought, setShowDrought] = useState(true)
-  const [showCocoa, setShowCocoa] = useState(true)
-  const [showCoffee, setShowCoffee] = useState(true)
-  const [showCotton, setShowCotton] = useState(true)
-  const [showMaize, setShowMaize] = useState(true)
-  const [showSugar, setShowSugar] = useState(true)
-  const [showWheat, setShowWheat] = useState(true)
 
   const getters = {
     display, 
@@ -72,13 +66,8 @@ function Mobile({ expanded }) {
     showDrought,
     crops,
     cropLayer,
+    showCropLayer,
     cropValues,
-    showCocoa,
-    showCoffee,
-    showCotton,
-    showMaize,
-    showSugar,
-    showWheat,
   };
 
   const setters = {
@@ -93,13 +82,8 @@ function Mobile({ expanded }) {
     setShowRegionPicker,
     setShowDrought,
     setCropLayer,
+    setShowCropLayer,
     setCropValues,
-    setShowCocoa,
-    setShowCoffee,
-    setShowCotton,
-    setShowMaize,
-    setShowSugar,
-    setShowWheat,
   };
 
   return (

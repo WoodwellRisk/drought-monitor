@@ -50,13 +50,8 @@ function Layers({ getters, setters }) {
     showDrought,
     crops,
     cropLayer,
+    showCropLayer,
     cropValues,
-    showCocoa,
-    showCoffee,
-    showCotton,
-    showMaize,
-    showSugar,
-    showWheat,
   } = getters
 
   const {
@@ -71,13 +66,8 @@ function Layers({ getters, setters }) {
     setShowRegionPicker,
     setShowDrought,
     setCropLayer,
+    setShowCropLayer,
     setCropValues,
-    setShowCocoa,
-    setShowCoffee,
-    setShowCotton,
-    setShowMaize,
-    setShowSugar,
-    setShowWheat
   } = setters
 
   // https://javascript.info/date
@@ -105,6 +95,7 @@ function Layers({ getters, setters }) {
       if (cropName != "") {
         setCropValues({ ...cropValues, [`${cropName}`]: false })
       }
+      setShowCropLayer({})
     } else { // else change between tags
       if (cropLayer == "") {
         setCropValues({ ...cropValues, [`${cropName}`]: true })
@@ -112,17 +103,9 @@ function Layers({ getters, setters }) {
         setCropValues({ ...cropValues, [`${cropLayer}`]: false, [`${cropName}`]: true })
       }
       setCropLayer(cropName)
+      setShowCropLayer({show: cropLayer})
     }
   }
-
-  useEffect(() => {
-    setShowCocoa(cropValues['cocoa'])
-    setShowCoffee(cropValues['coffee'])
-    setShowCotton(cropValues['cotton'])
-    setShowMaize(cropValues['maize'])
-    setShowSugar(cropValues['sugar'])
-    setShowWheat(cropValues['wheat'])
-  }, [cropValues])
 
   const handleYearChange = (event) => {
     setYear(event.target.value)

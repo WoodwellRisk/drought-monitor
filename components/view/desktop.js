@@ -43,14 +43,8 @@ function Desktop() {
   }
   const [cropLayer, setCropLayer] = useState("")
   const [cropValues, setCropValues] = useState(defaultCropValues)
+  const [showCropLayer, setShowCropLayer] = useState([{}])
   const [showDrought, setShowDrought] = useState(true)
-  const [showCocoa, setShowCocoa] = useState(true)
-  const [showCoffee, setShowCoffee] = useState(true)
-  const [showCotton, setShowCotton] = useState(true)
-  const [showMaize, setShowMaize] = useState(true)
-  const [showSugar, setShowSugar] = useState(true)
-  const [showWheat, setShowWheat] = useState(true)
-
 
   const getters = {
     display, 
@@ -67,13 +61,8 @@ function Desktop() {
     showDrought,
     crops,
     cropLayer,
+    showCropLayer,
     cropValues,
-    showCocoa,
-    showCoffee,
-    showCotton,
-    showMaize,
-    showSugar,
-    showWheat,
   };
 
   const setters = {
@@ -88,13 +77,8 @@ function Desktop() {
     setShowRegionPicker,
     setShowDrought,
     setCropLayer,
+    setShowCropLayer,
     setCropValues,
-    setShowCocoa,
-    setShowCoffee,
-    setShowCotton,
-    setShowMaize,
-    setShowSugar,
-    setShowWheat,
   };
 
   return (

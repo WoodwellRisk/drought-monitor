@@ -38,13 +38,8 @@ const Map = ({ getters, setters, mobile }) => {
     showRegionPicker,
     crops,
     cropLayer,
+    showCropLayer,
     cropValues,
-    showCocoa,
-    showCoffee,
-    showCotton,
-    showMaize,
-    showSugar,
-    showWheat,
   } = getters
 
   const {
@@ -58,13 +53,8 @@ const Map = ({ getters, setters, mobile }) => {
     setColormapName,
     setShowRegionPicker,
     setCropLayer,
+    setShowCropLayer,
     setCropValues,
-    setShowCocoa,
-    setShowCoffee,
-    setShowCotton,
-    setShowMaize,
-    setShowSugar,
-    setShowWheat
   } = setters
 
   const sx = {
@@ -124,117 +114,31 @@ const Map = ({ getters, setters, mobile }) => {
           width={1}
         />
 
-
-        {showCocoa && (
+        
+        {/* 
+          as the list of crop layers gets longer, we want to automate how they are re-rendered on the map
+          as opposed to mannually adding a {showX && (...)} for each one. the code below works
+          even though the showCropLayer state re-renders to true when switching between layers
+          (i.e., its state isn't updating). however, they key={} in the Line and Fill components force the components
+          to re-render. so the showCropLayer prop controls whether any crop layer is shown and the change in the 
+          cropLayer prop's state controls the actual re-render between crop layers.
+        */}
+        {showCropLayer != {} && cropLayer != "" && (
           <>
             <Fill
-              source={'https://storage.googleapis.com/drought-monitor/vector/cocoa_mask'}
-              variable={'cocoa_mask'}
+              key={`${cropLayer}_mask`}
+              source={`https://storage.googleapis.com/drought-monitor/vector/${cropLayer}_mask`}
+              variable={`${cropLayer}_mask`}
               color={theme.rawColors.background}
               opacity={0.7}
             />
 
             <Line
-              source={'https://storage.googleapis.com/drought-monitor/vector/cocoa'}
-              variable={'cocoa'}
+              key={`${cropLayer}`}
+              source={`https://storage.googleapis.com/drought-monitor/vector/${cropLayer}`}
+              variable={`${cropLayer}`}
               color={'black'}
               width={1}
-
-            />
-          </>
-        )}
-
-        {showCoffee && (
-          <>
-            <Fill
-              source={'https://storage.googleapis.com/drought-monitor/vector/coffee_mask'}
-              variable={'coffee_mask'}
-              color={theme.rawColors.background}
-              opacity={0.7}
-            />
-
-            <Line
-              source={'https://storage.googleapis.com/drought-monitor/vector/coffee'}
-              variable={'coffee'}
-              color={'black'}
-              width={1}
-
-            />
-          </>
-        )}
-
-        {showCotton && (
-          <>
-            <Fill
-              source={'https://storage.googleapis.com/drought-monitor/vector/cotton_mask'}
-              variable={'cotton_mask'}
-              color={theme.rawColors.background}
-              opacity={0.7}
-            />
-
-            <Line
-              source={'https://storage.googleapis.com/drought-monitor/vector/cotton'}
-              variable={'cotton'}
-              color={'black'}
-              width={1}
-
-            />
-          </>
-        )}
-
-        {showMaize && (
-          <>
-            <Fill
-              source={'https://storage.googleapis.com/drought-monitor/vector/maize_mask'}
-              variable={'maize_mask'}
-              color={theme.rawColors.background}
-              opacity={0.7}
-            />
-
-            <Line
-              source={'https://storage.googleapis.com/drought-monitor/vector/maize'}
-              variable={'maize'}
-              color={'black'}
-              width={1}
-
-            />
-          </>
-        )}
-
-        {showSugar && (
-          <>
-            <Fill
-              source={'https://storage.googleapis.com/drought-monitor/vector/sugar_mask'}
-              variable={'sugar_mask'}
-              color={theme.rawColors.background}
-              opacity={0.7}
-            />
-
-            <Line
-              source={'https://storage.googleapis.com/drought-monitor/vector/sugar'}
-              variable={'sugar'}
-              color={'black'}
-              width={1}
-
-            />
-          </>
-        )}
-
-        {showWheat && (
-          <>
-            <Fill
-              source={'https://storage.googleapis.com/drought-monitor/vector/wheat_mask'}
-              variable={'wheat_mask'}
-              color={theme.rawColors.background}
-              opacity={0.7}
-            />
-
-            <Line
-              source={'https://storage.googleapis.com/drought-monitor/vector/wheat'}
-              variable={'wheat'}
-              color={'black'}
-              width={1}
-
             />
           </>
         )}
