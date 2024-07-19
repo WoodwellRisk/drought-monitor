@@ -5,7 +5,7 @@ import { Colorbar, Tag, Slider } from '@carbonplan/components'
 import { SidebarDivider } from '@carbonplan/layouts'
 import Info from './info'
 
-function Layers({ getters, setters }) {
+function Layers({ getters, setters, sliding, onSliding }) {
   const sx = {
     group: {
       my: [3],
@@ -148,6 +148,14 @@ function Layers({ getters, setters }) {
     }
   }, [year, monthDay])
 
+  const handleMouseDown = useCallback(() => {
+    onSliding(true)
+  }, [year, monthDay])
+
+  const handleMouseUp = useCallback(() => {
+    onSliding(false)
+  }, [year, monthDay])
+
   return (
     <>
       <Box sx={sx.group}>
@@ -220,6 +228,8 @@ function Layers({ getters, setters }) {
             sx={{ mt: [3], mb: [2] }}
             value={year}
             onChange={handleYearChange}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
             min={2003}
             max={2024}
             step={1}
@@ -277,6 +287,8 @@ function Layers({ getters, setters }) {
             sx={{ mt: [3], mb: [2] }}
             value={monthDayIdx}
             onChange={handleMonthDayChange}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
             min={monthDayMin}
             max={monthDayMax}
             step={1}

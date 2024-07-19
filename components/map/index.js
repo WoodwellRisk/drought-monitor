@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useThemeUI, Box } from 'theme-ui'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 // import DashedLine from './dashed-line'
@@ -16,6 +16,7 @@ const Map = ({ getters, setters, mobile }) => {
   const [opacity, setOpacity] = useState(1)
   const [showCountriesOutline, setShowCountriesOutline] = useState(false)
   const [showStatesOutline, setShowStatesOutline] = useState(false)
+  const [regionLoadingData, setRegionDataLoading] = useState(true)
 
   // https://github.com/mapbox/mapbox-gl-js/blob/2b6915c8004a5b759338f3a7d92fb2882db9dd5c/src/geo/lng_lat.js#L192-L201
   // https://docs.mapbox.com/mapbox-gl-js/example/restrict-bounds/
@@ -67,6 +68,20 @@ const Map = ({ getters, setters, mobile }) => {
     },
   }
 
+    // this callback was modified from its source: https://github.com/carbonplan/oae-web/blob/3eff3fb99a24a024f6f9a8278add9233a31e853b/components/map.js#L93
+    const handleRegionData = useCallback(
+      (data) => {
+        // console.log(data)
+        if (data.value == null) {
+          setRegionDataLoading(true)
+        } else if (data.value) {
+          setRegionData(data.value)
+          setRegionDataLoading(false)
+        }
+      },
+      [setRegionData, setRegionDataLoading]
+    )
+
   return (
     <Box ref={container} sx={{ flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
       <MapContainer zoom={1} maxZoom={8} center={[-40, 40]} maxBounds={bounds} >
@@ -114,7 +129,6 @@ const Map = ({ getters, setters, mobile }) => {
           width={1}
         />
 
-        
         {/* 
           as the list of crop layers gets longer, we want to automate how they are re-rendered on the map
           as opposed to mannually adding a {showX && (...)} for each one. the code below works
@@ -164,7 +178,7 @@ const Map = ({ getters, setters, mobile }) => {
           source={`https://storage.googleapis.com/drought-monitor/zarr/${variable}.zarr`}
           variable={variable}
           selector={{ time }}
-          regionOptions={{ setData: setRegionData }}
+          regionOptions={{ setData: handleRegionData, selector: {} }}
         />
 
         {!mobile && (<Ruler />)}

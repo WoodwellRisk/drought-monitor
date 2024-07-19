@@ -3,13 +3,16 @@ import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/cha
 import Bar from './bar'
 import * as d3 from 'd3'
 
-const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
+const BarChart = ({ data, variable, time, colormap }) => {
+    // console.log("Data: ", data)
+    // console.log(data)
+    // console.log(colormap)
 
     const sx = {
         chart: {
             mt: [4],
             mx: 'auto',
-            pl: [0, 4, 5, 6],
+            pl: [0, 1, 1, 1],
             pr: [0, 1, 1, 1,],
             width: '100%',
             height: '200px',
@@ -25,11 +28,11 @@ const BarChart = ({ variable, regionData, colormap, showRegionPicker }) => {
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ]
 
-    if (!regionData.value || !regionData.value[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
+    if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
         return
     }
 
-    regionData.value[variable].forEach(function (element, idx) {
+    data[variable][time].forEach(function (element, idx) {
         if (element !== 9.969209968386869e36) {
             if (element > max) {
                 graphData.push(max);

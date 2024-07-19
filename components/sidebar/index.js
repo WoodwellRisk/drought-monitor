@@ -6,12 +6,11 @@ import SidebarHeader from './sidebar-header'
 import Menu from './menu'
 import Layers from './layers'
 import SummaryStats from './summary-stats'
-import BarChart from './charts/bar-chart'
 import Footer from './footer'
 
 const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
   const {
-    display, 
+    display,
     variable,
     year,
     monthDay,
@@ -23,7 +22,7 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
     hexmap,
     showRegionPicker,
     crops,
-    cropLayer, 
+    cropLayer,
     cropValues,
     showDrought,
   } = getters
@@ -42,7 +41,7 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
     setCropValues,
     setShowDrought,
   } = setters
-  
+
   const sx = {
     'sidebar-container': {
       maxWidth: [
@@ -96,27 +95,34 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
   }
 
   const [showMenu, setShowMenu] = useState(false)
+  const [sliding, setSliding] = useState(false)
 
   return (
     <Box sx={sx['sidebar-container']}>
       <SidebarHeader showMenu={showMenu} toggleMenu={() => setShowMenu(!showMenu)} />
-      
+
       <Box id='sidebar' sx={{ position: 'relative', flex: 1, overflowY: 'scroll', }} >
-        <Menu visible={showMenu} /> 
+        <Menu visible={showMenu} />
 
         <Box onClick={toggleAbout} sx={sx['expand-section']} >
           HOW TO USE THIS SITE <Text sx={sx.arrow}>→</Text>
         </Box>
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        <Layers getters={getters} setters={setters} />
+        <Layers getters={getters} setters={setters} sliding={sliding} onSliding={setSliding} />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
         {showRegionPicker && (
           <Box sx={{ ...sx.stats }}>
-            <SummaryStats variable={variable} regionData={regionData} />
-            <BarChart variable={variable} regionData={regionData} colormap={hexmap} />
-            <SidebarDivider sx={{ width: '100%', my: 4 }} />
+            <SummaryStats
+              variable={variable}
+              time={time}
+              regionData={regionData}
+              showRegionPicker={showRegionPicker}
+              colormap={colormap}
+              hexmap={hexmap}
+              sliding={sliding}
+            />
           </Box>
         )}
 

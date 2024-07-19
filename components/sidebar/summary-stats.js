@@ -1,40 +1,45 @@
 import { Box } from 'theme-ui'
+import { useMemo } from 'react'
+import { SidebarDivider } from '@carbonplan/layouts'
+import BarChart from './charts/bar-chart'
+import TimeSeries from './charts/timeseries'
 
-const AverageDisplay = ({ variable, data }) => {
+const StatsDisplay = ({ data, variable, time, colormap, hexmap, sliding }) => {
+  // console.log(time)
+  // console.log(data)
+  if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
+    return
+  }
 
-    if (!data.value || !data.value[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
-      return (
-          <Box
-          sx={{
-            ml: [2],
-            mt: [0],
-            fontFamily: 'mono',
-            letterSpacing: 'mono',
-            textTransform: 'uppercase',
+  let result;
 
-          }}
-        >
-          {''}
-        </Box>
-      )
-    }
-  
-    let result
-    const filteredData = data.value[variable].filter((d) => d !== 9.969209968386869e36)
+  // https://github.com/carbonplan/forest-carbon-web/blob/9012c0fd99a952b68a08a6a25ba645af736bb8fb/components/regional-emissions.js
+  let chartData = useMemo(() => {
+    let lineData = {}
+    if (!data) return {}
+    data.coordinates.time.forEach((t) => {
+      let filteredData = data[variable][t].filter((d) => d !== 9.969209968386869e36)
+      const average = filteredData.reduce((a, b) => a + b, 0) / filteredData.length
+      lineData[t] = average
+    })
+    return lineData
+  }, [data])
 
-    if (filteredData.length === 0) {
-      result = 'no data in region'
-    } else {
-      const average =
-        filteredData.reduce((a, b) => a + b, 0) / filteredData.length
-        result = `Average: ${(average * 100).toFixed(2)}`
-    }
-  
-    return (
+  // console.log(chartData)
+
+  let avg = chartData[time]
+  if (isNaN(avg)) {
+    result = 'no data in region'
+  } else {
+      result = `Average: ${avg.toFixed(2)} percentile`
+  }
+
+  return (
+    <>
       <Box
         sx={{
           ml: [2],
-          mt: [0],
+          mt: ['-1px'],
           fontFamily: 'mono',
           letterSpacing: 'mono',
           textTransform: 'uppercase',
@@ -43,26 +48,34 @@ const AverageDisplay = ({ variable, data }) => {
       >
         {result}
       </Box>
-    )
-  }
-  
-  const SummaryStats = ({variable, regionData}) => {    
 
-    return (
-      <Box
-        sx={{
-            mt: [4],
-            mb: [0],
-            mx: 'auto',
-            pl: [0, 4, 5, 6],
-            pr: [0, 1, 1, 1,],
-        }}
-      > 
-        {regionData?.value && (
-          <AverageDisplay variable={variable} data={regionData} />
-        )}
-      </Box>
-    )
-  }
-  
-  export default SummaryStats
+      <BarChart data={data} variable={variable} time={time} colormap={hexmap} />
+
+      {/* <TimeSeries data={chartData} time={time} colormap={colormap} sliding={sliding} /> */}
+    </>
+  )
+}
+
+const SummaryStats = (props) => {
+  const {regionData, variable, time, showRegionPicker, colormap, hexmap, sliding} = props
+
+  return (
+    <Box
+      sx={{
+        mt: [4],
+        mx: 'auto',
+        pl: [0, 2, 2, 2],
+        pr: [0, 1, 1, 1,],
+      }}
+    >
+      {showRegionPicker && regionData[variable] && (
+        <>
+          <StatsDisplay data={regionData} variable={variable} time={time} colormap={colormap} hexmap={hexmap} sliding={sliding} />
+          <SidebarDivider sx={{ width: '100%', my: 4 }} />
+        </>
+      )}
+    </Box>
+  )
+}
+
+export default SummaryStats
