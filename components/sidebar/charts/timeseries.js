@@ -1,6 +1,6 @@
 import { Box } from 'theme-ui'
 import * as d3 from 'd3'
-import { AxisLabel, Chart, Circle, Grid, Line, Plot, Scatter, Ticks, TickLabels } from '@carbonplan/charts'
+import { AxisLabel, Chart, Circle, Grid, Line, Plot, Ticks, TickLabels } from '@carbonplan/charts'
 import { SidebarDivider } from '@carbonplan/layouts'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Colorbar } from '@carbonplan/components'
@@ -10,6 +10,7 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
     const sx = {
         chart: {
             mt: [0],
+            mb: [0],
             mx: 'auto',
             // pl: [0, 1, 1, 0],
             // pr: [0, 1, 1, 1,],
@@ -23,6 +24,7 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
             textTransform: 'uppercase',
             mt: [4],
             ml: [2],
+            pl: [6],
         },
     }
 
@@ -54,25 +56,23 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
     // we need to move from [0,1] drought values to [0, 547] hexmap indices
     let scaledIndices = plotData.map(xy => Math.round(xy[1] * 547))
     let reOrderedColormap = scaledIndices.map((val, idx) => hexmap[val])
-    console.log(reOrderedColormap)
 
     return (
         <>
+            <Box sx={{ ...sx.label }}>
+                <Colorbar
+                    sx={{ width: '100%', display: 'inline-block', flexShrink: 1, }}
+                    sxClim={{ fontSize: [1, 1, 1, 2], pt: [0] }}
+                    width='100%'
+                    colormap={reOrderedColormap}
+                    label={'Change over time'}
+                    clim={['2003', '2024']}
+                    horizontal
+                    bottom
+                    discrete
+                />
+            </Box>
             <Box sx={{ ...sx.chart }} className='chart-container'>
-                <Box sx={{ ...sx.label, }}>
-                    <Colorbar
-                        sx={{ width: '250px', display: 'inline-block', flexShrink: 1, }}
-                        sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
-                        width='100%'
-                        colormap={reOrderedColormap}
-                        label={'Change over time'}
-                        clim={['2003', '2024']}
-                        horizontal
-                        bottom
-                        discrete
-                    />
-                </Box>
-
                 <Chart x={[0, lengthOfTime - 1]} y={[0, 1]} padding={{ left: 60, top: 20 }}>
                     <Grid vertical horizontal />
                     <Ticks left bottom />
@@ -93,9 +93,7 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
                             }}
                         />
 
-                        <Line data={plotData} width={2} color={"red"} />
-                        {/* <Line data={plotData} width={2} color={reOrderedColormap} /> */}
-                        {/* <Scatter data={plotData} size={5} color={...reOrderedColormap} /> */}
+                        <Line data={plotData} width={2} color={'red'} />
 
                         {/* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every */}
                         {!plotData.every((value) => isNaN(value[1])) && (

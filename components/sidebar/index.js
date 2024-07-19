@@ -90,7 +90,7 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
       // pl: [0, 4, 5, 6],
       // pr: [0, 1, 1, 1,],
       width: '100%',
-      height: '250px',
+      height: '300px',
     }
   }
 

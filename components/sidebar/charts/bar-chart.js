@@ -4,10 +4,6 @@ import Bar from './bar'
 import * as d3 from 'd3'
 
 const BarChart = ({ data, variable, time, colormap }) => {
-    // console.log("Data: ", data)
-    // console.log(data)
-    // console.log(colormap)
-
     const sx = {
         chart: {
             mt: [4],

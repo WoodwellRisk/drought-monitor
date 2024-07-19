@@ -5,8 +5,6 @@ import BarChart from './charts/bar-chart'
 import TimeSeries from './charts/timeseries'
 
 const StatsDisplay = ({ data, variable, time, colormap, hexmap, sliding }) => {
-  // console.log(time)
-  // console.log(data)
   if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
     return
   }
@@ -25,8 +23,6 @@ const StatsDisplay = ({ data, variable, time, colormap, hexmap, sliding }) => {
     return lineData
   }, [data])
 
-  // console.log(chartData)
-
   let avg = chartData[time]
   if (isNaN(avg)) {
     result = 'no data in region'
@@ -39,6 +35,7 @@ const StatsDisplay = ({ data, variable, time, colormap, hexmap, sliding }) => {
       <Box
         sx={{
           ml: [2],
+          pl: [6],
           mt: ['-1px'],
           fontFamily: 'mono',
           letterSpacing: 'mono',
