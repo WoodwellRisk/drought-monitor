@@ -192,8 +192,8 @@ function Layers({ getters, setters, sliding, onSliding }) {
           {'Drought Monitor'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
-                Near-real time monitor of moisture anomalies. Anomalies are measured as water balance percentiles, where values close to 50 represent normal conditions.
-                Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a biweekly basis, from 2003 to present.
+                Near real-time monitor of moisture anomalies. Anomalies are measured as water balance percentiles relative to levels from 2001 to 2020. Values close to 50 represent normal conditions. 
+                Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a biweekly basis, from 2001 to present.
               </Box>
             </Box>
           </Info>
