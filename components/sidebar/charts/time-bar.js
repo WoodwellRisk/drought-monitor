@@ -1,11 +1,12 @@
 import { Box } from 'theme-ui'
-import * as d3 from 'd3'
 import { Area, AxisLabel, Chart, Circle, Grid, Line, Plot, Ticks, TickLabels } from '@carbonplan/charts'
 import { SidebarDivider } from '@carbonplan/layouts'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Colorbar } from '@carbonplan/components'
+import Bar from './bar'
+import * as d3 from 'd3'
 
-const TimeSeries = ({ data, time, colormap, sliding }) => {
+const TimeBar = ({ data, time, colormap, sliding }) => {
 
     const sx = {
         chart: {
@@ -40,14 +41,9 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
     // we have to skip the first five values that are nans because they are not supported
     const plotData = xData.map((x, idx) => [x, yData[idx]]).slice(numberOfNaNs,)
     
-    console.log(plotData.length)
+    // console.log(plotData.length)
     // console.log(plotData)
     // console.log(colormap)
-    const discreteColormap = useThemedColormap('redteal', { count: 547 }).slice(0,)
-    const hexmap = discreteColormap.map((rgb) => {
-        let [r, g, b] = rgb
-        return d3.color(`rgb(${r}, ${g}, ${b})`).formatHex()
-    })
 
     // console.log(discreteColormap)
     // console.log(hexmap)
@@ -55,7 +51,15 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
     // console.log(plotData.map((val, idx) => colormap[idx]))
     // we need to move from [0,1] drought values to [0, 547] hexmap indices
     let scaledIndices = plotData.map(xy => Math.round(xy[1] * 547))
-    let reOrderedColormap = scaledIndices.map((val, idx) => hexmap[val])
+    let reOrderedColormap = scaledIndices.map((val, idx) => colormap[val])
+    // let positiveNegativeColormap = plotData.map((val, idx) => val > 0.5 ? '#64bac5' : val == 0.5 ? '#0a0a0a' : '#ef7071')
+    // let positiveNegativeColormap = plotData.map((val, idx) => {
+    //     // console.log(val[1], val[1] > 0.5)
+    //     return val[1] > 0.5 ? '#64bac5' : val[1] == 0.5 ? '#0a0a0a' : '#ef7071'
+    // })
+    // console.log(positiveNegativeColormap)
+    // console.log(reOrderedColormap)
+    // console.log(plotData.map((val, idx) => val > 0.5 ? '#E1F2F3' : val == 0.5 ? 'black' : '#FFE5E2' ))
 
     return (
         <>
@@ -74,33 +78,11 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
             </Box>
             <Box sx={{ ...sx.chart }} className='chart-container'>
                 <Chart x={[0, lengthOfTime - 1]} y={[0, 1]} padding={{ left: 60, top: 20 }}>
-                    {/* <Grid vertical horizontal /> */}
+                    <Grid vertical horizontal />
                     <Ticks left bottom />
                     <TickLabels left bottom />
                     <AxisLabel left>Percentile</AxisLabel>
                     <AxisLabel bottom>Time</AxisLabel>
-                    <Plot>
-                        <Area
-                            // color='#F5FAFB' // lighter
-                            color='#E1F2F3' // darker
-                            data={[
-                            [0, 1.0],
-                            [550, 1.0],
-                            ]}
-                        />
-
-                        <Area
-                            // color='#FFF0F0' // lighter
-                            color='#FFE5E2' // darker
-                            data={[
-                            [0, 0.5],
-                            [550, 0.5],
-                            ]}
-                        />
-                    </Plot>
-                   
-                    <Grid vertical horizontal />
-
                     <Plot>
                         <Line
                             data={[
@@ -116,6 +98,12 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
                         />
 
                         <Line data={plotData} width={1.5} color={'black'} />
+                        
+                        <Bar
+                            data={plotData.map(([x, y]) => [x, 0.5, y])}
+                            color={plotData.map((val, idx) => val[1] > 0.5 ? '#64bac5' : val[1] == 0.5 ? '#0a0a0a' : '#ef7071' )}
+                            strokeWidth={0.0}
+                        />
 
                         {/* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every */}
                         {!plotData.every((value) => isNaN(value[1])) && (
@@ -133,4 +121,4 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
     )
 }
 
-export default TimeSeries
+export default TimeBar

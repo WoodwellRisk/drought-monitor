@@ -26,11 +26,17 @@ function Desktop() {
   // freeze colormap so that it doesn't change with theme
   // red will always be > 0.5, blue will always be < 0.5
   const colormap = useThemedColormap(colormapName).slice(0,)
-  const discreteColormap = useThemedColormap(colormapName, { count: 13 }).slice(1, 12)
-  const hexmap = discreteColormap.map((rgb) => {
+  const discreteColormapBar = useThemedColormap(colormapName, { count: 13 }).slice(1, 12)
+  const hexmapBar = discreteColormapBar.map((rgb) => {
       let [r, g, b] = rgb
       return d3.color(`rgb(${r}, ${g}, ${b})`).formatHex()
   })
+  const discreteColormapTime = useThemedColormap('redteal', { count: 547 }).slice(0,)
+  const hexmapTime = discreteColormapTime.map((rgb) => {
+      let [r, g, b] = rgb
+      return d3.color(`rgb(${r}, ${g}, ${b})`).formatHex()
+  })
+
 
   const crops = ["cocoa", "coffee", "cotton", "maize", "sugar", "wheat"]
   const defaultCropValues = {
@@ -56,7 +62,8 @@ function Desktop() {
     clim,
     colormapName,
     colormap,
-    hexmap,
+    hexmapBar,
+    hexmapTime,
     showRegionPicker,
     showDrought,
     crops,

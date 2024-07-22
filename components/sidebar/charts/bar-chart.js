@@ -66,6 +66,7 @@ const BarChart = ({ data, variable, time, colormap }) => {
     let plotData = zip(binEdges.map((edge) => edge * 100), percentages);
     const xMin = (min - binWidth) * 100;
     const xMax = (max + binWidth) * 100;
+    // console.log(plotData)
 
     return (
         <Box sx={{ ...sx.chart }} className='chart-container'>

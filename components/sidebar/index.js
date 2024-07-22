@@ -19,7 +19,8 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
     clim,
     colormapName,
     colormap,
-    hexmap,
+    hexmapBar,
+    hexmapTime,
     showRegionPicker,
     crops,
     cropLayer,
@@ -120,7 +121,8 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
               regionData={regionData}
               showRegionPicker={showRegionPicker}
               colormap={colormap}
-              hexmap={hexmap}
+              hexmapBar={hexmapBar}
+              hexmapTime={hexmapTime}
               sliding={sliding}
             />
           </Box>

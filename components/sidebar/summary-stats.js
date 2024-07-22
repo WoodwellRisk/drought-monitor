@@ -3,8 +3,9 @@ import { useMemo } from 'react'
 import { SidebarDivider } from '@carbonplan/layouts'
 import BarChart from './charts/bar-chart'
 import TimeSeries from './charts/timeseries'
+import TimeBar from './charts/time-bar'
 
-const StatsDisplay = ({ data, variable, time, colormap, hexmap, sliding }) => {
+const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, sliding }) => {
   if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
     return
   }
@@ -46,15 +47,17 @@ const StatsDisplay = ({ data, variable, time, colormap, hexmap, sliding }) => {
         {result}
       </Box>
 
-      <BarChart data={data} variable={variable} time={time} colormap={hexmap} />
+      <BarChart data={data} variable={variable} time={time} colormap={hexmapBar} />
 
       {/* <TimeSeries data={chartData} time={time} colormap={colormap} sliding={sliding} /> */}
+
+      {/* <TimeBar data={chartData} time={time} colormap={hexmapTime} sliding={sliding} /> */}
     </>
   )
 }
 
 const SummaryStats = (props) => {
-  const {regionData, variable, time, showRegionPicker, colormap, hexmap, sliding} = props
+  const {regionData, variable, time, showRegionPicker, colormap, hexmapBar, hexmapTime, sliding} = props
 
   return (
     <Box
@@ -67,7 +70,15 @@ const SummaryStats = (props) => {
     >
       {showRegionPicker && regionData[variable] && (
         <>
-          <StatsDisplay data={regionData} variable={variable} time={time} colormap={colormap} hexmap={hexmap} sliding={sliding} />
+          <StatsDisplay 
+            data={regionData} 
+            variable={variable}
+             time={time} colormap={colormap} 
+             hexmapBar={hexmapBar} 
+             hexmapTime={hexmapTime}
+             sliding={sliding} 
+          />
+
           <SidebarDivider sx={{ width: '100%', my: 4 }} />
         </>
       )}
