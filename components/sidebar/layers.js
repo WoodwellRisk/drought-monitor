@@ -79,8 +79,8 @@ function Layers({ getters, setters, sliding, onSliding }) {
     '09-10', '09-24', '10-08', '10-22', '11-05', '11-19', '12-03', '12-17'
   ]
 
-  const [monthDayIdx, setMonthDayIdx] = useState(5)
-  const [monthDayMin, setMonthDayMin] = useState(5)
+  const [monthDayIdx, setMonthDayIdx] = useState(0)
+  const [monthDayMin, setMonthDayMin] = useState(0)
   const [monthDayMax, setMonthDayMax] = useState(monthDayValues.length - 1)
 
   const handleDroughtChange = useCallback(() => {
@@ -112,18 +112,19 @@ function Layers({ getters, setters, sliding, onSliding }) {
   }
 
   useEffect(() => {
-    if (year == '2003') {
-      if (monthDayIdx < 5) {
-        setMonthDayIdx(5)
-      }
-      setMonthDayMin(5)
-      setMonthDayMax(monthDayValues.length - 1)
-    } else if (year == '2024') {
-      if (monthDayIdx > 10) {
-        setMonthDayIdx(10)
+    // if (year == '2003') {
+    //   if (monthDayIdx < 5) {
+    //     setMonthDayIdx(5)
+    //   }
+    //   setMonthDayMin(5)
+    //   setMonthDayMax(monthDayValues.length - 1)
+    // } else 
+    if (year == '2024') {
+      if (monthDayIdx > 12) {
+        setMonthDayIdx(12)
       }
       setMonthDayMin(0)
-      setMonthDayMax(10)
+      setMonthDayMax(12)
     } else {
       setMonthDayMin(0)
       setMonthDayMax(monthDayValues.length - 1)
@@ -139,10 +140,11 @@ function Layers({ getters, setters, sliding, onSliding }) {
   }, [monthDayIdx])
 
   useEffect(() => {
-    if (year == '2003' && (new Date(`${year}-${monthDay}`) < new Date('2003-03-12'))) {
-      setTime('2003-03-12')
-    } else if (year == '2024' && (new Date(`${year}-${monthDay}`) > new Date('2024-05-21'))) {
-      setTime('2024-05-21')
+    // if (year == '2003' && (new Date(`${year}-${monthDay}`) < new Date('2003-03-12'))) {
+    //   setTime('2003-03-12')
+    // } else 
+    if (year == '2024' && (new Date(`${year}-${monthDay}`) > new Date('2024-06-18'))) {
+      setTime('2024-06-18')
     } else {
       setTime(`${year}-${monthDay}`)
     }
@@ -249,7 +251,7 @@ function Layers({ getters, setters, sliding, onSliding }) {
                 float: 'left',
               }}
             >
-              2003
+              2001
             </Box>
 
             <Box
