@@ -52,6 +52,8 @@ function Layers({ getters, setters, sliding, onSliding }) {
     cropLayer,
     showCropLayer,
     cropValues,
+    maxDate,
+    showWarning,
   } = getters
 
   const {
@@ -68,6 +70,7 @@ function Layers({ getters, setters, sliding, onSliding }) {
     setCropLayer,
     setShowCropLayer,
     setCropValues,
+    setShowWarning,
   } = setters
 
   // https://javascript.info/date
@@ -111,26 +114,6 @@ function Layers({ getters, setters, sliding, onSliding }) {
     setYear(event.target.value)
   }
 
-  useEffect(() => {
-    // if (year == '2003') {
-    //   if (monthDayIdx < 5) {
-    //     setMonthDayIdx(5)
-    //   }
-    //   setMonthDayMin(5)
-    //   setMonthDayMax(monthDayValues.length - 1)
-    // } else 
-    if (year == '2024') {
-      if (monthDayIdx > 12) {
-        setMonthDayIdx(12)
-      }
-      setMonthDayMin(0)
-      setMonthDayMax(12)
-    } else {
-      setMonthDayMin(0)
-      setMonthDayMax(monthDayValues.length - 1)
-    }
-  }, [year])
-
   const handleMonthDayChange = (event) => {
     setMonthDayIdx(event.target.value)
   }
@@ -140,15 +123,17 @@ function Layers({ getters, setters, sliding, onSliding }) {
   }, [monthDayIdx])
 
   useEffect(() => {
-    // if (year == '2003' && (new Date(`${year}-${monthDay}`) < new Date('2003-03-12'))) {
-    //   setTime('2003-03-12')
-    // } else 
-    if (year == '2024' && (new Date(`${year}-${monthDay}`) > new Date('2024-06-18'))) {
-      setTime('2024-06-18')
-    } else {
-      setTime(`${year}-${monthDay}`)
-    }
+    setTime(`${year}-${monthDay}`)
   }, [year, monthDay])
+
+  useEffect(() => {
+    if (year == '2024' && (new Date(time) > new Date(maxDate))) {
+      setShowRegionPicker(false)
+      setShowWarning(true)
+    } else {
+      setShowWarning(false)
+    }
+  }, [time])
 
   const handleMouseDown = useCallback(() => {
     onSliding(true)

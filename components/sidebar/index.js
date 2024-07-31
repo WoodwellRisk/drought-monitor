@@ -26,22 +26,9 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
     cropLayer,
     cropValues,
     showDrought,
+    maxDate,
+    showWarning
   } = getters
-
-  const {
-    setDisplay,
-    setVariable,
-    setYear,
-    setMonthDay,
-    setTime,
-    setRegionData,
-    setClim,
-    setColormapName,
-    setShowRegionPicker,
-    setCropLayer,
-    setCropValues,
-    setShowDrought,
-  } = setters
 
   const sx = {
     'sidebar-container': {
@@ -113,7 +100,7 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
         <Layers getters={getters} setters={setters} sliding={sliding} onSliding={setSliding} />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        {showRegionPicker && (
+        {showRegionPicker && new Date(time) <= new Date(maxDate) && (
           <Box sx={{ ...sx.stats }}>
             <SummaryStats
               variable={variable}

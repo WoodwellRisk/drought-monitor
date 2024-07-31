@@ -70,7 +70,7 @@ const TimeBar = ({ data, time, colormap, sliding }) => {
                     width='100%'
                     colormap={reOrderedColormap}
                     label={'Change over time'}
-                    clim={['2003', '2024']}
+                    clim={['2001', '2024']}
                     horizontal
                     bottom
                     discrete

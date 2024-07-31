@@ -66,7 +66,7 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
                     width='100%'
                     colormap={reOrderedColormap}
                     label={'Change over time'}
-                    clim={['2003', '2024']}
+                    clim={['2001', '2024']}
                     horizontal
                     bottom
                     discrete
@@ -85,7 +85,7 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
                             color='#E1F2F3' // darker
                             data={[
                             [0, 1.0],
-                            [550, 1.0],
+                            [620, 1.0],
                             ]}
                         />
 
@@ -94,7 +94,7 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
                             color='#FFE5E2' // darker
                             data={[
                             [0, 0.5],
-                            [550, 0.5],
+                            [620, 0.5],
                             ]}
                         />
                     </Plot>

@@ -58,32 +58,33 @@ const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, s
 
 const SummaryStats = (props) => {
   const {regionData, variable, time, showRegionPicker, colormap, hexmapBar, hexmapTime, sliding} = props
+  
+    return (
+      <Box
+        sx={{
+          mt: [4],
+          mx: 'auto',
+          pl: [0, 2, 2, 2],
+          pr: [0, 1, 1, 1,],
+        }}
+      >
+        {showRegionPicker && regionData[variable] && (
+          <>
+            <StatsDisplay 
+              data={regionData} 
+              variable={variable}
+               time={time} colormap={colormap} 
+               hexmapBar={hexmapBar} 
+               hexmapTime={hexmapTime}
+               sliding={sliding} 
+            />
+  
+            <SidebarDivider sx={{ width: '100%', my: 4 }} />
+          </>
+        )}
+      </Box>
+    )
 
-  return (
-    <Box
-      sx={{
-        mt: [4],
-        mx: 'auto',
-        pl: [0, 2, 2, 2],
-        pr: [0, 1, 1, 1,],
-      }}
-    >
-      {showRegionPicker && regionData[variable] && (
-        <>
-          <StatsDisplay 
-            data={regionData} 
-            variable={variable}
-             time={time} colormap={colormap} 
-             hexmapBar={hexmapBar} 
-             hexmapTime={hexmapTime}
-             sliding={sliding} 
-          />
-
-          <SidebarDivider sx={{ width: '100%', my: 4 }} />
-        </>
-      )}
-    </Box>
-  )
 }
 
 export default SummaryStats

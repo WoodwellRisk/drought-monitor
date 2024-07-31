@@ -1,12 +1,13 @@
-import { useCallback, useRef, useState } from 'react'
-import { useThemeUI, Box } from 'theme-ui'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Box, useThemeUI } from 'theme-ui'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 // import DashedLine from './dashed-line'
 // import DottedLine from './dotted-line'
-import { Dimmer } from '@carbonplan/components'
+import { Badge, Dimmer } from '@carbonplan/components'
 import RegionControls from './region-controls'
 import Ruler from './ruler'
 import Overlays from './overlays'
+import TimeWarning from './time-warning'
 
 const Map = ({ getters, setters, mobile }) => {
   const container = useRef(null)
@@ -41,6 +42,8 @@ const Map = ({ getters, setters, mobile }) => {
     cropLayer,
     showCropLayer,
     cropValues,
+    maxDate,
+    showWarning,
   } = getters
 
   const {
@@ -56,6 +59,7 @@ const Map = ({ getters, setters, mobile }) => {
     setCropLayer,
     setShowCropLayer,
     setCropValues,
+    setShowWarning,
   } = setters
 
   const sx = {
@@ -143,7 +147,7 @@ const Map = ({ getters, setters, mobile }) => {
               key={`${cropLayer}_mask`}
               source={`https://storage.googleapis.com/drought-monitor/vector/${cropLayer}_mask`}
               variable={`${cropLayer}_mask`}
-              color={theme.rawColors.background}
+              color={theme.rawColors.secondary}
               opacity={0.7}
             />
 
@@ -157,7 +161,7 @@ const Map = ({ getters, setters, mobile }) => {
           </>
         )}
 
-        {showRegionPicker && (
+        {showRegionPicker && new Date(time) <= new Date(maxDate) && (
           <RegionPicker
             color={theme.colors.primary}
             backgroundColor={theme.rawColors.background}
@@ -168,21 +172,36 @@ const Map = ({ getters, setters, mobile }) => {
           />
         )}
 
-        <Raster
-          key={variable}
-          colormap={colormap}
-          clim={clim}
-          display={display}
-          opacity={opacity}
-          mode={'texture'}
-          source={`https://storage.googleapis.com/drought-monitor/zarr/${variable}.zarr`}
-          variable={variable}
-          selector={{ time }}
-          regionOptions={{ setData: handleRegionData, selector: {} }}
-        />
+        {new Date(time) <= new Date(maxDate) && (
+          <Raster
+            key={variable}
+            colormap={colormap}
+            clim={clim}
+            display={display}
+            opacity={opacity}
+            mode={'texture'}
+            source={`https://storage.googleapis.com/drought-monitor/zarr/${variable}.zarr`}
+            variable={variable}
+            selector={{ time }}
+            regionOptions={{ setData: handleRegionData, selector: {} }}
+          />
+        )}
+
+        {showWarning && (
+          <TimeWarning 
+          mobile={mobile} 
+          time={time} 
+          showWarning={showWarning}
+          setShowWarning={setShowWarning}/>
+        )}
+
 
         {!mobile && (<Ruler />)}
-        <RegionControls showRegionPicker={showRegionPicker} setShowRegionPicker={setShowRegionPicker} />
+
+        {!showWarning && new Date(time) <= new Date(maxDate) && (
+          <RegionControls showRegionPicker={showRegionPicker} setShowRegionPicker={setShowRegionPicker} />
+        )}
+
         <Overlays
           getters={{ showStatesOutline, showCountriesOutline }}
           setters={{ setShowStatesOutline, setShowCountriesOutline }}

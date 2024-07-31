@@ -19,6 +19,7 @@ function Desktop() {
   const [year, setYear] = useState('2003')
   const [monthDay, setMonthDay] = useState('03-12')
   const [time, setTime] = useState(`${year}-${monthDay}`)
+  const maxDate = '2024-06-18'
   const [clim, setClim] = useState([0.0, 1.0])
   const [regionData, setRegionData] = useState({loading: true})
   const [showRegionPicker, setShowRegionPicker] = useState(false)
@@ -52,6 +53,8 @@ function Desktop() {
   const [showCropLayer, setShowCropLayer] = useState([{}])
   const [showDrought, setShowDrought] = useState(true)
 
+  const [showWarning, setShowWarning] = useState(false)
+
   const getters = {
     display, 
     variable,
@@ -70,6 +73,8 @@ function Desktop() {
     cropLayer,
     showCropLayer,
     cropValues,
+    maxDate,
+    showWarning,
   };
 
   const setters = {
@@ -86,6 +91,7 @@ function Desktop() {
     setCropLayer,
     setShowCropLayer,
     setCropValues,
+    setShowWarning,
   };
 
   return (

@@ -24,6 +24,7 @@ function Mobile({ expanded }) {
   const [year, setYear] = useState('2003')
   const [monthDay, setMonthDay] = useState('03-12')
   const [time, setTime] = useState(`${year}-${monthDay}`)
+  const maxDate = '2024-06-18'
   const [clim, setClim] = useState([0.0, 1.0])
   const [regionData, setRegionData] = useState({loading: true})
   const [showRegionPicker, setShowRegionPicker] = useState(false)
@@ -51,6 +52,9 @@ function Mobile({ expanded }) {
   const [showCropLayer, setShowCropLayer] = useState({})
   const [showDrought, setShowDrought] = useState(true)
 
+  const [showWarning, setShowWarning] = useState(false)
+  const [sliding, setSliding] = useState(false)
+
   const getters = {
     display, 
     variable,
@@ -68,6 +72,8 @@ function Mobile({ expanded }) {
     cropLayer,
     showCropLayer,
     cropValues,
+    maxDate,
+    showWarning,
   };
 
   const setters = {
@@ -84,6 +90,7 @@ function Mobile({ expanded }) {
     setCropLayer,
     setShowCropLayer,
     setCropValues,
+    setShowWarning,
   };
 
   return (
@@ -112,7 +119,7 @@ function Mobile({ expanded }) {
           transform: expanded ? 'translateY(0)' : 'translateY(-550px)',
         }}
       >
-        <Layers getters={getters} setters={setters} />
+        <Layers getters={getters} setters={setters} sliding={sliding} onSliding={setSliding}/>
       </Tray>
 
       {section === 'about' && (
