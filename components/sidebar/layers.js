@@ -269,7 +269,7 @@ function Layers({ getters, setters, sliding, onSliding }) {
         </Box>
 
         <Box sx={{ ...sx.label, mt: [4] }}>
-          <Box sx={sx.label}>Month and day</Box>
+          <Box sx={sx.label}>Biweekly period</Box>
           <Slider
             sx={{ mt: [3], mb: [2] }}
             value={monthDayIdx}

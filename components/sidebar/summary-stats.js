@@ -1,9 +1,9 @@
 import { Box } from 'theme-ui'
 import { useMemo } from 'react'
 import { SidebarDivider } from '@carbonplan/layouts'
+import * as d3 from 'd3'
 import BarChart from './charts/bar-chart'
 import TimeSeries from './charts/timeseries'
-import TimeBar from './charts/time-bar'
 
 const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, sliding }) => {
   if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
@@ -14,17 +14,26 @@ const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, s
 
   // https://github.com/carbonplan/forest-carbon-web/blob/9012c0fd99a952b68a08a6a25ba645af736bb8fb/components/regional-emissions.js
   let chartData = useMemo(() => {
-    let lineData = {}
+    let avgData = {}
+    // let top95 = {}
+    // let bottom95 = {}
+
     if (!data) return {}
     data.coordinates.time.forEach((t) => {
       let filteredData = data[variable][t].filter((d) => d !== 9.969209968386869e36)
       const average = filteredData.reduce((a, b) => a + b, 0) / filteredData.length
-      lineData[t] = average
+      avgData[t] = average
+      // top95[t] = d3.quantile(filteredData, 0.95)
+      // bottom95[t] = d3.quantile(filteredData, 0.05)
     })
-    return lineData
+    // return {'avg': avgData, 'top95': top95, 'bottom95': bottom95}
+    return {'avg': avgData}
+
   }, [data])
 
-  let avg = chartData[time]
+  if(!chartData['avg']) return
+
+  let avg = chartData['avg'][time]
   if (isNaN(avg)) {
     result = 'no data in region'
   } else {
@@ -49,9 +58,8 @@ const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, s
 
       <BarChart data={data} variable={variable} time={time} colormap={hexmapBar} />
 
-      {/* <TimeSeries data={chartData} time={time} colormap={colormap} sliding={sliding} /> */}
+      {/* <TimeSeries data={chartData} time={time} colormap={hexmapTime} sliding={sliding} /> */}
 
-      {/* <TimeBar data={chartData} time={time} colormap={hexmapTime} sliding={sliding} /> */}
     </>
   )
 }

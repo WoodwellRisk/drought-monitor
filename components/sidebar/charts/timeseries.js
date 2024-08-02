@@ -1,11 +1,14 @@
 import { Box } from 'theme-ui'
-import * as d3 from 'd3'
 import { Area, AxisLabel, Chart, Circle, Grid, Line, Plot, Ticks, TickLabels } from '@carbonplan/charts'
 import { SidebarDivider } from '@carbonplan/layouts'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Colorbar } from '@carbonplan/components'
+import Bar from './bar'
+import * as d3 from 'd3'
 
-const TimeSeries = ({ data, time, colormap, sliding }) => {
+import {useEffect} from 'react'
+
+const TimeBar = ({ data, time, colormap, sliding }) => {
 
     const sx = {
         chart: {
@@ -28,38 +31,33 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
         },
     }
 
-    const numberOfNaNs = Object.values(data).filter(x => isNaN(x)).length
-    const lengthOfTime = Object.keys(data).length - numberOfNaNs
+    let mean = data['avg']
+    // let top = data['top95']
+    // let bottom = data['bottom95']
+
+    // const numberOfNaNs = Object.values(data).filter(x => isNaN(x)).length
+    // const lengthOfTime = Object.keys(data).length - numberOfNaNs
+
     // https://stackoverflow.com/questions/11258077/how-to-find-index-of-an-object-by-key-and-value-in-an-javascript-array#39810268
-    const timeIndex = Object.keys(data).findIndex(date => date == time)
+    const timeIndex = Object.keys(mean).findIndex(date => date == time)
 
+    const lengthOfTime = Object.keys(mean).length
     const xData = Array.from(Array(lengthOfTime), (_, i) => i)
-    const yData = Object.values(data)
+    const yMean = Object.values(mean)
+    // const yTop = Object.values(top)
+    // const yBottom = Object.values(bottom)
     // https://stackoverflow.com/questions/22015684/zip-arrays-in-javascript
-    // https://github.com/carbonplan/charts/issues/4
-    // we have to skip the first five values that are nans because they are not supported
-    const plotData = xData.map((x, idx) => [x, yData[idx]]).slice(numberOfNaNs,)
-    
-    console.log(plotData.length)
-    // console.log(plotData)
-    // console.log(colormap)
-    const discreteColormap = useThemedColormap('redteal', { count: 547 }).slice(0,)
-    const hexmap = discreteColormap.map((rgb) => {
-        let [r, g, b] = rgb
-        return d3.color(`rgb(${r}, ${g}, ${b})`).formatHex()
-    })
+    const plotMean = xData.map((x, idx) => [x, yMean[idx]])
+    // const plotTop = xData.map((x, idx) => [x, yTop[idx]])
+    // const plotBottom = xData.map((x, idx) => [x, yBottom[idx]])
 
-    // console.log(discreteColormap)
-    // console.log(hexmap)
-    // console.log(plotData.map((val, idx) => val[1]))
-    // console.log(plotData.map((val, idx) => colormap[idx]))
     // we need to move from [0,1] drought values to [0, 547] hexmap indices
-    let scaledIndices = plotData.map(xy => Math.round(xy[1] * 547))
-    let reOrderedColormap = scaledIndices.map((val, idx) => hexmap[val])
+    // let scaledIndices = plotMean.map(xy => Math.round(xy[1] * lengthOfTime))
+    // let reOrderedColormap = scaledIndices.map((val, idx) => colormap[val])
 
     return (
         <>
-            <Box sx={{ ...sx.label }}>
+            {/* <Box sx={{ ...sx.label }}>
                 <Colorbar
                     sx={{ width: '100%', display: 'inline-block', flexShrink: 1, }}
                     sxClim={{ fontSize: [1, 1, 1, 2], pt: [0] }}
@@ -71,36 +69,15 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
                     bottom
                     discrete
                 />
-            </Box>
+            </Box> */}
+
             <Box sx={{ ...sx.chart }} className='chart-container'>
                 <Chart x={[0, lengthOfTime - 1]} y={[0, 1]} padding={{ left: 60, top: 20 }}>
-                    {/* <Grid vertical horizontal /> */}
+                    <Grid vertical horizontal />
                     <Ticks left bottom />
                     <TickLabels left bottom />
                     <AxisLabel left>Percentile</AxisLabel>
                     <AxisLabel bottom>Time</AxisLabel>
-                    <Plot>
-                        <Area
-                            // color='#F5FAFB' // lighter
-                            color='#E1F2F3' // darker
-                            data={[
-                            [0, 1.0],
-                            [620, 1.0],
-                            ]}
-                        />
-
-                        <Area
-                            // color='#FFF0F0' // lighter
-                            color='#FFE5E2' // darker
-                            data={[
-                            [0, 0.5],
-                            [620, 0.5],
-                            ]}
-                        />
-                    </Plot>
-                   
-                    <Grid vertical horizontal />
-
                     <Plot>
                         <Line
                             data={[
@@ -115,16 +92,37 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
                             }}
                         />
 
-                        <Line data={plotData} width={1.5} color={'black'} />
+                        {/* <Bar
+                            data={plotTop.map(([x, y]) => [x, 0.5, y])}
+                            color={'gray'}
+                            strokeWidth={0.0}
+                            alpha={0.5}
+                        />
 
-                        {/* https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/every */}
-                        {!plotData.every((value) => isNaN(value[1])) && (
-                            <Circle
-                                x={timeIndex}
-                                y={data[time]}
-                                size={8}
-                            />
-                        )}
+                        <Bar
+                            data={plotBottom.map(([x, y]) => [x, 0.5, y])}
+                            color={'gray'}
+                            strokeWidth={0.0}
+                        /> */}
+
+                        <Line data={plotMean} width={1.5} color={'black'} />
+
+                        <Bar
+                            data={plotMean.map(([x, y]) => [x, 0.5, y])}
+                            color={plotMean.map((val, idx) => val[1] > 0.5 ? '#64bac5' : val[1] == 0.5 ? '#0a0a0a' : '#ef7071')}
+                            strokeWidth={0.0}
+                        />
+
+                        <Circle
+                            x={timeIndex}
+                            y={mean[time]}
+
+                            size={8}
+                            sx={{
+                                opacity: sliding ? 1 : 0,
+                                transition: 'opacity 0.15s',
+                            }}
+                        />
 
                     </Plot>
                 </Chart>
@@ -133,4 +131,4 @@ const TimeSeries = ({ data, time, colormap, sliding }) => {
     )
 }
 
-export default TimeSeries
+export default TimeBar

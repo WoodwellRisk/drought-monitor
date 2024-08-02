@@ -27,7 +27,7 @@ const BarChart = ({ data, variable, time, colormap }) => {
     if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
         return
     }
-    console.log(data)
+    // console.log(data)
 
     data[variable][time].forEach(function (element, idx) {
         if (element !== 9.969209968386869e36) {
