@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
-// import DashedLine from './dashed-line'
-// import DottedLine from './dotted-line'
-import { Badge, Dimmer } from '@carbonplan/components'
+import { Dimmer } from '@carbonplan/components'
 import RegionControls from './region-controls'
 import Ruler from './ruler'
 import Overlays from './overlays'
@@ -18,13 +16,6 @@ const Map = ({ getters, setters, mobile }) => {
   const [showCountriesOutline, setShowCountriesOutline] = useState(false)
   const [showStatesOutline, setShowStatesOutline] = useState(false)
   const [regionLoadingData, setRegionDataLoading] = useState(true)
-
-  // https://github.com/mapbox/mapbox-gl-js/blob/2b6915c8004a5b759338f3a7d92fb2882db9dd5c/src/geo/lng_lat.js#L192-L201
-  // https://docs.mapbox.com/mapbox-gl-js/example/restrict-bounds/
-  const bounds = [
-    [-360, -60.5], // southwest
-    [360, 85] // northeast
-  ]
 
   const {
     display,
@@ -72,19 +63,26 @@ const Map = ({ getters, setters, mobile }) => {
     },
   }
 
-    // this callback was modified from its source: https://github.com/carbonplan/oae-web/blob/3eff3fb99a24a024f6f9a8278add9233a31e853b/components/map.js#L93
-    const handleRegionData = useCallback(
-      (data) => {
-        // console.log(data)
-        if (data.value == null) {
-          setRegionDataLoading(true)
-        } else if (data.value) {
-          setRegionData(data.value)
-          setRegionDataLoading(false)
-        }
-      },
-      [setRegionData, setRegionDataLoading]
-    )
+  // https://github.com/mapbox/mapbox-gl-js/blob/2b6915c8004a5b759338f3a7d92fb2882db9dd5c/src/geo/lng_lat.js#L192-L201
+  // https://docs.mapbox.com/mapbox-gl-js/example/restrict-bounds/
+  const bounds = [
+    [-360, -60.5], // southwest
+    [360, 85] // northeast
+  ]
+
+  // this callback was modified from its source: https://github.com/carbonplan/oae-web/blob/3eff3fb99a24a024f6f9a8278add9233a31e853b/components/map.js#L93
+  const handleRegionData = useCallback(
+    (data) => {
+      // console.log(data)
+      if (data.value == null) {
+        setRegionDataLoading(true)
+      } else if (data.value) {
+        setRegionData(data.value)
+        setRegionDataLoading(false)
+      }
+    },
+    [setRegionData, setRegionDataLoading]
+  )
 
   return (
     <Box ref={container} sx={{ flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
@@ -148,7 +146,7 @@ const Map = ({ getters, setters, mobile }) => {
               source={`https://storage.googleapis.com/drought-monitor/vector/${cropLayer}_mask`}
               variable={`${cropLayer}_mask`}
               color={theme.rawColors.secondary}
-              opacity={0.7}
+              opacity={0.5}
             />
 
             <Line
@@ -188,11 +186,12 @@ const Map = ({ getters, setters, mobile }) => {
         )}
 
         {showWarning && (
-          <TimeWarning 
-          mobile={mobile} 
-          time={time} 
-          showWarning={showWarning}
-          setShowWarning={setShowWarning}/>
+          <TimeWarning
+            mobile={mobile}
+            time={time}
+            showWarning={showWarning}
+            setShowWarning={setShowWarning} 
+          />
         )}
 
 

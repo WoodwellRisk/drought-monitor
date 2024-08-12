@@ -3,7 +3,7 @@ import { X } from '@carbonplan/icons'
 
 const TimeWarning = ({ mobile, time, showWarning, setShowWarning }) => {
 
-    const { theme } = useThemeUI()
+    const { theme, colorMode } = useThemeUI()
 
     return (
         <Box sx={{ 
@@ -20,8 +20,8 @@ const TimeWarning = ({ mobile, time, showWarning, setShowWarning }) => {
             //   'calc(...)',
             //   'calc(...)',
             // ],
-            bg: theme.rawColors.primary == '#1B1E23' ? theme.rawColors.background : theme.rawColors.primary,
-            color: theme.rawColors.primary == '#1B1E23' ? theme.rawColors.primary : theme.rawColors.background,
+            bg: colorMode == 'dark' ? '#ebebec' : '#1b1e23',
+            color: colorMode == 'dark' ? '#1b1e23' : '#ebebec',
             border: '3px solid',
             borderColor: 'red',
             borderRadius: '10px',

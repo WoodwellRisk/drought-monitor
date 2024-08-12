@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Box, Flex, Grid, useThemeUI } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
 import { Left } from '@carbonplan/icons'
@@ -6,7 +6,6 @@ import { useThemedColormap } from '@carbonplan/colormaps'
 import { Button, Tray, FadeIn } from '@carbonplan/components'
 import Map from '../map'
 import Layers from '../sidebar/layers'
-import About from '../sidebar/about'
 import Content from '../sidebar/about/content'
 import Loading from './loading'
 
