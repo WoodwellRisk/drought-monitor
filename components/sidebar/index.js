@@ -76,7 +76,7 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
       mb: [5],
       mx: 'auto',
       width: '100%',
-      height: '300px',
+      height: '275px',
     }
   }
 

@@ -13,13 +13,6 @@ const TimeWarning = ({ mobile, time, showWarning, setShowWarning }) => {
             top: mobile ? '30%' : '40%',
             left: mobile ? '30%' : '40%',
             display: showWarning ? 'inline-block' : 'hidden',
-            // the left alignment needs work
-            // left: [
-            //   '0',
-            //   'calc(...)
-            //   'calc(...)',
-            //   'calc(...)',
-            // ],
             bg: colorMode == 'dark' ? '#ebebec' : '#1b1e23',
             color: colorMode == 'dark' ? '#1b1e23' : '#ebebec',
             border: '3px solid',

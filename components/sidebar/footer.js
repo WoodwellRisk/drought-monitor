@@ -17,14 +17,14 @@ const Footer = ({ showRegionPicker }) => {
     return (
         <>
             {showRegionPicker && (
-                <SidebarDivider sx={{ width: '100%', mt: 2}} />
+                <SidebarDivider sx={{ width: '100%', my: 2}} />
             )}
             <Box sx={{
                 px: [0, 4, 4, 0],
-                pt: [0, 0, 0, 0],
+                pt: [0, 4, 4, 0],
                 pb: [4],
                 mb: [1],
-                mt: [2],
+                mt: [-2],
                 fontSize: [1, 1, 1, 2],
                 fontFamily: 'body',
                 lineHeight: 'body',

@@ -1,6 +1,8 @@
-import { Box } from 'theme-ui'
+import { Box, IconButton } from 'theme-ui'
 import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/charts'
+import { SidebarDivider } from '@carbonplan/layouts'
 import Bar from './bar'
+import DownloadButton from '../icons/download'
 import * as d3 from 'd3'
 
 const BarChart = ({ data, variable, time, colormap }) => {
@@ -19,10 +21,6 @@ const BarChart = ({ data, variable, time, colormap }) => {
     const max = 1.0
     const variableRange = [min, max]
     let graphData = []
-    const placeHolderData = [
-        [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
 
     if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
         return
@@ -84,7 +82,24 @@ const BarChart = ({ data, variable, time, colormap }) => {
                         strokeWidth={0.5}
                     />
                 </Plot>
+
             </Chart>
+            {/* <Box sx={{
+                    ml: [2],
+                    mb: [2],
+                    pl: [5],
+                    mt: ['-1px'],
+                    fontFamily: 'mono',
+                    letterSpacing: 'mono',
+                    textTransform: 'uppercase',
+                }}>
+                    Download Data <DownloadButton time={time} data={plotData} region={data['coordinates']} />
+            </Box> */}
+
+            <SidebarDivider sx={{ width: '100%', my: 4 }} />
+
+
+
         </Box>
     )
 }

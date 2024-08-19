@@ -1,9 +1,8 @@
 import { Box } from 'theme-ui'
 import { useMemo } from 'react'
-import { SidebarDivider } from '@carbonplan/layouts'
 import * as d3 from 'd3'
 import BarChart from './charts/bar-chart'
-import TimeSeries from './charts/timeseries'
+// import TimeSeries from './charts/timeseries'
 
 const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, sliding }) => {
   if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
@@ -45,7 +44,7 @@ const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, s
       <Box
         sx={{
           ml: [2],
-          pl: [6],
+          pl: [5],
           mt: ['-1px'],
           fontFamily: 'mono',
           letterSpacing: 'mono',
@@ -86,9 +85,7 @@ const SummaryStats = (props) => {
                hexmapTime={hexmapTime}
                sliding={sliding} 
             />
-  
-            <SidebarDivider sx={{ width: '100%', my: 4 }} />
-          </>
+            </>
         )}
       </Box>
     )
