@@ -127,14 +127,14 @@ const DensityPlot = ({ data, variable, time, year, monthDay, minDate, colormap }
                     {plotPreviousData && (
                         <>
                             {/* <Area
-                                data={plotData2}
+                                data={plotPreviousData}
                                 width={1.5}
                                 opacity={0.3}
                                 color={'gray'}
                                 curve={d3.curveMonotoneX} // d3.curveBumpX is another good option
                             /> */}
                             <Line
-                                data={plotData2}
+                                data={plotPreviousData}
                                 width={1.5}
                                 color={'gray'}
                                 curve={d3.curveMonotoneX}
