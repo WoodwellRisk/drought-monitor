@@ -33,6 +33,7 @@ const Map = ({ getters, setters, mobile }) => {
     cropLayer,
     showCropLayer,
     cropValues,
+    minDate,
     maxDate,
     showWarning,
   } = getters

@@ -2,9 +2,23 @@ import { Box } from 'theme-ui'
 import { useMemo } from 'react'
 import * as d3 from 'd3'
 import BarChart from './charts/bar-chart'
+import DensityPlot from './charts/density-plot'
 // import TimeSeries from './charts/timeseries'
 
-const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, sliding }) => {
+const StatsDisplay = (props) => {
+  const { 
+    data, 
+    variable, 
+    time,
+    minDate, 
+    year,
+    monthDay,
+    colormap, 
+    hexmapBar, 
+    hexmapTime, 
+    sliding 
+  } = props
+
   if (!data || !data[variable]) { // ex: if(!'drought' or Object["drought"]) {...}
     return
   }
@@ -59,12 +73,35 @@ const StatsDisplay = ({ data, variable, time, colormap, hexmapBar, hexmapTime, s
 
       {/* <TimeSeries data={chartData} time={time} colormap={hexmapTime} sliding={sliding} /> */}
 
+      {/* <DensityPlot 
+        data={data} 
+        variable={variable} 
+        time={time} 
+        year={year}
+        monthDay={monthDay}
+        minDate={minDate}
+        colormap={hexmapBar} 
+      /> */}
+
     </>
   )
 }
 
 const SummaryStats = (props) => {
-  const {regionData, variable, time, showRegionPicker, colormap, hexmapBar, hexmapTime, sliding} = props
+  const {
+    regionData, 
+    variable, 
+    time, 
+    year,
+    monthDay,
+    minDate,
+    maxDate, 
+    showRegionPicker, 
+    colormap, 
+    hexmapBar, 
+    hexmapTime, 
+    sliding
+  } = props
   
     return (
       <Box
@@ -80,7 +117,11 @@ const SummaryStats = (props) => {
             <StatsDisplay 
               data={regionData} 
               variable={variable}
-               time={time} colormap={colormap} 
+               time={time} 
+               year={year}
+               monthDay={monthDay}
+               minDate={minDate}
+               colormap={colormap} 
                hexmapBar={hexmapBar} 
                hexmapTime={hexmapTime}
                sliding={sliding} 

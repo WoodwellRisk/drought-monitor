@@ -20,9 +20,10 @@ function Mobile({ expanded }) {
 
   const [display, setDisplay] = useState(true)
   const [variable, setVariable] = useState('drought')
-  const [year, setYear] = useState('2003')
-  const [monthDay, setMonthDay] = useState('03-12')
+  const [year, setYear] = useState('2001')
+  const [monthDay, setMonthDay] = useState('01-01')
   const [time, setTime] = useState(`${year}-${monthDay}`)
+  const minDate = '2001-01-01'
   const maxDate = '2024-06-18'
   const [clim, setClim] = useState([0.0, 1.0])
   const [regionData, setRegionData] = useState({loading: true})
@@ -71,6 +72,7 @@ function Mobile({ expanded }) {
     cropLayer,
     showCropLayer,
     cropValues,
+    minDate,
     maxDate,
     showWarning,
   };

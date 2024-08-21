@@ -217,7 +217,7 @@ function Layers({ getters, setters, sliding, onSliding }) {
             onChange={handleYearChange}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            min={2003}
+            min={2001}
             max={2024}
             step={1}
           />

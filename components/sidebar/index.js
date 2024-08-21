@@ -26,6 +26,7 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
     cropLayer,
     cropValues,
     showDrought,
+    minDate,
     maxDate,
     showWarning
   } = getters
@@ -103,6 +104,9 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
             <SummaryStats
               variable={variable}
               time={time}
+              year={year}
+              monthDay={monthDay}
+              minDate={minDate}
               regionData={regionData}
               showRegionPicker={showRegionPicker}
               colormap={colormap}
