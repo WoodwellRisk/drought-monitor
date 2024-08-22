@@ -57,9 +57,9 @@ const StatsDisplay = (props) => {
     <>
       <Box
         sx={{
-          ml: [2],
-          pl: [5],
-          mt: ['-1px'],
+          // ml: [2],
+          // pl: [5],
+          // mt: ['-1px'],
           fontFamily: 'mono',
           letterSpacing: 'mono',
           textTransform: 'uppercase',
@@ -106,10 +106,10 @@ const SummaryStats = (props) => {
     return (
       <Box
         sx={{
-          mt: [4],
-          mx: 'auto',
-          pl: [0, 2, 2, 2],
-          pr: [0, 1, 1, 1,],
+          // mt: [4],
+          // mx: 'auto',
+          // pl: [0, 2, 2, 2],
+          // pr: [0, 1, 1, 1,],
         }}
       >
         {showRegionPicker && regionData[variable] && (

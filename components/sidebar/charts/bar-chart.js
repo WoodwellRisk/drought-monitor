@@ -10,8 +10,8 @@ const BarChart = ({ data, variable, time, colormap }) => {
         chart: {
             mt: [4],
             mx: 'auto',
-            pl: [0, 1, 1, 1],
-            pr: [0, 1, 1, 1,],
+            // pl: [0, 1, 1, 1],
+            // pr: [0, 1, 1, 1,],
             width: '100%',
             height: '200px',
         }
@@ -82,7 +82,6 @@ const BarChart = ({ data, variable, time, colormap }) => {
                         strokeWidth={0.5}
                     />
                 </Plot>
-
             </Chart>
             {/* <Box sx={{
                     ml: [2],
@@ -96,9 +95,7 @@ const BarChart = ({ data, variable, time, colormap }) => {
                     Download Data <DownloadButton time={time} data={plotData} region={data['coordinates']} />
             </Box> */}
 
-            <SidebarDivider sx={{ width: '100%', my: 4 }} />
-
-
+            {/* <SidebarDivider sx={{ width: '100%', my: 4 }} /> */}
 
         </Box>
     )

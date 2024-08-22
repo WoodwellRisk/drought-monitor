@@ -54,6 +54,8 @@ function Desktop() {
   const [showCropLayer, setShowCropLayer] = useState([{}])
   const [showDrought, setShowDrought] = useState(true)
 
+  const [showCountriesOutline, setShowCountriesOutline] = useState(false)
+  const [showStatesOutline, setShowStatesOutline] = useState(false)
   const [showWarning, setShowWarning] = useState(false)
 
   const getters = {
@@ -76,6 +78,8 @@ function Desktop() {
     cropValues,
     minDate,
     maxDate,
+    showCountriesOutline,
+    showStatesOutline,
     showWarning,
   };
 
@@ -93,6 +97,8 @@ function Desktop() {
     setCropLayer,
     setShowCropLayer,
     setCropValues,
+    setShowCountriesOutline,
+    setShowStatesOutline,
     setShowWarning,
   };
 

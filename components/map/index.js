@@ -2,9 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 import { Dimmer } from '@carbonplan/components'
-import RegionControls from './region-controls'
 import Ruler from './ruler'
-import Overlays from './overlays'
 import TimeWarning from './time-warning'
 
 const Map = ({ getters, setters, mobile }) => {
@@ -13,8 +11,6 @@ const Map = ({ getters, setters, mobile }) => {
   const { theme } = useThemeUI()
 
   const [opacity, setOpacity] = useState(1)
-  const [showCountriesOutline, setShowCountriesOutline] = useState(false)
-  const [showStatesOutline, setShowStatesOutline] = useState(false)
   const [regionLoadingData, setRegionDataLoading] = useState(true)
 
   const {
@@ -35,6 +31,8 @@ const Map = ({ getters, setters, mobile }) => {
     cropValues,
     minDate,
     maxDate,
+    showCountriesOutline,
+    showStatesOutline,
     showWarning,
   } = getters
 
@@ -51,6 +49,8 @@ const Map = ({ getters, setters, mobile }) => {
     setCropLayer,
     setShowCropLayer,
     setCropValues,
+    setShowCountriesOutline,
+    setShowStatesOutline,
     setShowWarning,
   } = setters
 
@@ -197,15 +197,6 @@ const Map = ({ getters, setters, mobile }) => {
 
 
         {!mobile && (<Ruler />)}
-
-        {!showWarning && new Date(time) <= new Date(maxDate) && (
-          <RegionControls showRegionPicker={showRegionPicker} setShowRegionPicker={setShowRegionPicker} />
-        )}
-
-        <Overlays
-          getters={{ showStatesOutline, showCountriesOutline }}
-          setters={{ setShowStatesOutline, setShowCountriesOutline }}
-        />
 
       </MapContainer>
 
