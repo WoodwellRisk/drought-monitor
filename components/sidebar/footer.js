@@ -1,7 +1,6 @@
 import { Box, Text } from 'theme-ui'
 import { Link } from '@carbonplan/components'
 import { alpha } from '@theme-ui/color'
-import { SidebarDivider } from '@carbonplan/layouts'
 
 // This component is modeled after the SidebarFooter component: 
 // https://github.com/carbonplan/layouts/blob/main/src/sidebar/sidebar-footer.js
@@ -13,12 +12,9 @@ const sx = {
     }
 }
 
-const Footer = ({ showRegionPicker }) => {
+const Footer = () => {
     return (
         <>
-            {showRegionPicker && (
-                <SidebarDivider sx={{ width: '100%', my: 2}} />
-            )}
             <Box sx={{
                 px: [0, 4, 4, 0],
                 pt: [0, 4, 4, 0],

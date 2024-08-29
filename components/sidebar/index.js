@@ -121,9 +121,6 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
         </ExpandingSection>
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        {/* <ExpandingSection label='Charts' onClick={() => setShowRegionPicker(!showRegionPicker)} />
-        <SidebarDivider sx={{ width: '100%', my: 4 }} /> */}
-
         <ExpandingSection 
           label='Charts' 
           expanded={showRegionPicker} 
@@ -148,25 +145,7 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
             </Box>
           )}
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', my: 4 }} /> 
-
-        {/* {showRegionPicker && new Date(time) <= new Date(maxDate) && (
-          <Box sx={{ ...sx.stats }}>
-            <SummaryStats
-              variable={variable}
-              time={time}
-              year={year}
-              monthDay={monthDay}
-              minDate={minDate}
-              regionData={regionData}
-              showRegionPicker={showRegionPicker}
-              colormap={colormap}
-              hexmapBar={hexmapBar}
-              hexmapTime={hexmapTime}
-              sliding={sliding}
-            />
-          </Box>
-        )} */}
+        <SidebarDivider sx={{ width: '100%', mt: 4 }} /> 
 
         <Footer />
       </Box>
