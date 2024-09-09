@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Flex, useThemeUI} from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import Sidebar from '../sidebar'

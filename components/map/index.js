@@ -1,17 +1,27 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
 import { Box, useThemeUI } from 'theme-ui'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 import { Dimmer } from '@carbonplan/components'
 import Ruler from './ruler'
 import TimeWarning from './time-warning'
+import Router from './router'
 
 const Map = ({ getters, setters, mobile }) => {
-  const container = useRef(null)
-  const [map, setMap] = useState(null)
   const { theme } = useThemeUI()
+
+  const container = useRef(null)
+  
+  // const [map, setMap] = useState(null)
+  const [zoom, setZoom] = useState(1)
+  const maxZoom = 8
+  const [center, setCenter] = useState([-40, 40])
 
   const [opacity, setOpacity] = useState(1)
   const [regionLoadingData, setRegionDataLoading] = useState(true)
+
+  const router = useRouter()
+  // console.log(router)
 
   const {
     display,
@@ -87,7 +97,7 @@ const Map = ({ getters, setters, mobile }) => {
 
   return (
     <Box ref={container} sx={{ flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
-      <MapContainer zoom={1} maxZoom={8} center={[-40, 40]} maxBounds={bounds} >
+      <MapContainer zoom={zoom} maxZoom={maxZoom} center={center} maxBounds={bounds} >
         <Fill
           color={theme.rawColors.background}
           source={'https://storage.googleapis.com/drought-monitor/vector/ocean'}
@@ -197,6 +207,8 @@ const Map = ({ getters, setters, mobile }) => {
 
 
         {!mobile && (<Ruler />)}
+
+        <Router setZoom={setZoom} setCenter={setCenter} />
 
       </MapContainer>
 
