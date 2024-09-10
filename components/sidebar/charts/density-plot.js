@@ -165,8 +165,6 @@ const DensityPlot = ({ data, variable, time, year, monthDay, minDate, colormap }
 
             </Chart>
 
-            <SidebarDivider sx={{ width: '100%', my: 4 }} />
-
         </Box>
     )
 }
