@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/router'
 import { Box, useThemeUI } from 'theme-ui'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 import { Dimmer } from '@carbonplan/components'
@@ -19,9 +18,6 @@ const Map = ({ getters, setters, mobile }) => {
 
   const [opacity, setOpacity] = useState(1)
   const [regionLoadingData, setRegionDataLoading] = useState(true)
-
-  const router = useRouter()
-  // console.log(router)
 
   const {
     display,

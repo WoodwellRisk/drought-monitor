@@ -68,6 +68,7 @@
     "jest": "^27.3.1",
     "microbundle": "^0.13.0",
     "prettier": "^2.2.1",
-    "rimraf": "3.0.2"
+    "rimraf": "3.0.2",
+    "rollup": ">=2.79.2"
   }
 }
