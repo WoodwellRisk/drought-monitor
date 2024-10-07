@@ -7,35 +7,22 @@ import Menu from './menu'
 import Layers from './layers'
 import ExpandingSection from './expanding-section'
 import Overlays from './overlays'
-import SummaryStats from './summary-stats'
+import SummaryStats from './charts/summary-stats'
 import Footer from './footer'
 
-const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
-  const {
-    display,
-    variable,
-    year,
-    monthDay,
-    time,
-    regionData,
-    clim,
-    colormapName,
-    colormap,
-    hexmapBar,
-    hexmapTime,
-    showRegionPicker,
-    crops,
-    cropLayer,
-    cropValues,
-    showDrought,
-    minDate,
-    maxDate,
-    showCountriesOutline,
-    showStatesOutline,
-    showWarning
-  } = getters
+import useStore from '../store/index'
 
-  const { setShowRegionPicker, setShowCountriesOutline, setShowStatesOutline, ...rest } = setters
+const Sidebar = () => {
+  const maxDate = useStore((state) => state.maxDate)
+  const time = useStore((state) => state.time)
+  const showRegionPicker = useStore((state) => state.showRegionPicker)
+  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker)
+  const showAbout = useStore((state) => state.showAbout)
+  const setShowAbout = useStore((state) => state.setShowAbout)
+  const showMenu = useStore((state) => state.showMenu)
+  const setShowMenu = useStore((state) => state.setShowMenu)
+  const showOverlays = useStore((state) => state.showOverlays)
+  const setShowOverlays = useStore((state) => state.setShowOverlays)
 
   const sx = {
     'sidebar-container': {
@@ -94,10 +81,6 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
     },
   }
 
-  const [showMenu, setShowMenu] = useState(false)
-  const [sliding, setSliding] = useState(false)
-  const [showOverlays, setShowOverlays] = useState(false)
-
   return (
     <Box sx={sx['sidebar-container']}>
       <SidebarHeader showMenu={showMenu} toggleMenu={() => setShowMenu(!showMenu)} />
@@ -105,12 +88,12 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
       <Box id='sidebar' sx={{ position: 'relative', flex: 1, overflowY: 'scroll', }} >
         <Menu visible={showMenu} />
 
-        <Box onClick={toggleAbout} sx={sx['click-section']} >
+        <Box onClick={() => setShowAbout(!showAbout)} sx={sx['click-section']} >
           How to use this site <Text sx={sx.arrow}>→</Text>
         </Box>
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        <Layers getters={getters} setters={setters} sliding={sliding} onSliding={setSliding} />
+        <Layers />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
         <ExpandingSection 
@@ -121,29 +104,14 @@ const Sidebar = ({ getters, setters, showAbout, toggleAbout }) => {
         >
           {showRegionPicker && new Date(time) <= new Date(maxDate) && (
             <Box sx={{ ...sx.stats }}>
-              <SummaryStats
-                variable={variable}
-                time={time}
-                year={year}
-                monthDay={monthDay}
-                minDate={minDate}
-                regionData={regionData}
-                showRegionPicker={showRegionPicker}
-                colormap={colormap}
-                hexmapBar={hexmapBar}
-                hexmapTime={hexmapTime}
-                sliding={sliding}
-              />
+              <SummaryStats />
             </Box>
           )}
         </ExpandingSection>
         <SidebarDivider sx={{ width: '100%', my: 4 }} /> 
 
         <ExpandingSection label='Overlays' expanded={showOverlays} setExpanded={setShowOverlays}>
-          <Overlays
-              getters={{ showStatesOutline, showCountriesOutline }}
-              setters={{ setShowStatesOutline, setShowCountriesOutline }}
-            />
+          <Overlays />
         </ExpandingSection>
         <SidebarDivider sx={{ width: '100%', mt: 4 }} />
 

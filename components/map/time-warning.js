@@ -1,9 +1,14 @@
 import { Box, IconButton, useThemeUI } from 'theme-ui'
 import { X } from '@carbonplan/icons'
 
-const TimeWarning = ({ mobile, time, showWarning, setShowWarning }) => {
+import useStore from '../store/index'
 
-    const { theme, colorMode } = useThemeUI()
+const TimeWarning = ({ mobile }) => {
+
+    const { colorMode } = useThemeUI()
+    const time = useStore((state) => state.time)
+    const showWarning = useStore((state) => state.showWarning)
+    const setShowWarning = useStore((state) => state.setShowWarning)
 
     return (
         <Box sx={{ 

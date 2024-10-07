@@ -2,16 +2,20 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useMapbox } from '@carbonplan/maps'
 
-const Router = ({ setZoom, setCenter }) => {
+import useStore from '../store/index'
+
+const Router = () => {
     const { map } = useMapbox()
     const router = useRouter()
+    const setZoom = useStore((state) => state.setZoom)
+    const setCenter = useStore((state) => state.setCenter)
     const [zoomToBox, setZoomToBox] = useState(null)
     const [zoomInitialized, setZoomInitialized] = useState(false)
 
     {/* 
-* The following three methods are modified from their original source:
-* https://github.com/carbonplan/forest-offsets-web/blob/ee51781bcbeb35172e29e051dc6387a1ec5b34cb/components/viewer.js#L129
-*/}
+    * The following three methods are modified from their original source:
+    * https://github.com/carbonplan/forest-offsets-web/blob/ee51781bcbeb35172e29e051dc6387a1ec5b34cb/components/viewer.js#L129
+    */}
     useEffect(() => {
         const { center, zoom } = router.query
 

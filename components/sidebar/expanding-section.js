@@ -2,20 +2,19 @@
 // https://github.com/carbonplan/prototype-maps/blob/6f867bfe6731c5c880f6ebf3ea36c8b3efe2809e/components/expanding-section.js
 
 import { Expander } from '@carbonplan/components'
-import { useState } from 'react'
 import { Box, Flex } from 'theme-ui'
-
-const sx = {
-  heading: {
-    fontFamily: 'heading',
-    letterSpacing: 'smallcaps',
-    textTransform: 'uppercase',
-    fontSize: [2, 2, 2, 3],
-  },
-}
 
 const ExpandingSection = ({ label, expanded, setExpanded, disabled=null, children }) => {
 
+  const sx = {
+    heading: {
+      fontFamily: 'heading',
+      letterSpacing: 'smallcaps',
+      textTransform: 'uppercase',
+      fontSize: [2, 2, 2, 3],
+    },
+  }
+  
   return (
     <Box sx={{mx: [3, 4, 5, 5]}}>
       <Flex

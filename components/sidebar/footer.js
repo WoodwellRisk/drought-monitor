@@ -5,14 +5,14 @@ import { alpha } from '@theme-ui/color'
 // This component is modeled after the SidebarFooter component: 
 // https://github.com/carbonplan/layouts/blob/main/src/sidebar/sidebar-footer.js
 
-const sx = {
-    code: {
-        bg: 'muted',
-        fontFamily: 'Monaco, Menlo, Consolas, Courier New, monospace !important',
-    }
-}
-
 const Footer = () => {
+    const sx = {
+        code: {
+            bg: 'muted',
+            fontFamily: 'Monaco, Menlo, Consolas, Courier New, monospace !important',
+        }
+    }
+    
     return (
         <>
             <Box sx={{

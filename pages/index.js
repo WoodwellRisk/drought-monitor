@@ -10,7 +10,6 @@ function Index() {
   const isWide = useBreakpointIndex() > 0
   const [expanded, setExpanded] = useState(false)
   const [colorMode, setColorMode] = useColorMode()
-
   const description = 'Woodwell Climate Research Center drought / crop monitor'
   const title = 'Woodwell Risk drought / crop monitor'
   const logoURL = 'https://storage.googleapis.com/risk-maps/media/woodwell-risk.png'

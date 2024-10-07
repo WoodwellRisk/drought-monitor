@@ -1,11 +1,39 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useThemeUI, Box } from 'theme-ui'
+import { Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Colorbar, Tag, Slider } from '@carbonplan/components'
 import { SidebarDivider } from '@carbonplan/layouts'
 import Info from './info'
 
-function Layers({ getters, setters, sliding, onSliding }) {
+import useStore from '../store/index'
+
+function Layers() {
+  const colormapName = useStore((state) => state.colormapName)
+  const colormap = useThemedColormap(colormapName)
+  
+  const maxDate = useStore((state) => state.maxDate)
+  const year = useStore((state) => state.year)
+  const setYear = useStore((state) => state.setYear)
+  const monthDay = useStore((state) => state.monthDay)
+  const setMonthDay = useStore((state) => state.setMonthDay)
+  const time = useStore((state) => state.time)
+  const setTime = useStore((state) => state.setTime)
+  
+  const crops = useStore((state) => state.crops)
+  const cropValues = useStore((state) => state.cropValues)
+  const setCropValues = useStore((state) => state.setCropValues)
+  const cropLayer = useStore((state) => state.cropLayer)
+  const setCropLayer = useStore((state) => state.setCropLayer)
+  const setShowCropLayer = useStore((state) => state.setShowCropLayer)
+
+  const display = useStore((state) => state.display)
+  const setDisplay = useStore((state) => state.setDisplay)
+  const showDrought = useStore((state) => state.showDrought)
+  const setShowDrought = useStore((state) => state.setShowDrought)
+  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker)
+  const setShowWarning = useStore((state) => state.setShowWarning)
+  const setSliding = useStore((state) => state.setSliding)
+
   const sx = {
     group: {
       my: [3],
@@ -35,44 +63,6 @@ function Layers({ getters, setters, sliding, onSliding }) {
     }
   }
 
-  const {
-    display,
-    variable,
-    year,
-    monthDay,
-    time,
-    regionData,
-    clim,
-    colormapName,
-    colormap,
-    hexmap,
-    showRegionPicker,
-    showDrought,
-    crops,
-    cropLayer,
-    showCropLayer,
-    cropValues,
-    maxDate,
-    showWarning,
-  } = getters
-
-  const {
-    setDisplay,
-    setVariable,
-    setYear,
-    setMonthDay,
-    setTime,
-    setRegionData,
-    setClim,
-    setColormapName,
-    setShowRegionPicker,
-    setShowDrought,
-    setCropLayer,
-    setShowCropLayer,
-    setCropValues,
-    setShowWarning,
-  } = setters
-
   // https://javascript.info/date
   // console.log(" '01-01' < '03-12' ")
   // console.log(new Date("2003-01-01") < new Date("2003-03-12"))
@@ -87,8 +77,8 @@ function Layers({ getters, setters, sliding, onSliding }) {
   const [monthDayMax, setMonthDayMax] = useState(monthDayValues.length - 1)
 
   const handleDroughtChange = useCallback(() => {
-    setShowDrought((prev) => !prev)
-    setDisplay((prev) => !prev)
+    setShowDrought(!showDrought)
+    setDisplay(!display)
   })
 
   const handleCropClick = (event) => {
@@ -136,11 +126,11 @@ function Layers({ getters, setters, sliding, onSliding }) {
   }, [time])
 
   const handleMouseDown = useCallback(() => {
-    onSliding(true)
+    setSliding(true)
   }, [year, monthDay])
 
   const handleMouseUp = useCallback(() => {
-    onSliding(false)
+    setSliding(false)
   }, [year, monthDay])
 
   return (
@@ -199,8 +189,7 @@ function Layers({ getters, setters, sliding, onSliding }) {
             sx={{ width: '250px', display: 'inline-block', flexShrink: 1, }}
             sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
             width='100%'
-            colormap={useThemedColormap('redteal')}
-            // colormap={hexmap}
+            colormap={colormap}
             label={'percentile'}
             clim={[0.0, 100.0]}
             horizontal

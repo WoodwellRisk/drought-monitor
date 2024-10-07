@@ -1,64 +1,40 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
+import { useThemedColormap } from '@carbonplan/colormaps'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 import { Dimmer } from '@carbonplan/components'
 import Ruler from './ruler'
 import TimeWarning from './time-warning'
 import Router from './router'
 
-const Map = ({ getters, setters, mobile }) => {
+import useStore from '../store/index'
+
+const Map = ({ mobile }) => {
   const { theme } = useThemeUI()
-
   const container = useRef(null)
-  
   // const [map, setMap] = useState(null)
-  const [zoom, setZoom] = useState(1)
-  const maxZoom = 8
-  const [center, setCenter] = useState([-40, 40])
+  const zoom = useStore((state) => state.zoom)
+  const maxZoom = useStore((state) => state.maxZoom)
+  const center = useStore((state) => state.center)
+  const bounds = useStore((state) => state.bounds)
 
-  const [opacity, setOpacity] = useState(1)
-  const [regionLoadingData, setRegionDataLoading] = useState(true)
-
-  const {
-    display,
-    variable,
-    year,
-    monthDay,
-    time,
-    regionData,
-    clim,
-    colormapName,
-    colormap,
-    hexmap,
-    showRegionPicker,
-    crops,
-    cropLayer,
-    showCropLayer,
-    cropValues,
-    minDate,
-    maxDate,
-    showCountriesOutline,
-    showStatesOutline,
-    showWarning,
-  } = getters
-
-  const {
-    setDisplay,
-    setVariable,
-    setYear,
-    setMonthDay,
-    setTime,
-    setRegionData,
-    setClim,
-    setColormapName,
-    setShowRegionPicker,
-    setCropLayer,
-    setShowCropLayer,
-    setCropValues,
-    setShowCountriesOutline,
-    setShowStatesOutline,
-    setShowWarning,
-  } = setters
+  const variable = useStore((state) => state.variable)
+  const maxDate = useStore((state) => state.maxDate)
+  const time = useStore((state) => state.time)
+  const opacity = useStore((state) => state.opacity)
+  const clim = useStore((state) => state.clim)
+  const colormapName = useStore((state) => state.colormapName)
+  const colormap = useThemedColormap(colormapName).slice(0,)
+  
+  const showRegionPicker = useStore((state) => state.showRegionPicker)
+  const setRegionData = useStore((state) => state.setRegionData)
+  const setRegionDataLoading = useStore((state) => state.setRegionDataLoading)
+  const display = useStore((state) => state.display)
+  const cropLayer = useStore((state) => state.cropLayer)
+  const showCropLayer = useStore((state) => state.showCropLayer)
+  const showCountriesOutline = useStore((state) => state.showCountriesOutline)
+  const showStatesOutline = useStore((state) => state.showStatesOutline)
+  const showWarning = useStore((state) => state.showWarning)
 
   const sx = {
     label: {
@@ -70,20 +46,12 @@ const Map = ({ getters, setters, mobile }) => {
     },
   }
 
-  // https://github.com/mapbox/mapbox-gl-js/blob/2b6915c8004a5b759338f3a7d92fb2882db9dd5c/src/geo/lng_lat.js#L192-L201
-  // https://docs.mapbox.com/mapbox-gl-js/example/restrict-bounds/
-  const bounds = [
-    [-360, -60.5], // southwest
-    [360, 85] // northeast
-  ]
-
   // this callback was modified from its source: https://github.com/carbonplan/oae-web/blob/3eff3fb99a24a024f6f9a8278add9233a31e853b/components/map.js#L93
   const handleRegionData = useCallback(
     (data) => {
-      // console.log(data)
       if (data.value == null) {
         setRegionDataLoading(true)
-      } else if (data.value) {
+      } else if (data.value[variable]) {
         setRegionData(data.value)
         setRegionDataLoading(false)
       }
@@ -193,18 +161,13 @@ const Map = ({ getters, setters, mobile }) => {
         )}
 
         {showWarning && (
-          <TimeWarning
-            mobile={mobile}
-            time={time}
-            showWarning={showWarning}
-            setShowWarning={setShowWarning} 
-          />
+          <TimeWarning mobile={mobile} />
         )}
 
 
         {!mobile && (<Ruler />)}
 
-        <Router setZoom={setZoom} setCenter={setCenter} />
+        <Router />
 
       </MapContainer>
 

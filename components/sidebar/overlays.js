@@ -1,6 +1,8 @@
 import { Box, Flex } from 'theme-ui'
 import { Toggle } from '@carbonplan/components'
 
+import useStore from '../store/index'
+
 const sx = {
     'overlays-container': {
         mb: [0],
@@ -21,9 +23,11 @@ const sx = {
     }
 }
 
-const Overlays = ({ getters, setters }) => {
-    const { showStatesOutline, showCountriesOutline } = getters
-    const { setShowStatesOutline, setShowCountriesOutline } = setters
+const Overlays = () => {
+    const showStatesOutline = useStore((state) => state.showStatesOutline)
+    const setShowStatesOutline = useStore((state) => state.setShowStatesOutline)
+    const showCountriesOutline = useStore((state) => state.showCountriesOutline)
+    const setShowCountriesOutline = useStore((state) => state.setShowCountriesOutline)
 
     return (
         <Box sx={sx['overlays-container']}>
@@ -33,7 +37,7 @@ const Overlays = ({ getters, setters }) => {
                     <Toggle
                         sx={sx['toggle']}
                         value={showCountriesOutline}
-                        onClick={() => setShowCountriesOutline((prev) => !prev)}
+                        onClick={() => setShowCountriesOutline(!showCountriesOutline)}
                     />
             </Flex>
 
@@ -42,7 +46,7 @@ const Overlays = ({ getters, setters }) => {
                 <Toggle
                     sx={sx['toggle']}
                     value={showStatesOutline}
-                    onClick={() => setShowStatesOutline((prev) => !prev)}
+                    onClick={() => setShowStatesOutline(!showStatesOutline)}
                 />
             </Flex>
 

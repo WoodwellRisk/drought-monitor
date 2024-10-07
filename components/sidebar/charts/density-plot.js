@@ -1,11 +1,16 @@
 import { Box, IconButton } from 'theme-ui'
 import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/charts'
-import { SidebarDivider } from '@carbonplan/layouts'
 import { Area, Line } from '@carbonplan/charts'
 import Bar from './bar'
+
+import useStore from '../../store/index'
 import * as d3 from 'd3'
 
-const DensityPlot = ({ data, variable, time, year, monthDay, minDate, colormap }) => {
+const DensityPlot = ({ data, variable, time, colormap }) => {
+    const year = useStore((state) => state.year)
+    const monthDay = useStore((state) => state.monthDay)
+    const minDate = useStore((state) => state.minDate)
+    
     const sx = {
         chart: {
             mt: [4],

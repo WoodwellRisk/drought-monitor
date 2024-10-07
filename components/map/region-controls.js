@@ -2,8 +2,12 @@ import { Box, IconButton } from 'theme-ui'
 import { useRecenterRegion } from '@carbonplan/maps'
 import { XCircle } from '@carbonplan/icons'
 
-const RegionControls = ({ showRegionPicker, setShowRegionPicker, }) => {
+import useStore from '../store/index'
+
+const RegionControls = () => {
   const { recenterRegion } = useRecenterRegion()
+  const showRegionPicker = useStore((state) => state.showRegionPicker)
+  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker)
 
   return (
     <Box

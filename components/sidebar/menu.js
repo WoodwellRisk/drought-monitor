@@ -1,30 +1,30 @@
 import { Box, Link } from 'theme-ui'
 import { Row, Column } from '@carbonplan/components'
 
-const link = {
-  color: 'text',
-  fontSize: [5, 5, 5, 6],
-  fontFamily: 'heading',
-  letterSpacing: 'heading',
-  py: [3, 3, 3, 5],
-  borderStyle: 'solid',
-  borderColor: 'muted',
-  borderWidth: '0px',
-  borderBottomWidth: '1px',
-  textDecoration: 'none',
-  position: 'relative',
-  display: 'block',
-  '@media (hover: hover) and (pointer: fine)': {
-    '&:hover > #arrow': {
-      opacity: 1,
-    },
-  },
-  '&:hover': {
-    color: 'text',
-  },
-}
-
 function Menu({ visible }) {
+  const link = {
+    color: 'text',
+    fontSize: [5, 5, 5, 6],
+    fontFamily: 'heading',
+    letterSpacing: 'heading',
+    py: [3, 3, 3, 5],
+    borderStyle: 'solid',
+    borderColor: 'muted',
+    borderWidth: '0px',
+    borderBottomWidth: '1px',
+    textDecoration: 'none',
+    position: 'relative',
+    display: 'block',
+    '@media (hover: hover) and (pointer: fine)': {
+      '&:hover > #arrow': {
+        opacity: 1,
+      },
+    },
+    '&:hover': {
+      color: 'text',
+    },
+  }
+
   return (
     <Box
       sx={{

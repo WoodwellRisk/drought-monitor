@@ -1,6 +1,5 @@
 import { Box, IconButton } from 'theme-ui'
 import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/charts'
-import { SidebarDivider } from '@carbonplan/layouts'
 import Bar from './bar'
 import DownloadButton from '../icons/download'
 import * as d3 from 'd3'
