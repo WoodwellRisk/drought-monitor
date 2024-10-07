@@ -70,7 +70,7 @@ const StatsDisplay = (props) => {
   )
 }
 
-const SummaryStats = () => {
+const Charts = () => {
   const variable = useStore((state) => state.variable)
   const regionData = useStore((state) => state.regionData)
   const showRegionPicker = useStore((state) => state.showRegionPicker)
@@ -106,4 +106,4 @@ const SummaryStats = () => {
 
 }
 
-export default SummaryStats
+export default Charts

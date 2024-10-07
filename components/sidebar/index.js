@@ -7,7 +7,7 @@ import Menu from './menu'
 import Layers from './layers'
 import ExpandingSection from './expanding-section'
 import Overlays from './overlays'
-import SummaryStats from './charts/summary-stats'
+import Charts from './charts/index'
 import Footer from './footer'
 
 import useStore from '../store/index'
@@ -104,7 +104,7 @@ const Sidebar = () => {
         >
           {showRegionPicker && new Date(time) <= new Date(maxDate) && (
             <Box sx={{ ...sx.stats }}>
-              <SummaryStats />
+              <Charts />
             </Box>
           )}
         </ExpandingSection>
