@@ -14,8 +14,11 @@ function Layers() {
   const maxDate = useStore((state) => state.maxDate)
   const year = useStore((state) => state.year)
   const setYear = useStore((state) => state.setYear)
-  const monthDay = useStore((state) => state.monthDay)
-  const setMonthDay = useStore((state) => state.setMonthDay)
+  const month = useStore((state) => state.month)
+  const setMonth = useStore((state) => state.setMonth)
+  const monthValues = useStore((state) => state.monthValues)
+  const monthIdx = useStore((state) => state.monthIdx)
+  const setMonthIdx = useStore((state) => state.setMonthIdx)
   const time = useStore((state) => state.time)
   const setTime = useStore((state) => state.setTime)
   
@@ -63,19 +66,6 @@ function Layers() {
     }
   }
 
-  // https://javascript.info/date
-  // console.log(" '01-01' < '03-12' ")
-  // console.log(new Date("2003-01-01") < new Date("2003-03-12"))
-  const monthDayValues = [
-    '01-01', '01-15', '01-29', '02-12', '02-26', '03-12', '03-26', '04-09', '04-23',
-    '05-07', '05-21', '06-04', '06-18', '07-02', '07-16', '07-30', '08-13', '08-27',
-    '09-10', '09-24', '10-08', '10-22', '11-05', '11-19', '12-03', '12-17'
-  ]
-
-  const [monthDayIdx, setMonthDayIdx] = useState(0)
-  const [monthDayMin, setMonthDayMin] = useState(0)
-  const [monthDayMax, setMonthDayMax] = useState(monthDayValues.length - 1)
-
   const handleDroughtChange = useCallback(() => {
     setShowDrought(!showDrought)
     setDisplay(!display)
@@ -104,17 +94,17 @@ function Layers() {
     setYear(event.target.value)
   }
 
-  const handleMonthDayChange = (event) => {
-    setMonthDayIdx(event.target.value)
+  const handleMonthChange = (event) => {
+    setMonthIdx(event.target.value)
   }
 
   useEffect(() => {
-    setMonthDay(monthDayValues[monthDayIdx])
-  }, [monthDayIdx])
+    setMonth(monthValues[monthIdx])
+  }, [monthIdx])
 
   useEffect(() => {
-    setTime(`${year}-${monthDay}`)
-  }, [year, monthDay])
+    setTime(`${year}-${month}-01`)
+  }, [year, month])
 
   useEffect(() => {
     if (year == '2024' && (new Date(time) > new Date(maxDate))) {
@@ -127,11 +117,11 @@ function Layers() {
 
   const handleMouseDown = useCallback(() => {
     setSliding(true)
-  }, [year, monthDay])
+  }, [year, month])
 
   const handleMouseUp = useCallback(() => {
     setSliding(false)
-  }, [year, monthDay])
+  }, [year, month])
 
   return (
     <>
@@ -169,8 +159,8 @@ function Layers() {
           {'Drought Monitor'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
-                Near real-time monitor of moisture anomalies. Anomalies are measured as water balance percentiles relative to levels from 2001 to 2020. Values close to 50 represent normal conditions. 
-                Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a biweekly basis, from 2001 to present.
+                Near real-time monitor of moisture anomalies. Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. Values close to 50 represent normal conditions. 
+                Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a monthly basis, from 2001 to present.
               </Box>
             </Box>
           </Info>
@@ -258,15 +248,15 @@ function Layers() {
         </Box>
 
         <Box sx={{ ...sx.label, mt: [4] }}>
-          <Box sx={sx.label}>Biweekly period</Box>
+          <Box sx={sx.label}>Month</Box>
           <Slider
             sx={{ mt: [3], mb: [2] }}
-            value={monthDayIdx}
-            onChange={handleMonthDayChange}
+            value={monthIdx}
+            onChange={handleMonthChange}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            min={monthDayMin}
-            max={monthDayMax}
+            min={0}
+            max={11}
             step={1}
           />
 
@@ -284,7 +274,7 @@ function Layers() {
                 float: 'left',
               }}
             >
-              {monthDayValues[monthDayMin]}
+              {'01'}
             </Box>
 
             <Box
@@ -299,7 +289,7 @@ function Layers() {
                 fontSize: [1],
               }}
             >
-              {monthDayValues[monthDayIdx]}
+              {monthValues[monthIdx]}
             </Box>
 
             <Box
@@ -311,7 +301,7 @@ function Layers() {
                 display: 'inline-block',
               }}
             >
-              {monthDayValues[monthDayMax]}
+              {'12'}
             </Box>
           </Box>
         </Box>

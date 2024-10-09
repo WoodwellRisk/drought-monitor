@@ -25,15 +25,19 @@ const useStore = create((set) => ({
     setOpacity: (opacity) => set({ opacity }),
 
     minDate: '2001-01-01',
-    maxDate: '2024-06-18',
+    maxDate: '2024-09-01',
 
     year: '2001',
     setYear: (year) => set({ year }),
 
-    monthDay: '01-01',
-    setMonthDay: (monthDay) => set({ monthDay }),
+    monthValues: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
+    month: '01',
+    setMonth: (month) => set({ month }),
+    
+    monthIdx: 0,
+    setMonthIdx: (monthIdx) => set({ monthIdx }),
 
-    time: (year, monthDay) => set(`${year}-${monthDay}`),
+    time: (year, month) => set(`${year}-${month}-01`),
     setTime: (time) => set({ time }),
 
     colormapName: 'redteal',

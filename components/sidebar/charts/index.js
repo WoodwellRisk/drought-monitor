@@ -44,7 +44,8 @@ const StatsDisplay = (props) => {
   if (isNaN(avg)) {
     result = 'no data in region'
   } else {
-    result = `Average: ${avg.toFixed(2)} percentile`
+    let displayAvg = avg * 100
+    result = `Average: ${displayAvg.toFixed(2)} percentile`
   }
 
   return (

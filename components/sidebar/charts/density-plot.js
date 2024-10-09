@@ -8,7 +8,7 @@ import * as d3 from 'd3'
 
 const DensityPlot = ({ data, variable, time, colormap }) => {
     const year = useStore((state) => state.year)
-    const monthDay = useStore((state) => state.monthDay)
+    const month = useStore((state) => state.month)
     const minDate = useStore((state) => state.minDate)
     
     const sx = {
@@ -41,7 +41,7 @@ const DensityPlot = ({ data, variable, time, colormap }) => {
 
     let plotPreviousData = null 
 
-    let previousTime = `${parseInt(year) - 1}-${monthDay}`
+    let previousTime = `${parseInt(year) - 1}-${month}-01`
     console.log(`Times: ${time} ${previousTime}`)
     console.log("Less? ", new Date(previousTime) < new Date(minDate))
     console.log("Data, current time: ", data[variable][time])
