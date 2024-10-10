@@ -45,7 +45,7 @@ const StatsDisplay = (props) => {
     result = 'no data in region'
   } else {
     let displayAvg = avg * 100
-    result = `Average: ${displayAvg.toFixed(2)} percentile`
+    result = `Average percentile: ${displayAvg.toFixed(0)}`
   }
 
   return (
