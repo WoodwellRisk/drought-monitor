@@ -7,6 +7,12 @@ const useStore = create((set) => ({
 
     maxZoom: 8,
 
+    zoomToBox: null,
+    setZoomToBox: (zoomToBox) => set({ zoomToBox }),
+
+    zoomInitialized: false,
+    setZoomInitialized: (zoomInitialized) => set({ zoomInitialized }),
+
     center: [-40, 40],
     setCenter: (center) => set({ center }),
 
