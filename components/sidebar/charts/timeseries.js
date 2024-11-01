@@ -15,7 +15,7 @@ const TimeBar = ({ data, time, colormap }) => {
 
     const sx = {
         chart: {
-            mt: [0],
+            mt: [4],
             mb: [0],
             mx: 'auto',
             // pl: [0, 1, 1, 0],
