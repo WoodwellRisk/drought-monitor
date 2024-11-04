@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { usePathname } from 'next/navigation'
 import { useMapbox } from '@carbonplan/maps'
 
 import useStore from '../store/index'
@@ -7,54 +8,95 @@ import useStore from '../store/index'
 const Router = () => {
     const { map } = useMapbox()
     const router = useRouter()
+    const pathname = usePathname()
+
+    const zoom = useStore((state) => state.zoom)
     const setZoom = useStore((state) => state.setZoom)
+    const center = useStore((state) => state.center)
     const setCenter = useStore((state) => state.setCenter)
-    const zoomToBox = useStore((state) => state.zoomToBox)
-    const setZoomToBox = useStore((state) => state.setZoomToBox)
-    const zoomInitialized = useStore((state) => state.zoomInitialized)
-    const setZoomInitialized = useStore((state) => state.setZoomInitialized)
 
-    {/* 
-    * The following three methods are modified from their original source:
-    * https://github.com/carbonplan/forest-offsets-web/blob/ee51781bcbeb35172e29e051dc6387a1ec5b34cb/components/viewer.js#L129
-    */}
-    useEffect(() => {
-        const { center, zoom } = router.query
+    const getInitialZoom = useCallback((url) => {
+        let initialZoom
+        let tempZoom = url.searchParams.get("zoom")
 
-        if (map && center && zoom && !zoomInitialized) {
-            setZoomToBox({
-                center: center.split(',').map((d) => parseFloat(d)),
-                zoom: parseFloat(zoom),
-            })
+        if (tempZoom != null && typeof parseFloat(tempZoom) == 'number' && parseFloat(tempZoom) > 0.0) {
+            initialZoom = tempZoom
+        } else {
+            initialZoom = 1
         }
-    }, [map, router])
+
+        url.searchParams.set('zoom', initialZoom)
+        return initialZoom
+    })
+
+    const getInitialCenter = useCallback((url) => {
+        let initialCenter
+
+        // this makes sure that the center search param is in array format, so we don't need to check the type
+        let tempCenter = url.searchParams.get("center")
+        if(tempCenter == null) {
+            url.searchParams.set('center', '-40,40')
+            return [-40, 40]
+        }
+
+        tempCenter = tempCenter.split(',').map((d) => parseFloat(d))
+
+        if (tempCenter.length == 2 && typeof tempCenter[0] == 'number' && !Number.isNaN(tempCenter[0]) && typeof tempCenter[1] == 'number' && !Number.isNaN(tempCenter[1])) {
+            if(tempCenter[1] >= -90 && tempCenter[1] <= 90) {
+                initialCenter = tempCenter.toString()
+            } else {
+                initialCenter = '-40,40'
+            }
+        } else {
+            initialCenter = '-40,40'
+        }
+
+        url.searchParams.set('center', initialCenter)
+        return initialCenter.split(',').map((d) => parseFloat(d))
+    })
 
     useEffect(() => {
-        if (map && zoomToBox) {
-            const { center, zoom } = zoomToBox
+        const url = new URL(window.location)
+        let savedZoom = getInitialZoom(url)
+        let savedCenter = getInitialCenter(url)
+
+        setZoom(savedZoom)
+        setCenter(savedCenter)
+
+        if (map && savedZoom && savedCenter) {
             map.easeTo({
-                center: center,
-                zoom: zoom,
+                center: savedCenter,
+                zoom: parseFloat(savedZoom),
                 duration: 0,
             })
-            setZoomInitialized(true)
-            setZoomToBox(null)
         }
-    }, [zoomToBox])
+
+        router.replace(`${pathname}?zoom=${url.searchParams.get('zoom')}&center=${url.searchParams.get('center')}`)
+        // prevent back button
+        // https://developer.mozilla.org/en-US/docs/Web/API/Window/popstate_event
+        window.history.pushState(null, null, url);
+        window.onpopstate = () => window.history.go(1)
+
+    }, [window.onload]);
 
     useEffect(() => {
         map.on('moveend', () => {
-            const { pathname } = router
-
             let zoom = map.getZoom().toFixed(2)
             let center = [parseFloat(map.getCenter().lng.toFixed(2)), parseFloat(map.getCenter().lat.toFixed(2))]
             setZoom(zoom)
             setCenter(center)
-
-            let suffix = `?center=${center[0]},${center[1]}&zoom=${zoom}`
-            router.replace(pathname + suffix, null, { shallow: true })
         })
-    }, [map])
+    }, [])
+
+    useEffect(() => {
+        if (center && zoom) { 
+            const url = new URL(window.location)
+            url.searchParams.set('zoom', zoom)
+            url.searchParams.set('center', center)
+            router.replace(`${pathname}?zoom=${url.searchParams.get('zoom')}&center=${url.searchParams.get('center')}`)
+        }
+
+    }, [zoom, center])
 
     return null
 }
