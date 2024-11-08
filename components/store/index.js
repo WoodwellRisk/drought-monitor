@@ -31,7 +31,7 @@ const useStore = create((set) => ({
     setOpacity: (opacity) => set({ opacity }),
 
     minDate: '2001-01-01',
-    maxDate: '2024-09-01',
+    maxDate: '2024-10-01',
 
     year: '2001',
     setYear: (year) => set({ year }),
