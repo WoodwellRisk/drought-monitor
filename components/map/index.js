@@ -4,6 +4,7 @@ import { useThemedColormap } from '@carbonplan/colormaps'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 import { Dimmer } from '@carbonplan/components'
 import Ruler from './ruler'
+import ZoomReset from './zoom-reset'
 import TimeWarning from './time-warning'
 import Router from './router'
 
@@ -166,6 +167,8 @@ const Map = ({ mobile }) => {
 
 
         {!mobile && (<Ruler />)}
+
+        {!mobile && (<ZoomReset />)}
 
         <Router />
 
