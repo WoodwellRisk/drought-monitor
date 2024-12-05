@@ -9,6 +9,7 @@ import useStore from '../store/index'
 const ZoomReset = () => {
   const { map } = useMapbox()
   const zoom = useStore((state) => state.zoom)
+  const initialZoom = 1.3;
   const center = useStore((state) => state.center)
   const resetButton = useRef(null)
 
@@ -26,12 +27,12 @@ const ZoomReset = () => {
     resetButton.current = event.target
     resetButton.current.classList.add('spin')
     
-    if (zoom != 1.00) {
+    if (zoom != initialZoom) {
       // map.flyTo() is having trouble going to the right lat / lon center because the map has maxBounds
       // so we need to instead fit the map to the original zoom, but we can't do the same for the center
       map.flyTo({
         // center: [-40, 40],
-        zoom: 1.0,
+        zoom: initialZoom,
       })
     }
   })
@@ -45,12 +46,12 @@ const ZoomReset = () => {
       aria-label='Reset map extent'
       onClick={handleResetClick}
       onAnimationEnd={handleAnimationEnd}
-      disabled={zoom == 1.00}
+      disabled={zoom == initialZoom}
       sx={{
         stroke: 'primary', cursor: 'pointer', ml: [2],
         display: ['initial', 'initial', 'initial', 'initial'],
         position: 'absolute',
-        color: (zoom == 1.00) ? 'muted' : 'primary',
+        color: (zoom == initialZoom) ? 'muted' : 'primary',
         left: [2],
         bottom: [20, 20, 20, 20],
         '.spin': {

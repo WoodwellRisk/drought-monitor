@@ -22,7 +22,7 @@ const Router = () => {
         if (tempZoom != null && typeof parseFloat(tempZoom) == 'number' && parseFloat(tempZoom) > 0.0) {
             initialZoom = tempZoom
         } else {
-            initialZoom = 1
+            initialZoom = 1.3
         }
 
         url.searchParams.set('zoom', initialZoom)

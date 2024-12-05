@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 const useStore = create((set) => ({
     // map container state
-    zoom: 1,
+    zoom: 1.3,
     setZoom: (zoom) => set({ zoom }),
 
     maxZoom: 8,
