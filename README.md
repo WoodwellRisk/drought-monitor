@@ -4,7 +4,7 @@
 # Woodwell Risk Drought Monitor
 
 ## Data sources
-...
+This site displays near real-time moisture anomalies. Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. Values close to 50 represent normal conditions. Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a monthly basis, from 2001 to present.
 
 ## Processing steps
 ### Vector data
