@@ -31,6 +31,7 @@ function Layers() {
 
   const display = useStore((state) => state.display)
   const setDisplay = useStore((state) => state.setDisplay)
+  const updatingData = useStore((state) => state.updatingData)
   const showDrought = useStore((state) => state.showDrought)
   const setShowDrought = useStore((state) => state.setShowDrought)
   const setShowRegionPicker = useStore((state) => state.setShowRegionPicker)
@@ -166,11 +167,20 @@ function Layers() {
           </Info>
         </Box>
 
+        <Box 
+          className='dataUpdateMessage'
+          sx={{mr: [2], mb: [4], width: 'max-extent', color: 'red', fontStyle: 'italic'}}
+        >
+          The data for this site is currently being updated.
+        </Box>
+
         <Tag
           color={'red'}
-          value={showDrought}
+          value={updatingData == true ? false : showDrought}
           onClick={handleDroughtChange}
-          sx={{ mr: [2], mb: [4], borderColor: 'red', width: 'max-content', }}>
+          sx={{mr: [2], mb: [4], borderColor: 'red', width: 'max-content'}}
+          disabled={updatingData}
+          >
           Water balance
         </Tag>
 

@@ -31,8 +31,8 @@ function Mobile({ expanded }) {
       <Tray
         expanded={expanded}
         sx={{
-          pb: [4],
-          pt: [5],
+          pb: expanded ? [4] : [0],
+          pt: expanded ? [5] : [0],
           transform: expanded ? 'translateY(0)' : 'translateY(-550px)',
         }}
       >

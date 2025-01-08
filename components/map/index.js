@@ -31,6 +31,7 @@ const Map = ({ mobile }) => {
   const setRegionData = useStore((state) => state.setRegionData)
   const setRegionDataLoading = useStore((state) => state.setRegionDataLoading)
   const display = useStore((state) => state.display)
+  const updatingData = useStore((state) => state.updatingData)
   const cropLayer = useStore((state) => state.cropLayer)
   const showCropLayer = useStore((state) => state.showCropLayer)
   const showCountriesOutline = useStore((state) => state.showCountriesOutline)
@@ -135,7 +136,7 @@ const Map = ({ mobile }) => {
           </>
         )}
 
-        {showRegionPicker && new Date(time) <= new Date(maxDate) && (
+        {showRegionPicker && new Date(time) <= new Date(maxDate) && !updatingData && (
           <RegionPicker
             color={theme.colors.primary}
             backgroundColor={theme.rawColors.background}
@@ -146,7 +147,7 @@ const Map = ({ mobile }) => {
           />
         )}
 
-        {new Date(time) <= new Date(maxDate) && (
+        {new Date(time) <= new Date(maxDate) && !updatingData && (
           <Raster
             key={variable}
             colormap={colormap}
@@ -161,7 +162,7 @@ const Map = ({ mobile }) => {
           />
         )}
 
-        {showWarning && (
+        {showWarning && !updatingData && (
           <TimeWarning mobile={mobile} />
         )}
 
