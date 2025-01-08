@@ -10,7 +10,7 @@ import useStore from '../store/index'
 function Layers() {
   const colormapName = useStore((state) => state.colormapName)
   const colormap = useThemedColormap(colormapName)
-  
+
   const maxDate = useStore((state) => state.maxDate)
   const year = useStore((state) => state.year)
   const setYear = useStore((state) => state.setYear)
@@ -21,7 +21,7 @@ function Layers() {
   const setMonthIdx = useStore((state) => state.setMonthIdx)
   const time = useStore((state) => state.time)
   const setTime = useStore((state) => state.setTime)
-  
+
   const crops = useStore((state) => state.crops)
   const cropValues = useStore((state) => state.cropValues)
   const setCropValues = useStore((state) => state.setCropValues)
@@ -87,7 +87,7 @@ function Layers() {
         setCropValues({ ...cropValues, [`${cropLayer}`]: false, [`${cropName}`]: true })
       }
       setCropLayer(cropName)
-      setShowCropLayer({show: cropLayer})
+      setShowCropLayer({ show: cropLayer })
     }
   }
 
@@ -160,27 +160,29 @@ function Layers() {
           {'Drought Monitor'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
-                Near real-time monitor of moisture anomalies. Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. Values close to 50 represent normal conditions. 
+                Near real-time monitor of moisture anomalies. Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. Values close to 50 represent normal conditions.
                 Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a monthly basis, from 2001 to present.
               </Box>
             </Box>
           </Info>
         </Box>
 
-        <Box 
-          className='dataUpdateMessage'
-          sx={{mr: [2], mb: [4], width: 'max-extent', color: 'red', fontStyle: 'italic'}}
-        >
-          The data for this site is currently being updated.
-        </Box>
+        {updatingData && (
+          <Box
+            className='dataUpdateMessage'
+            sx={{ mr: [2], mb: [4], width: 'max-extent', color: 'red', fontStyle: 'italic' }}
+          >
+            The data for this site is currently being updated.
+          </Box>
+        )}
 
         <Tag
           color={'red'}
           value={updatingData == true ? false : showDrought}
           onClick={handleDroughtChange}
-          sx={{mr: [2], mb: [4], borderColor: 'red', width: 'max-content'}}
+          sx={{ mr: [2], mb: [4], borderColor: 'red', width: 'max-content' }}
           disabled={updatingData}
-          >
+        >
           Water balance
         </Tag>
 

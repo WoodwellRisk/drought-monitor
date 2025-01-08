@@ -88,7 +88,7 @@ const useStore = create((set) => ({
     display: true,
     setDisplay: (display) => set({ display }),
 
-    updatingData: true,
+    updatingData: false,
 
     showCountriesOutline: false,
     setShowCountriesOutline: (showCountriesOutline) => set({ showCountriesOutline }),
