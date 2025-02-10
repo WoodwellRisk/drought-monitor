@@ -136,7 +136,7 @@ const Map = ({ mobile }) => {
           </>
         )}
 
-        {showRegionPicker && new Date(time) <= new Date(maxDate) && !updatingData && (
+        {showRegionPicker && new Date(time + 'T00:00:00') <= new Date(maxDate + 'T00:00:00') && !updatingData && (
           <RegionPicker
             color={theme.colors.primary}
             backgroundColor={theme.rawColors.background}
@@ -147,7 +147,7 @@ const Map = ({ mobile }) => {
           />
         )}
 
-        {new Date(time) <= new Date(maxDate) && !updatingData && (
+        {new Date(time + 'T00:00:00') <= new Date(maxDate + 'T00:00:00') && !updatingData && (
           <Raster
             key={variable}
             colormap={colormap}

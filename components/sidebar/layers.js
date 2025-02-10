@@ -11,7 +11,10 @@ function Layers() {
   const colormapName = useStore((state) => state.colormapName)
   const colormap = useThemedColormap(colormapName)
 
+  const minDate = useStore((state) => state.minDate)
   const maxDate = useStore((state) => state.maxDate)
+  const minYear = useStore((state) => state.minYear)()
+  const maxYear = useStore((state) => state.maxYear)()
   const year = useStore((state) => state.year)
   const setYear = useStore((state) => state.setYear)
   const month = useStore((state) => state.month)
@@ -108,7 +111,7 @@ function Layers() {
   }, [year, month])
 
   useEffect(() => {
-    if (year == '2024' && (new Date(time) > new Date(maxDate))) {
+    if (year == maxYear && (new Date(time + 'T00:00:00') > new Date(maxDate + 'T00:00:00'))) {
       setShowRegionPicker(false)
       setShowWarning(true)
     } else {
@@ -208,8 +211,8 @@ function Layers() {
             onChange={handleYearChange}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
-            min={2001}
-            max={2024}
+            min={minYear}
+            max={maxYear}
             step={1}
           />
 
@@ -227,7 +230,7 @@ function Layers() {
                 float: 'left',
               }}
             >
-              2001
+              {minYear}
             </Box>
 
             <Box
@@ -254,7 +257,7 @@ function Layers() {
                 display: 'inline-block',
               }}
             >
-              2024
+              {maxYear}
             </Box>
           </Box>
         </Box>

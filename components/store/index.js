@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-const useStore = create((set) => ({
+const useStore = create((set, get) => ({
     // map container state
     zoom: 1.3,
     setZoom: (zoom) => set({ zoom }),
@@ -31,7 +31,16 @@ const useStore = create((set) => ({
     setOpacity: (opacity) => set({ opacity }),
 
     minDate: '2001-01-01',
-    maxDate: '2024-12-01',
+    maxDate: '2025-01-01',
+
+    minYear: () => {
+        const {minDate} = get()
+        return `${ new Date(minDate + 'T00:00:00').getFullYear() }`
+    },
+    maxYear: () => {
+        const {maxDate} = get()
+        return `${ new Date(maxDate + 'T00:00:00').getFullYear() }`
+    },
 
     year: '2001',
     setYear: (year) => set({ year }),
@@ -89,7 +98,7 @@ const useStore = create((set) => ({
     display: true,
     setDisplay: (display) => set({ display }),
 
-    updatingData: false,
+    updatingData: true,
 
     showCountriesOutline: false,
     setShowCountriesOutline: (showCountriesOutline) => set({ showCountriesOutline }),
