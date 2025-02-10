@@ -23,6 +23,8 @@ const useStore = create((set, get) => ({
         [360, 85] // northeast
     ],
 
+    updatingData: false,
+
     // general / raster state variables
     variable: 'drought',
     setVariable: (variable) => set({ variable }),
@@ -97,8 +99,6 @@ const useStore = create((set, get) => ({
 
     display: true,
     setDisplay: (display) => set({ display }),
-
-    updatingData: true,
 
     showCountriesOutline: false,
     setShowCountriesOutline: (showCountriesOutline) => set({ showCountriesOutline }),
