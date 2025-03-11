@@ -23,7 +23,7 @@ const useStore = create((set, get) => ({
         [360, 85] // northeast
     ],
 
-    updatingData: true,
+    updatingData: false,
 
     // general / raster state variables
     variable: 'drought',
@@ -33,7 +33,7 @@ const useStore = create((set, get) => ({
     setOpacity: (opacity) => set({ opacity }),
 
     minDate: '2001-01-01',
-    maxDate: '2025-01-01',
+    maxDate: '2025-02-01',
 
     minYear: () => {
         const {minDate} = get()
