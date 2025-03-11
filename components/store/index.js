@@ -23,7 +23,7 @@ const useStore = create((set, get) => ({
         [360, 85] // northeast
     ],
 
-    updatingData: false,
+    updatingData: true,
 
     // general / raster state variables
     variable: 'drought',
