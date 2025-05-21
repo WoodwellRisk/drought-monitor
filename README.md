@@ -28,6 +28,3 @@ National and state outlines were downloaded from [Natural Earth](https://www.nat
 The temperature, precipitation, and potential evapotranspiration data used to create the water balance index come from [ERA5 monthly averaged data](https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en) and were downloaded using the Copernicus Climate Data Store (CDS) Application Program Interface (API), or [CDS API](https://cds.climate.copernicus.eu/how-to-api).
 
 For back-end data analysis/transformation of `NetCDF` and `TIF` files, we used Python and R.
-
-## Icons
-The menu icon was adapted from [Wikimedia Commons](https://commons.wikimedia.org/w/index.php?curid=115942949).
