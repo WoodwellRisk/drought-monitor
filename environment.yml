@@ -21,7 +21,6 @@ dependencies:
   - python
   - rasterio
   - rioxarray
-  - seaborn
   - shapely
   - shiny
   - shinywidgets

@@ -28,14 +28,14 @@ from utils import *
 # shiny run --reload drought.py
 
 # open historical data for both integration windows
-historical_files = sorted(glob.glob('./data/raster/historical/*w3*.nc'))
+historical_files = sorted(glob.glob('../data/raster/historical/*w3*.nc'))
 h_3 = xr.concat(
     [xr.open_dataset(file).assign_coords({'time': pd.to_datetime(file[-13:-3])}) for file in historical_files],
     dim='time'
 )
 h_3 = process_dataset(h_3)
 
-historical_files = sorted(glob.glob('./data/raster/historical/*w12*.nc'))
+historical_files = sorted(glob.glob('../data/raster/historical/*w12*.nc'))
 h_12 = xr.concat(
     [xr.open_dataset(file).assign_coords({'time': pd.to_datetime(file[-13:-3])}) for file in historical_files],
     dim='time'
@@ -43,24 +43,24 @@ h_12 = xr.concat(
 h_12 = process_dataset(h_12)
 
 # open forecast data for both integration windows
-f_3 = xr.open_dataset('./data/raster/forecast/nmme_ensemble_water-balance-perc-w3_mon_2025-04-01_plus5.nc')
+f_3 = xr.open_dataset('../data/raster/forecast/nmme_ensemble_water-balance-perc-w3_mon_2025-04-01_plus5.nc')
 f_3 = process_dataset(f_3)
 f_3 = f_3.rename({ '50%': 'perc' })
 
-f_12 = xr.open_dataset('./data/raster/forecast/nmme_ensemble_water-balance-perc-w12_mon_2025-04-01_plus5.nc')
+f_12 = xr.open_dataset('../data/raster/forecast/nmme_ensemble_water-balance-perc-w12_mon_2025-04-01_plus5.nc')
 f_12 = process_dataset(f_12)
 f_12 = f_12.rename({ '50%': 'perc' })
 
 # open crop data layers
-barley = gpd.read_parquet('./data/vector/barley.parquet')
-cocoa = gpd.read_parquet('./data/vector/cocoa.parquet')
-coffee = gpd.read_parquet('./data/vector/coffee.parquet')
-cotton = gpd.read_parquet('./data/vector/cotton.parquet')
-maize = gpd.read_parquet('./data/vector//maize.parquet')
-rice = gpd.read_parquet('./data/vector/rice.parquet')
-soy = gpd.read_parquet('./data/vector/soybean.parquet')
-sugar = gpd.read_parquet('./data/vector/sugar.parquet')
-wheat = gpd.read_parquet('./data/vector//wheat.parquet')
+barley = gpd.read_parquet('../data/vector/barley.parquet')
+cocoa = gpd.read_parquet('../data/vector/cocoa.parquet')
+coffee = gpd.read_parquet('../data/vector/coffee.parquet')
+cotton = gpd.read_parquet('../data/vector/cotton.parquet')
+maize = gpd.read_parquet('../data/vector//maize.parquet')
+rice = gpd.read_parquet('../data/vector/rice.parquet')
+soy = gpd.read_parquet('../data/vector/soybean.parquet')
+sugar = gpd.read_parquet('../data/vector/sugar.parquet')
+wheat = gpd.read_parquet('../data/vector//wheat.parquet')
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -74,7 +74,6 @@ app_ui = ui.page_fluid(
         ui.include_css(static_dir / 'stylesheet.css'),        
         ui.include_js('./scripts/reset-sidebar-visibility.js', method='inline'),
         ui.include_js('./scripts/settings-button-click.js', method='inline'),
-        # ui.include_js('./scripts/map-zoom.js', method='inline'),
     ),
 
     ui.div({'id': 'layout'},
@@ -90,9 +89,6 @@ app_ui = ui.page_fluid(
                 ui.div({'id': 'menu-inner-container'},
                 ui.input_action_button("about_button", "About",),
                 ui.input_action_button("settings_button", "Settings", onclick="onSettingsClick()"),
-                # ui.div({'id': 'menu-icon-container'},
-                #     ui.img({'id': 'menu-icon'}, src='menu-dark.svg', width="40px", alt='Menu toggle icon'),
-                # ),
                 ),
             ),
         ),
@@ -168,28 +164,14 @@ app_ui = ui.page_fluid(
                     ui.output_text('country_bbox_text'),
                     ui.output_text('crop_name_text'),
 
-                    # ui.div({'id': 'bounds-error-container'},
-                    #     ui.div({'class': 'bounds-error'},
-                    #         f'No water balance data to show. This is likely because barley is not grown in Cuba or the data resoultion is too low.'
-                    #     ),
-                    # ),
-
                     ui.div({'id': 'forecast-map-container'},
-                        # ui.output_plot('forecast_map'),
-                        # output_widget('forecast_map'),
                         ui.output_ui('forecast_map'),
-                        # ui.div(
-                        #     {'id': 'bounds-error-container'},
-                        #     ui.div({'class': 'bounds-error'},
-                        #         f'No water balance data to show. This is likely because barley is not grown in Cuba or the data resoultion is too low.'
-                        #         ),
-                        #     )
                     ),
 
-                    ui.div({'id': 'crop-map-container'},
-                        # output_widget('crop_explorer'),
-                        ui.output_ui('crop_explorer_folium'),
-                    ),
+                    # ui.div({'id': 'crop-map-container'},
+                    #     # output_widget('crop_explorer'),
+                    #     ui.output_ui('crop_explorer_folium'),
+                    # ),
 
                     # ui.div({'id': 'viz-test'},
                     #     ui.include_js('drought-monitor/pages/index.js', method="inline"),
@@ -221,7 +203,8 @@ app_ui = ui.page_fluid(
 )
 
 def server(input: Inputs, output: Outputs, session: Session):    
-    countries = gpd.read_file('./data/vector/countries.gpkg', crs=4326)
+    # countries = gpd.read_file('../data/vector/countries.gpkg', crs=4326)
+    countries = gpd.read_parquet('../data/vector/countries.parquet')
     countries_list = sorted(countries.name.values)
     country_options = reactive.value(countries_list)
 
