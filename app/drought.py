@@ -26,7 +26,7 @@ from pathlib import Path
 # import fsspec
 # import gcsfs
 
-from .utils import *
+from utils import *
 
 # shiny run --reload drought.py
 
