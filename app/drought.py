@@ -23,44 +23,47 @@ from shinywidgets import render_plotly, render_widget, output_widget
 
 from pathlib import Path
 
+# import fsspec
+# import gcsfs
+
 from utils import *
 
 # shiny run --reload drought.py
 
-# open historical data for both integration windows
-historical_files = sorted(glob.glob('../data/raster/historical/*w3*.nc'))
-h_3 = xr.concat(
-    [xr.open_dataset(file).assign_coords({'time': pd.to_datetime(file[-13:-3])}) for file in historical_files],
-    dim='time'
-)
-h_3 = process_dataset(h_3)
+# open historical and forecast data for both integration windows
+h3 = xr.open_dataset('gs://drought-monitor/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", storage_options = {'token': 'anon'}).compute()
+h12 = xr.open_dataset('gs://drought-monitor/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", storage_options = {'token': 'anon'}).compute()
+f3 = xr.open_dataset('gs://drought-monitor/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", storage_options = {'token': 'anon'}).compute()
+f12 = xr.open_dataset('gs://drought-monitor/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", storage_options = {'token': 'anon'}).compute()
 
-historical_files = sorted(glob.glob('../data/raster/historical/*w12*.nc'))
-h_12 = xr.concat(
-    [xr.open_dataset(file).assign_coords({'time': pd.to_datetime(file[-13:-3])}) for file in historical_files],
-    dim='time'
-)
-h_12 = process_dataset(h_12)
+# the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
+f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+f12 = f12[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
 
-# open forecast data for both integration windows
-f_3 = xr.open_dataset('../data/raster/forecast/nmme_ensemble_water-balance-perc-w3_mon_2025-04-01_plus5.nc')
-f_3 = process_dataset(f_3)
-f_3 = f_3.rename({ '50%': 'perc' })
+# # open country boundary layer
+countries = gpd.read_parquet('gs://drought-monitor/vector/countries.parquet', storage_options={'token': 'anon'})
 
-f_12 = xr.open_dataset('../data/raster/forecast/nmme_ensemble_water-balance-perc-w12_mon_2025-04-01_plus5.nc')
-f_12 = process_dataset(f_12)
-f_12 = f_12.rename({ '50%': 'perc' })
+# # open crop data layers
+barley = gpd.read_parquet('gs://drought-monitor/vector/barley.parquet', storage_options={'token': 'anon'})
+cocoa = gpd.read_parquet('gs://drought-monitor/vector/cocoa.parquet', storage_options={'token': 'anon'})
+coffee = gpd.read_parquet('gs://drought-monitor/vector/coffee.parquet', storage_options={'token': 'anon'})
+cotton = gpd.read_parquet('gs://drought-monitor/vector/cotton.parquet', storage_options={'token': 'anon'})
+maize = gpd.read_parquet('gs://drought-monitor/vector/maize.parquet', storage_options={'token': 'anon'})
+rice = gpd.read_parquet('gs://drought-monitor/vector/rice.parquet', storage_options={'token': 'anon'})
+soy = gpd.read_parquet('gs://drought-monitor/vector/soybean.parquet', storage_options={'token': 'anon'})
+sugar = gpd.read_parquet('gs://drought-monitor/vector/sugar.parquet', storage_options={'token': 'anon'})
+wheat = gpd.read_parquet('gs://drought-monitor/vector/wheat.parquet', storage_options={'token': 'anon'})
 
-# open crop data layers
-barley = gpd.read_parquet('../data/vector/barley.parquet')
-cocoa = gpd.read_parquet('../data/vector/cocoa.parquet')
-coffee = gpd.read_parquet('../data/vector/coffee.parquet')
-cotton = gpd.read_parquet('../data/vector/cotton.parquet')
-maize = gpd.read_parquet('../data/vector//maize.parquet')
-rice = gpd.read_parquet('../data/vector/rice.parquet')
-soy = gpd.read_parquet('../data/vector/soybean.parquet')
-sugar = gpd.read_parquet('../data/vector/sugar.parquet')
-wheat = gpd.read_parquet('../data/vector//wheat.parquet')
+# countries = gpd.read_parquet('./data/vector/countries.parquet')
+# barley = gpd.read_parquet('./data/vector/barley.parquet')
+# cocoa = gpd.read_parquet('./data/vector/cocoa.parquet')
+# coffee = gpd.read_parquet('./data/vector/coffee.parquet')
+# cotton = gpd.read_parquet('./data/vector/cotton.parquet')
+# maize = gpd.read_parquet('./data/vector/maize.parquet')
+# rice = gpd.read_parquet('./data/vector/rice.parquet')
+# soy = gpd.read_parquet('./data/vector/soybean.parquet')
+# sugar = gpd.read_parquet('./data/vector/sugar.parquet')
+# wheat = gpd.read_parquet('./data/vector/wheat.parquet')
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -159,10 +162,10 @@ app_ui = ui.page_fluid(
                 ), 
 
                 ui.div({"id": 'main'},
-                    ui.output_text('country_filter_text'),
-                    ui.output_text('country_name_text'),
-                    ui.output_text('country_bbox_text'),
-                    ui.output_text('crop_name_text'),
+                    # ui.output_text('country_filter_text'),
+                    # ui.output_text('country_name_text'),
+                    # ui.output_text('country_bbox_text'),
+                    # ui.output_text('crop_name_text'),
 
                     ui.div({'id': 'forecast-map-container'},
                         ui.output_ui('forecast_map'),
@@ -202,9 +205,7 @@ app_ui = ui.page_fluid(
     ),
 )
 
-def server(input: Inputs, output: Outputs, session: Session):    
-    # countries = gpd.read_file('../data/vector/countries.gpkg', crs=4326)
-    countries = gpd.read_parquet('../data/vector/countries.parquet')
+def server(input: Inputs, output: Outputs, session: Session):
     countries_list = sorted(countries.name.values)
     country_options = reactive.value(countries_list)
 
@@ -261,11 +262,11 @@ def server(input: Inputs, output: Outputs, session: Session):
         window_size = integration_window()
 
         if(window_size == '3'):
-            h.set(h_3)
-            f.set(f_3)
+            h.set(h3)
+            f.set(f3)
         elif(window_size == '12'):
-            h.set(h_12)
-            f.set(f_12) 
+            h.set(h12)
+            f.set(f12) 
         else:
             raise ValueError("The integration window should be either 3 or 12 months.")
 
@@ -420,7 +421,6 @@ def server(input: Inputs, output: Outputs, session: Session):
             
             except rioxarray.exceptions.NoDataInBounds:
                 print('No data in bounds!')
-                print("SHOULD BE INSERTING ERROR")
                 display_bounds_error.set(True)
                 historical_wb.set(None)
                 forecast_wb.set(None)
@@ -533,6 +533,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             # include just forecast
             elif(show_historical == False and show_forecast == True):
                 df = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
+
                 # this is the 50% line in the forecast data
                 df['perc'] = df['perc'].astype(float).round(4)
                 df['mean'] = df['mean'].astype(float).round(4)
@@ -1138,6 +1139,4 @@ def server(input: Inputs, output: Outputs, session: Session):
             yield buffer.getvalue()
 
 
-# www_dir = Path(__file__).parent / "www"
 app = App(app_ui, server, static_assets=static_dir)
-# app.run()
