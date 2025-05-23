@@ -9,7 +9,6 @@ dependencies:
   - folium
   - fsspec
   - gcsfs
-  - gdal
   - geopandas
   - h5netcdf
   - matplotlib
