@@ -101,8 +101,8 @@ app_ui = ui.page_fluid(
     # css
      ui.tags.head(
         ui.include_css(static_dir / 'stylesheet.css'),        
-        ui.include_js('scripts/reset-sidebar-visibility.js', method='inline'),
-        ui.include_js('scripts/settings-button-click.js', method='inline'),
+        ui.include_js('./scripts/reset-sidebar-visibility.js', method='inline'),
+        ui.include_js('./scripts/settings-button-click.js', method='inline'),
     ),
 
     ui.div({'id': 'layout'},
