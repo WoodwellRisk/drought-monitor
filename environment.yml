@@ -7,8 +7,6 @@ dependencies:
   - anywidget
   - fiona
   - folium
-  - fsspec
-  - gcsfs
   - geopandas
   - h5netcdf
   - matplotlib
