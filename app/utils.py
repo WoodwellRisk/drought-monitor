@@ -1,18 +1,30 @@
+import numpy as np
 import shapely
 import geopandas as gpd
 import xarray as xr
 
 
-def process_dataset(ds):
+def shift_data(ds):
     """
-    Take in an Xarray dataset, rename the latitude and longitude columns, and shift the latitudes by 180 degrees.
+    Take in an Xarray dataset and shift the latitudes by 180 degrees.
     """
-    dataset = ds.rename({ 'longitude':'x','latitude':'y'})
-    dataset.rio.write_crs("epsg:4326", inplace=True)
-    dataset.coords['x'] = (dataset.coords['x'] + 180) % 360 - 180
-    dataset = dataset.sortby(dataset.x)
+    ds.coords['x'] = (ds.coords['x'] + 180) % 360 - 180
+    ds = ds.sortby(ds.x)
 
-    return dataset
+    return ds
+
+
+def open_production_data(path):
+    """
+    Read in a crop production raster, rename the band data, and shift the latitude and longitude columns 
+    """
+    production = xr.open_dataset(path).sel(band=1)
+    production = production.rename_vars({'band_data': 'production'})
+    production.rio.write_crs(4326, inplace=True)
+    production = shift_data(production)
+    production = xr.where(production <= 0, np.nan, production)
+    
+    return production
 
 
 def create_bbox_from_coords(x_min, x_max, y_min, y_max, crs=4326):

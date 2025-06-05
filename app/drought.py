@@ -41,7 +41,7 @@ f12 = f12[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
 # open country boundary layer
 countries = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
 
-# open crop data layers
+# open crop polygon layers
 barley = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/barley.parquet')
 cocoa = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cocoa.parquet')
 coffee = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/coffee.parquet')
@@ -49,8 +49,19 @@ cotton = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cotton.parque
 maize = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/maize.parquet')
 rice = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/rice.parquet')
 soy = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/soybean.parquet')
-sugar = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/sugar.parquet')
+sugarcane = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/sugarcane.parquet')
 wheat = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/wheat.parquet')
+
+# open crop raster layers
+barley_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_barley.tif')
+cocoa_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cocoa.tif')
+coffee_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_coffee-all.tif')
+cotton_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cotton.tif')
+maize_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_maize.tif')
+rice_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_rice.tif')
+soy_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_soybean.tif')
+sugarcane_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif')
+wheat_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -205,7 +216,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     crop_list = [
         'None', 'Barley', 'Cocoa', 'Coffee', 'Cotton',
-        'Maize', 'Rice', 'Soy', 'Sugar', 'Wheat',
+        'Maize', 'Rice', 'Soy', 'Sugarcane', 'Wheat',
     ]
     crop_options = reactive.value(crop_list)
 
@@ -404,8 +415,8 @@ def server(input: Inputs, output: Outputs, session: Session):
                     crop_layer = rice
                 case 'soy':
                     crop_layer = soy
-                case 'sugar':
-                    crop_layer = sugar
+                case 'sugarcane':
+                    crop_layer = sugarcane
                 case 'wheat':
                     crop_layer = wheat
             
