@@ -391,6 +391,7 @@ select option:active, select option:checked, select option:focus, select option:
 .nav {
     --bs-nav-link-color: var(--gray);
     --bs-nav-link-hover-color: none;
+    --bs-nav-link-padding-x: 1rem;
 }
 
 .nav-item > .nav-link.active {
@@ -602,6 +603,10 @@ shiny-data-frame#timeseries_table {
         width: 100%;
     }
 
+    .nav {
+        --bs-nav-link-padding-x: 0.75rem;
+    }
+
     #timeseries-container {
         overflow-x: auto;
         overflow-y: hidden;
@@ -673,6 +678,10 @@ shiny-data-frame#timeseries_table {
         width: 425px;
         margin: 10px auto;
     } */
+
+    .nav {
+        --bs-nav-link-padding-x: 1rem;
+    }
 
     .shiny-input-container:not(.shiny-input-container-inline) {
         width: 100%;
