@@ -18,7 +18,6 @@ import matplotlib.font_manager as font_manager
 
 import plotly.express as px
 import plotly.graph_objects as go
-
 from shiny import App, Inputs, Outputs, Session, ui, render, reactive
 from shinywidgets import render_plotly, render_widget, output_widget
 
@@ -165,44 +164,75 @@ app_ui = ui.page_fluid(
                     {'id': 'about-container'},
                 ), 
 
-                ui.div({"id": 'main'},
+                ui.div({'id': 'main'},
+                ui.navset_tab(
+                    ui.nav_panel('Timeseries', 
+                        ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
+                            ui.download_link("download_timeseries_link", 'Download timeseries')
+                        ),
+                        ui.div({'id': 'timeseries-container'},
+                            ui.div({'id': 'timeseries-toggle-container'},
+                                ui.input_checkbox("historical_checkbox", "Historical", True),
+                                ui.input_checkbox("forecast_checkbox", "Forecast", True),
+                            ),
+                            ui.card({'id': 'timeseries-inner-container'},
+                                ui.output_plot('timeseries', width='100%', height='100%'),
+                            ),
+                        ),
+                        
+                        ui.div({'id': 'download-csv-container', 'class': 'download-container'},
+                            ui.download_link("download_csv_link", 'Download CSV')
+                        ),
+                        ui.div({'id': 'timeseries-table-container'},
+                            ui.output_data_frame("timeseries_table"),
+                        ),
+                    ),
+
+                    ui.nav_panel('Crop maps', 
+                        ui.div({'id': 'crop-map-container'},
+                            output_widget('crop_map'),
+                            # ui.output_ui('crop_map'),
+                        ),
+                    ),
+
+                    ui.nav_panel('Forecast map', 
+                        ui.div({'id': 'forecast-map-container'},
+                            ui.output_ui('forecast_map'),
+                        ),
+                    ),
+
+                    id='tab_menu'
+                ),
+
+
                     # ui.output_text('country_filter_text'),
                     # ui.output_text('country_name_text'),
                     # ui.output_text('country_bbox_text'),
                     # ui.output_text('crop_name_text'),
 
-                    # ui.div({'id': 'forecast-map-container'},
-                    #     ui.output_ui('forecast_map'),
-                    # ),
-
-                    # ui.div({'id': 'crop-map-container'},
-                    #     # output_widget('crop_explorer'),
-                    #     ui.output_ui('crop_explorer_folium'),
-                    # ),
-
                     # ui.div({'id': 'viz-test'},
                     #     ui.include_js('drought-monitor/pages/index.js', method="inline"),
                     # ),
 
-                    ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
-                        ui.download_link("download_timeseries_link", 'Download timeseries')
-                    ),
-                    ui.div({'id': 'timeseries-container'},
-                        ui.div({'id': 'timeseries-toggle-container'},
-                            ui.input_checkbox("historical_checkbox", "Historical", True),
-                            ui.input_checkbox("forecast_checkbox", "Forecast", True),
-                        ),
-                        ui.card({'id': 'timeseries-inner-container'},
-                            ui.output_plot('timeseries', width='100%', height='100%'),
-                        ),
-                    ),
+                    # ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
+                    #     ui.download_link("download_timeseries_link", 'Download timeseries')
+                    # ),
+                    # ui.div({'id': 'timeseries-container'},
+                    #     ui.div({'id': 'timeseries-toggle-container'},
+                    #         ui.input_checkbox("historical_checkbox", "Historical", True),
+                    #         ui.input_checkbox("forecast_checkbox", "Forecast", True),
+                    #     ),
+                    #     ui.card({'id': 'timeseries-inner-container'},
+                    #         ui.output_plot('timeseries', width='100%', height='100%'),
+                    #     ),
+                    # ),
                     
-                    ui.div({'id': 'download-csv-container', 'class': 'download-container'},
-                        ui.download_link("download_csv_link", 'Download CSV')
-                    ),
-                    ui.div({'id': 'timeseries-table-container'},
-                        ui.output_data_frame("timeseries_table"),
-                    ),
+                    # ui.div({'id': 'download-csv-container', 'class': 'download-container'},
+                    #     ui.download_link("download_csv_link", 'Download CSV')
+                    # ),
+                    # ui.div({'id': 'timeseries-table-container'},
+                    #     ui.output_data_frame("timeseries_table"),
+                    # ),
                 ),
             ),
         ),
@@ -219,6 +249,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         'Maize', 'Rice', 'Soy', 'Sugarcane', 'Wheat',
     ]
     crop_options = reactive.value(crop_list)
+    crop_layer = reactive.value(None)
+    crop_production = reactive.value(None)
 
     country_name = reactive.value('')
     crop_name = reactive.value('')
@@ -354,8 +386,45 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.crop_select)
     def update_crop():
-        new_crop = input.crop_select()
-        crop_name.set(new_crop.lower())
+        new_crop = input.crop_select().lower()
+        crop_name.set(new_crop)
+
+        match new_crop:
+            case '':
+                crop_layer.set(None)
+                crop_production.set(None)
+            case 'none':
+                crop_layer.set(None)
+                crop_production.set(None)
+            case 'barley':
+                crop_layer.set(barley)
+                crop_production.set(barley_production)
+            case 'cocoa':
+                crop_layer.set(cocoa)
+                crop_production.set(cocoa_production)
+            case 'coffee':
+                crop_layer.set(coffee)
+                crop_production.set(coffee_production)
+            case 'cotton':
+                crop_layer.set(cotton)
+                crop_production.set(cotton_production)
+            case 'maize':
+                crop_layer.set(maize)
+                crop_production.set(maize_production)
+            case 'rice':
+                crop_layer.set(rice)
+                crop_production.set(rice_production)
+            case 'soy':
+                crop_layer.set(soy)
+                crop_production.set(soy_production)
+            case 'sugarcane':
+                crop_layer.set(sugarcane)
+                crop_production.set(sugarcane_production)
+            case 'wheat':
+                crop_layer.set(wheat)
+                crop_production.set(wheat_production)
+            # case _:
+            #     return
 
 
     @render.text
@@ -366,9 +435,15 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.process_data_button)
     def update_wb_data():
-        window_size = integration_window()
-        name = country_name()
         crop = crop_name()
+        crop_extent = crop_layer()
+        # production = crop_production().rio.write_crs(4326, inplace=True)
+        # production.rio.write_crs(4326, inplace=True)
+
+        name = country_name()
+
+        window_size = integration_window()
+
         historical = h()
         forecast = f()
 
@@ -381,16 +456,10 @@ def server(input: Inputs, output: Outputs, session: Session):
         country = countries.query(" name == @name ")
 
         # we have already filtered countries where we don't have data, so clipping by country extent 
-        # should never produce a rioxarray.exceptions.NoDataInBounds error
-        # first clip by the bounding box to get the figure extent (drop=True)
-        # then clip by country geometry for just the data in that country (drop=False)
-        # historical = historical.rio.clip(bounding_box.geometry, all_touched=True, drop=True)
-        # historical = historical.rio.clip(country.geometry, all_touched=True, drop=False)
+        # should never produce a rioxarray.exceptions.NoDataInBounds error at this step
         historical = historical.rio.clip(country.geometry, all_touched=True, drop=True)
         historical = historical.assign_attrs({'crop': crop})
 
-        # forecast = forecast.rio.clip(bounding_box.geometry, all_touched=True, drop=True)
-        # forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=False)
         forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
         forecast = forecast.assign_attrs({'crop': crop})
 
@@ -400,30 +469,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             forecast_wb.set(forecast)
             return
         else:
-            match crop:
-                case 'barley':
-                    crop_layer = barley
-                case 'cocoa':
-                    crop_layer = cocoa
-                case 'coffee':
-                    crop_layer = coffee
-                case 'cotton':
-                    crop_layer = cotton
-                case 'maize':
-                    crop_layer = maize
-                case 'rice':
-                    crop_layer = rice
-                case 'soy':
-                    crop_layer = soy
-                case 'sugarcane':
-                    crop_layer = sugarcane
-                case 'wheat':
-                    crop_layer = wheat
-            
             try:
-                historical = historical.rio.clip(crop_layer.geometry, all_touched=True, drop=True)
-                forecast = forecast.rio.clip(crop_layer.geometry, all_touched=True, drop=True)
-            
+                historical = historical.rio.clip(crop_extent.geometry, all_touched=True, drop=True)
+                forecast = forecast.rio.clip(crop_extent.geometry, all_touched=True, drop=True)
+
             except rioxarray.exceptions.NoDataInBounds:
                 print('No data in bounds!')
                 display_bounds_error.set(True)
@@ -467,35 +516,81 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(historical_wb, forecast_wb, input.historical_checkbox, input.forecast_checkbox)
     def update_dataframe():
+        crop = crop_name()
+        production = crop_production()
         name = country_name()
-
         window_size = integration_window()
-
-        historical = historical_wb()
-        forecast = forecast_wb()
 
         show_historical = input.historical_checkbox()
         show_forecast = input.forecast_checkbox()
 
-        # if the xarray data is empty (on initial load), then return empty dataframe
-        if(forecast is None and historical is None):
+        historical = historical_wb()
+        forecast = forecast_wb()
+
+        # if the xarray data is empty (on initial load) or if the toggles controlling which datasets to show are both false, then return empty dataframe
+        if((forecast is None and historical is None) or (show_forecast == False and show_historical == False)):
             df = pd.DataFrame({
                 'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
                 '5%': [], '20%': [], '80%': [], '95%': [],
                 })
-                    
         else:
-            crop = historical.crop
+            # else, we need to check if we need to production-weight the timeseries
+            if(crop == '' or crop == 'none'):
+                pass
+            else:
+                # clip production data to country extent, then standardize
+                country = countries.query(" name == @name ")
+                production = production.rio.write_crs(4236)
+                country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
+                standardized_production = country_level_production / country_level_production.sum(skipna=True)
+                standardized_production = standardized_production[['x', 'y', 'production']]
 
-            # if the toggles controlling which datasets to show are both false, then return empty dataframe
-            if (show_forecast == False and show_historical == False):
-                df = pd.DataFrame({
-                    'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
-                    '5%': [], '20%': [], '80%': [], '95%': [],
-                    })
+                # multiply water balance data by standardized production values
+                historical = xr.merge([historical, standardized_production])
+                historical = historical * historical.production
+
+                forecast = xr.merge([forecast, standardized_production])
+                forecast['mean'] = forecast['mean'] * forecast.production
+                forecast['mode'] = forecast['mode'] * forecast.production
+                forecast['5%'] = forecast['5%'] * forecast.production
+                forecast['20%'] = forecast['20%'] * forecast.production
+                forecast['perc'] = forecast['perc'] * forecast.production
+                forecast['80%'] = forecast['80%'] * forecast.production
+                forecast['95%'] = forecast['95%'] * forecast.production
+
+                # next, multiply the water balance data by the number of rows in the dataset
+                # in this case, it is the number of rows in the first (and every individual) month
+                nrows_historical = historical.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@historical.time.values[0]) ").shape[0]
+                nrows_forecast = forecast.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@forecast.time.values[0]) ").shape[0]
+                print("NUMBER OF ROWS")
+                print(nrows_historical, nrows_forecast)
+                print()
+
+                # assert(nrows_historical == nrows_forecast)
+                
+                historical *= nrows_historical
+                
+                forecast['mean'] = forecast['mean'] * nrows_forecast
+                forecast['mode'] = forecast['mode'] * nrows_forecast
+                forecast['5%'] = forecast['5%'] * nrows_forecast
+                forecast['20%'] = forecast['20%'] * nrows_forecast
+                forecast['perc'] = forecast['perc'] * nrows_forecast
+                forecast['80%'] = forecast['80%'] * nrows_forecast
+                forecast['95%'] = forecast['95%'] * nrows_forecast
+                
+                # lastly, drop the production row from the dataframes
+                historical = historical.drop_vars('production')
+                historical = historical[['time', 'x', 'y', 'perc']]
+
+                forecast = forecast.drop_vars('production')
+                forecast = forecast[['time', 'x', 'y', 'mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+
+                print("HISTORICAL:")
+                print(historical)
+                print()
 
             # include just historical
-            elif(show_historical == True and show_forecast == False):
+            if(show_historical == True and show_forecast == False):
                 df = historical.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df['perc'] = df['perc'].astype(float).round(4)
                 df['agree'] = np.nan
@@ -509,13 +604,12 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['20%'] = np.nan
                 df['80%'] = np.nan
                 df['95%'] = np.nan
-
+                
                 df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
             
             # include just forecast
             elif(show_historical == False and show_forecast == True):
                 df = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
-
                 # this is the 50% line in the forecast data
                 df['perc'] = df['perc'].astype(float).round(4)
                 df['mean'] = df['mean'].astype(float).round(4)
@@ -531,6 +625,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['crop'] = crop
                 df['type'] = 'forecast'
                 df['window'] = int(window_size)
+                
                 df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
 
             # else both are active, include both
@@ -782,115 +877,115 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # #     return fig 
 
-    # # @render_plotly
-    # @render.ui
-    # @reactive.event(forecast_wb)
-    # def forecast_map(alt="a map showing the borders of a country of interest"):
+    # @render_plotly
+    @render.ui
+    @reactive.event(forecast_wb)
+    def forecast_map(alt="a map showing the borders of a country of interest"):
 
-    #     name = country_name()
-    #     country = countries.query(" name == @name ")
-    #     forecast = forecast_wb()
+        name = country_name()
+        country = countries.query(" name == @name ")
+        forecast = forecast_wb()
 
-    #     if(name == '' or forecast is None):
-    #         return
+        if(name == '' or forecast is None):
+            return
 
-    #     config = {
-    #         # 'staticPlot': False, 
-    #         'displaylogo': False, 
-    #         # 'displayModeBar': False, 
-    #         'scrollZoom': True,
-    #         # 'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'toImage']
-    #         'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage']
+        config = {
+            # 'staticPlot': False, 
+            'displaylogo': False, 
+            # 'displayModeBar': False, 
+            'scrollZoom': True,
+            # 'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'toImage']
+            'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage']
 
-    #     }
+        }
 
-    #     country = countries.query(" name == @name ")
-    #     centroid = country.centroid.values[0]
-    #     bbox = json.loads(country.bbox.values[0])
-    #     bounding_box = create_bbox_from_coords(*bbox).to_geo_dict()
+        country = countries.query(" name == @name ")
+        centroid = country.centroid.values[0]
+        bbox = json.loads(country.bbox.values[0])
+        bounding_box = create_bbox_from_coords(*bbox).to_geo_dict()
 
-    #     max_bounds = max(abs(bbox[0] - bbox[2]), abs(bbox[1] - bbox[3])) * 111
-    #     zoom = 11 - np.log(max_bounds)
+        max_bounds = max(abs(bbox[0] - bbox[2]), abs(bbox[1] - bbox[3])) * 111
+        zoom = 11 - np.log(max_bounds)
 
-    #     country_forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
-    #     df = country_forecast['mean'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
-    #     df.columns = ['time', 'y', 'x', 'Percentile']
+        country_forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
+        df = country_forecast['mean'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
+        df.columns = ['time', 'y', 'x', 'Percentile']
 
-    #     forecast_dates = df.time.unique().tolist()
-    #     formatted_dates = [date.strftime("%b-%Y") for date in forecast_dates]
+        forecast_dates = df.time.unique().tolist()
+        formatted_dates = [date.strftime("%b-%Y") for date in forecast_dates]
 
-    #     fig = px.scatter_map(
-    #         data_frame = df, 
-    #         lat = df.y, 
-    #         lon = df.x, 
-    #         color = df['Percentile'],
-    #         # color_continuous_scale = px.colors.diverging.RdYlBu_r, 
-    #         color_continuous_scale = px.colors.sequential.Plasma,
-    #         range_color = [0, 1],
-    #         hover_data = {'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
-    #         map_style = 'carto-positron-nolabels',
-    #         zoom=zoom,
-    #         height=445,
-    #         animation_frame = 'time'
-    #     )
+        fig = px.scatter_map(
+            data_frame = df, 
+            lat = df.y, 
+            lon = df.x, 
+            color = df['Percentile'],
+            color_continuous_scale = px.colors.diverging.RdYlBu, 
+            # color_continuous_scale = px.colors.sequential.Plasma,
+            range_color = [0, 1],
+            hover_data = {'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
+            map_style = 'carto-positron-nolabels',
+            zoom=zoom,
+            height=445,
+            animation_frame = 'time'
+        )
 
-    #     fig["layout"].pop("updatemenus")
+        fig["layout"].pop("updatemenus")
 
-    #     steps = []
-    #     for idx in range(len(formatted_dates)):
-    #         step = dict(
-    #             method='animate',
-    #             label=formatted_dates[idx]
-    #         )
-    #         steps.append(step)
+        steps = []
+        for idx in range(len(formatted_dates)):
+            step = dict(
+                method='animate',
+                label=formatted_dates[idx]
+            )
+            steps.append(step)
 
-    #     fig.update_layout(
-    #         sliders=[{
-    #             'currentvalue': {'prefix': 'Time: '},
-    #             'len': 0.8,
-    #             'pad': {'b': 10, 't': 0},
-    #             'steps': steps,
-    #             # 'transition': {'easing': 'circle-in'},
-    #             'bgcolor': '#f7f7f7',
-    #             'bordercolor': '#1b1e23',
-    #             'activebgcolor': '#1b1e23',
-    #             'tickcolor': '#1b1e23',
-    #             'font': {'color': '#1b1e23'},
-    #         }],
-    #         margin=dict(l=0, r=0, t=0, b=0),
-    #         paper_bgcolor='#f7f7f7',
-    #     )
+        fig.update_layout(
+            sliders=[{
+                'currentvalue': {'prefix': 'Time: '},
+                'len': 0.8,
+                'pad': {'b': 10, 't': 0},
+                'steps': steps,
+                # 'transition': {'easing': 'circle-in'},
+                'bgcolor': '#f7f7f7',
+                'bordercolor': '#1b1e23',
+                'activebgcolor': '#1b1e23',
+                'tickcolor': '#1b1e23',
+                'font': {'color': '#1b1e23'},
+            }],
+            margin=dict(l=0, r=0, t=0, b=0),
+            paper_bgcolor='#f7f7f7',
+        )
 
-    #     fig.update_coloraxes(
-    #         colorbar_title_side='right',
-    #         colorbar_len=0.8,
-    #         colorbar_thickness=20,
-    #     )
+        fig.update_coloraxes(
+            colorbar_title_side='right',
+            colorbar_len=0.8,
+            colorbar_thickness=20,
+        )
 
-    #     fig.update_layout(coloraxis_colorbar_x=0.01)
+        fig.update_layout(coloraxis_colorbar_x=0.01)
 
-    #     fig.add_traces(
-    #         px.scatter_geo(geojson=bounding_box).data
-    #     )
+        fig.add_traces(
+            px.scatter_geo(geojson=bounding_box).data
+        )
 
-    #     # figurewidget = go.FigureWidget(fig)
-    #     # return figurewidget
-    #     # return fig
+        # figurewidget = go.FigureWidget(fig)
+        # return figurewidget
+        # return fig
 
-    #     # https://stackoverflow.com/questions/78834353/animated-plotly-graph-in-pyshiny-express
-    #     """
-    #     The below is not working in CSS: the background color and border radius change, but not the padding.
-    #     So I could try to directly change the HTML string to add the padding in myself.
+        # https://stackoverflow.com/questions/78834353/animated-plotly-graph-in-pyshiny-express
+        """
+        The below is not working in CSS: the background color and border radius change, but not the padding.
+        So I could try to directly change the HTML string to add the padding in myself.
 
-    #     .maplibregl-ctrl-attrib-inner {
-    #         background-color: lightgray;
-    #         border-radius: 10px;
-    #         padding: 2px 5px;
-    #     }
-    #     """
+        .maplibregl-ctrl-attrib-inner {
+            background-color: lightgray;
+            border-radius: 10px;
+            padding: 2px 5px;
+        }
+        """
 
-    #     # to save individual images later: https://github.com/plotly/plotly.py/issues/664
-    #     return ui.HTML(fig.to_html(config=config, auto_play=False))
+        # to save individual images later: https://github.com/plotly/plotly.py/issues/664
+        return ui.HTML(fig.to_html(config=config, auto_play=False))
 
 
     # # @reactive.effect
@@ -899,53 +994,109 @@ def server(input: Inputs, output: Outputs, session: Session):
     # #     print(forecast_map)
 
 
-    # @render_plotly
-    # def crop_explorer():
+    @render_plotly
+    def crop_map():
+        crop = crop_name()
+        crop_extent = crop_layer()
+
+        config = {
+            # 'staticPlot': False, 
+            'displaylogo': False, 
+            # 'displayModeBar': False, 
+            'scrollZoom': True,
+            # https://stackoverflow.com/questions/59817118/how-to-trigger-zoom-in-and-zoom-out-in-plotly-chart-using-user-created-on-click
+            # https://plotly.com/javascript/zoom-events/
+            'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'toImage'],
+            'modeBarButtonsToAdd': ["zoomInGeo", "zoomInMap", "zoomInMapbox"],
+            # 'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'] if crop == 'none' or crop == '' else ['zoom', 'pan', 'select', 'lasso2d'],
+            # 'toImageButtonOptions': {
+            #     'filename': f'{crop}_extent',
+            #     'format': 'svg', # one of png, svg, jpeg, webp
+            #     # 'height': 500,
+            #     # 'width': 700,
+            #     'height': None,
+            #     'width': None,
+            #     'scale': 1 # multiply title/legend/axis/canvas sizes by this factor
+            # }
+            # https://community.plotly.com/t/image-export-how-to-set-dpi-alternatively-how-to-scale-down-using-width-and-height/49536/2
+        }
+
+        fig = go.Figure(go.Scattermap())
+
+        fig.update_layout(
+            map = {'style': "carto-positron-nolabels",},
+            margin = {'l':0, 'r':0, 'b':0, 't':0},
+        )
+
+        # save the figure (not the widget!) so that we can update the layers later
+        # crop_figure.set(fig)
+
+        # crop_map.save(fig) # ??
+        # and then something later like:
+        # fig = crop_map()
+        # most likely: fig.update_layout(map = {...'layers': [{'source': crop_layer, 'type': 'fill', 'below': 'traces', 'color': 'royalblue', 'opacity': 0.7,}]},)
+        # or: fig.add_traces(...)
+        # return fig
+
+        if(crop_extent is None):
+        # if(crop == '' or crop == 'none'):
+            figurewidget = go.FigureWidget(fig)
+            figurewidget._config = config
+            return figurewidget
+        
+        fig.update_layout(
+            map = {
+                'style': "carto-positron-nolabels",
+                'layers': [
+                    {
+                        'source': crop_extent.to_geo_dict(),
+                        'type': 'fill', 
+                        'below': 'traces', 
+                        # 'fill': {'outlinecolor': 'black'},
+                        'color': 'black', 
+                        'opacity': 0.4,
+                    },
+                    {
+                        'source': crop_extent.to_geo_dict(),
+                        'type': 'line', 
+                        'below': 'traces', 
+                        'color': 'black', 
+                        'line': {'width': 1.5},
+                    },
+                ]
+            },
+        )
+
+        # https://github.com/plotly/plotly.py/issues/1074#issuecomment-1471486307
+        figurewidget = go.FigureWidget(fig)
+        figurewidget._config = config
+
+        # fig.write_image('figure.png', engine='kaleido')
+        # figurewidget.write_image('widget.png')
+
+        return figurewidget
+
+
+    # @reactive.effect
+    # def update_crop_map():
+    #     """
+    #     """
+
     #     crop = crop_name()
+    #     if(crop == ''):
+    #         return
 
-    #     config = {
-    #         # 'staticPlot': False, 
-    #         'displaylogo': False, 
-    #         # 'displayModeBar': False, 
-    #         'scrollZoom': True,
-    #         # https://stackoverflow.com/questions/59817118/how-to-trigger-zoom-in-and-zoom-out-in-plotly-chart-using-user-created-on-click
-    #         # https://plotly.com/javascript/zoom-events/
-    #         'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'toImage'],
-    #         'modeBarButtonsToAdd': ["zoomInGeo", "zoomInMap", "zoomInMapbox"],
-    #         # 'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'] if crop == 'none' or crop == '' else ['zoom', 'pan', 'select', 'lasso2d'],
-    #         # 'toImageButtonOptions': {
-    #         #     'filename': f'{crop}_extent',
-    #         #     'format': 'svg', # one of png, svg, jpeg, webp
-    #         #     # 'height': 500,
-    #         #     # 'width': 700,
-    #         #     'height': None,
-    #         #     'width': None,
-    #         #     'scale': 1 # multiply title/legend/axis/canvas sizes by this factor
-    #         # }
-    #         # https://community.plotly.com/t/image-export-how-to-set-dpi-alternatively-how-to-scale-down-using-width-and-height/49536/2
-    #     }
+    #     print(crop_map.widget.center)
 
-    #     fig = go.Figure(go.Scattermap())
+    #     fig = crop_figure()
+    #     print(type(fig))
+    #     print(fig)
+    #     print(fig.layout)
+    #     print()
 
-    #     fig.update_layout(
-    #         map = {'style': "carto-positron-nolabels",},
-    #         margin = {'l':0, 'r':0, 'b':0, 't':0},
-    #     )
-
-    #     # save the figure (not the widget!) so that we can update the layers later
-    #     # crop_figure.set(fig)
-
-    #     # crop_map.save(fig) # ??
-    #     # and then something later like:
-    #     # fig = crop_map()
-    #     # most likely: fig.update_layout(map = {...'layers': [{'source': crop_layer, 'type': 'fill', 'below': 'traces', 'color': 'royalblue', 'opacity': 0.7,}]},)
-    #     # or: fig.add_traces(...)
-    #     # return fig
-
-    #     if(crop == '' or crop == 'none'):
-    #         figurewidget = go.FigureWidget(fig)
-    #         figurewidget._config = config
-    #         return figurewidget
+    #     if(crop == 'none'):
+    #         fig.update_layout(map = {'layers': []})
+    #         return
 
     #     match crop:
     #         case 'barley':
@@ -979,7 +1130,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     #                     'below': 'traces', 
     #                     'fill': {'outlinecolor': 'black'},
     #                     'color': 'black', 
-    #                     'opacity': 0.3,
+    #                     'opacity': 0.7,
     #                 },
     #                 # {
     #                 #     'source': crop_layer,
@@ -992,148 +1143,103 @@ def server(input: Inputs, output: Outputs, session: Session):
     #         },
     #     )
 
-    #     # https://github.com/plotly/plotly.py/issues/1074#issuecomment-1471486307
-    #     figurewidget = go.FigureWidget(fig)
-    #     figurewidget._config = config
-
-    #     # fig.write_image('figure.png', engine='kaleido')
-    #     # figurewidget.write_image('widget.png')
-
-    #     return figurewidget
+    #     return fig
 
 
-    # # @reactive.effect
-    # # def update_crop_explorer():
-    # #     """
-    # #     """
+    # @render_widget
+    # def crop_map():
+    #     from ipyleaflet import basemaps, LayersControl, TileLayer, Map, GeoData, GeoJSON
 
-    # #     crop = crop_name()
-    # #     if(crop == ''):
-    # #         return
+    #     # basemap = TileLayer(
+    #     #     url='https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+    #     #     # attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    #     #     subdomains='abcd',
+    #     #     maxZoom=20,
+    #     # )
 
-    # #     print(crop_explorer.widget.center)
+    #     zoom = 2
 
-    # #     fig = crop_figure()
-    # #     print(type(fig))
-    # #     print(fig)
-    # #     print(fig.layout)
-    # #     print()
+    #     m = Map(basemap=basemaps.CartoDB.Positron, zoom=zoom, scroll_wheel_zoom=True,  attribution_control=False)
 
-    # #     if(crop == 'none'):
-    # #         fig.update_layout(map = {'layers': []})
-    # #         return
+    #     geo_data = GeoData(geo_dataframe=wheat, style={'color': 'black','weight': 1, 'opacity': 1}, name='Wheat')
+    #     # geo_data = GeoJSON(
+    #     #     data=wheat.to_geo_dict(),
+    #     #     style={'color': 'black', 'fillColor': '#3366cc', 'weight': 1, 'opacity': 1},
+    #     #     name = 'Wheat'
+    #     # )
+    #     m.add(geo_data)
+    #     m.add(LayersControl())
 
-    # #     match crop:
-    # #         case 'barley':
-    # #             crop_layer = barley.to_geo_dict()
-    # #         case 'cocoa':
-    # #             crop_layer = cocoa.to_geo_dict()
-    # #         case 'coffee':
-    # #             crop_layer = coffee.to_geo_dict()
-    # #         case 'cotton':
-    # #             crop_layer = cotton.to_geo_dict()
-    # #         case 'maize':
-    # #             crop_layer = maize.to_geo_dict()
-    # #         case 'rice':
-    # #             crop_layer = rice.to_geo_dict()
-    # #         case 'soy':
-    # #             crop_layer = soy.to_geo_dict()
-    # #         case 'sugar':
-    # #             crop_layer = sugar.to_geo_dict()
-    # #         case 'wheat':
-    # #             crop_layer = wheat.to_geo_dict()
-    # #         case _:
-    # #             return
-
-    # #     fig.update_layout(
-    # #         map = {
-    # #             'style': "carto-positron-nolabels",
-    # #             'layers': [
-    # #                 {
-    # #                     'source': crop_layer,
-    # #                     'type': 'fill', 
-    # #                     'below': 'traces', 
-    # #                     'fill': {'outlinecolor': 'black'},
-    # #                     'color': 'black', 
-    # #                     'opacity': 0.7,
-    # #                 },
-    # #                 # {
-    # #                 #     'source': crop_layer,
-    # #                 #     'type': 'line', 
-    # #                 #     # 'below': 'traces', 
-    # #                 #     'color': 'black', 
-    # #                 #     'line': {'width': 1.5},
-    # #                 # },
-    # #             ]
-    # #         },
-    # #     )
-
-    # #     return fig
+    #     return m
 
 
+    # @reactive.effect
+    # # @reactive.event(crop_name)
+    # def _():
+    #     from ipyleaflet import LayersControl, TileLayer, Map, GeoData, GeoJSON
 
-    # @render.ui
-    # def crop_explorer_folium():
     #     crop = crop_name()
+    #     basemap = crop_map.widget.layers[0]
+    #     # basemap.redraw()
+    #     zoom = crop_map.widget.zoom
+    #     center = crop_map.widget.center
+    #     print(zoom, center)
 
+    #     # if(len(crop_map.widget.layers) > 1):
+    #     #     print(crop_map.widget.layers)
+    #     #     print()
+    #     #     crop_map.widget.remove(crop_map.widget.layers[1])
+        
     #     if(crop == '' or crop == 'none'):
-    #         # create empty GeoDataFrame
-    #         empty = gpd.GeoDataFrame(columns=['id', 'geometry'], geometry='geometry', crs='4326')
-    #         m = empty.explore(tiles='CartoDB positron-nolabels', min_zoom=1, min_lat=-90, max_lat=90)
-    #         # sw = [-60, -180]
-    #         # ne = [60, 180]
-    #         # m.fit_bounds([sw, ne]) 
+    #         # geo_data = GeoData(geo_dataframe=wheat, style={'color':'black','weight':1},)
+    #         # geo_data = GeoJSON(
+    #         #     data=wheat.to_geo_dict(),
+    #         #     style={'color': 'black','weight':1},
+    #         # )
 
-    #         map_html = m._repr_html_()
-    #         # https://stackoverflow.com/questions/64116339/trying-to-remove-bottom-padding-in-map-repr-html-in-my-python-web-app
-    #         map_html = map_html.replace('height:0;padding-bottom:60%', 'height:100%;padding-bottom:0', 1)
-    #         map_html = map_html.replace('<div style="width:100%;">', '<div style="width:100%; height:100%">', 1)
+    #         # crop_map.widget.add_layer(geo_data)
+    #         # crop_map.widget.add_control(LayersControl())
+    #         # crop_map.widget = Map(layers=(basemap,), zoom=zoom, center=center, scroll_wheel_zoom=True,  attribution_control=False)
+    #         crop_map.widget.layers = (basemap,)
+        
+    #     else:
+    #         print(crop)
+    #         print("TRUE! SHOULD BE UPDATING MAP LAYERS")
+    #         match crop:
+    #             case 'barley':
+    #                 crop_layer = barley
+    #                 # m.layers = [GeoData(geo_dataframe=barley, style={'color': 'black','weight':1},)]
+    #                 # m.add(GeoData(geo_dataframe=barley, style={'color': 'black','weight':1},))
+    #             case 'cocoa':
+    #                 crop_layer = cocoa
+    #                 # m.add(GeoData(geo_dataframe=cocoa, style={'color': 'black','weight':1},))
+    #             case 'coffee':
+    #                 crop_layer = coffee
+    #                 # m.add(GeoData(geo_dataframe=coffee, style={'color': 'black','weight':1},))
+    #             case 'cotton':
+    #                 crop_layer = cotton
+    #                 # m.add(GeoData(geo_dataframe=cotton, style={'color': 'black','weight':1},))
+    #             case 'maize':
+    #                 crop_layer = maize
+    #                 # m.add(GeoData(geo_dataframe=sugarcane, style={'color': 'black','weight':1},))
+    #             case 'rice':
+    #                 crop_layer = rice
+    #                 # m.add(GeoData(geo_dataframe=rice, style={'color': 'black','weight':1},))
+    #             case 'soy':
+    #                 crop_layer = soy
+    #                 # m.add(GeoData(geo_dataframe=soy, style={'color': 'black','weight':1},))
+    #             case 'sugarcane':
+    #                 crop_layer = sugarcane
+    #                 # m.add(GeoData(geo_dataframe=sugarcane, style={'color': 'black','weight':1},))
+    #             case 'wheat':
+    #                 crop_layer = wheat
+    #                 # m.add(GeoData(geo_dataframe=wheat, style={'color': 'black','weight':1},))
+    #                 # m.add(LayersControl())
 
-    #         return ui.HTML(
-    #             f"""
-    #             <div id='folium-map-container' style="width:100%; height: 100%;">
-    #                 {map_html}
-    #             </div>
-    #             """
-    #         )
-
-    #     match crop:
-    #         case 'barley':
-    #             crop_layer = barley
-    #         case 'cocoa':
-    #             crop_layer = cocoa
-    #         case 'coffee':
-    #             crop_layer = coffee
-    #         case 'cotton':
-    #             crop_layer = cotton
-    #         case 'maize':
-    #             crop_layer = maize
-    #         case 'rice':
-    #             crop_layer = rice
-    #         case 'soy':
-    #             crop_layer = soy
-    #         case 'sugar':
-    #             crop_layer = sugar
-    #         case 'wheat':
-    #             crop_layer = wheat
-    #         case _:
-    #             return
-
-    #     m = crop_layer.explore(tiles='CartoDB positron-nolabels', tooltip=False, highlight=False, style_kwds={'color': '#1b1e23'})
-
-    #     # we could redesign this so that the map stays rendered, but we add crop layers later
-    #     # https://stackoverflow.com/questions/79079049/retaining-zoom-and-map-center-in-shiny-for-python-with-folium-when-changing-map
-    #     map_html = m._repr_html_()
-    #     map_html = map_html.replace('height:0;padding-bottom:60%', 'height:100%;padding-bottom:0', 1)
-    #     map_html = map_html.replace('<div style="width:100%;">', '<div style="width:100%; height:100%">', 1)
-
-    #     return ui.HTML(
-    #         f"""
-    #         <div id='folium-map-container' style="width:100%; height: 100%;">
-    #             {map_html}
-    #         </div>
-    #         """
-    #     )
+    #         geo_data = GeoData(geo_dataframe=crop_layer, style={'color': 'black','weight':1},)
+    #         crop_map.widget.layers = (basemap, geo_data)
+    #         # crop_map.widget
+         
 
     @render.data_frame
     @reactive.event(table_to_save)

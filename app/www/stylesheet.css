@@ -375,6 +375,28 @@ select option:active, select option:checked, select option:focus, select option:
     font-size: 1.5rem;
 }
 
+#tab_menu {
+    margin: 0px 10px;
+}
+
+.nav-tabs {
+    --bs-nav-tabs-border-width: 0px;
+    --bs-nav-tabs-border-color: none;
+    --bs-nav-tabs-border-radius: none;
+    --bs-nav-tabs-link-active-bg: var(--white);
+    --bs-nav-tabs-link-active-color: var(--black);
+    --bs-nav-tabs-link-hover-border-color: none;
+}
+
+.nav {
+    --bs-nav-link-color: var(--gray);
+    --bs-nav-link-hover-color: none;
+}
+
+.nav-item > .nav-link.active {
+    border-bottom: 1px solid var(--black);
+}
+
 #country_filter_text, #country_name_text, #country_bbox_text, #crop_name_text {
     border: 1px solid var(--border-color);
     height: 30px;
@@ -393,7 +415,7 @@ select option:active, select option:checked, select option:focus, select option:
 #forecast-map-container {
     border: 1px solid var(--border-color);
     height: 450px;
-    margin: 5px 10px;
+    margin: 30px 10px 5px 10px;
 }
 
 /* https://community.plotly.com/t/plotly-6-map-attribution-box-positioning/91228 */
@@ -416,7 +438,7 @@ select option:active, select option:checked, select option:focus, select option:
 }
   
 .maplibregl-ctrl-attrib-inner {
-    background-color: lightgray;
+    background-color: #d4dadc;
     border-radius: 10px;
     padding: 2px 5px;
 }
@@ -437,7 +459,7 @@ select option:active, select option:checked, select option:focus, select option:
     margin: 30px 10px 10px 10px;
 }
 
-#crop_explorer {
+#crop_map {
     height: 100%;
 }
 

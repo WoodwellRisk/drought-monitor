@@ -18,7 +18,7 @@ def open_production_data(path):
     """
     Read in a crop production raster, rename the band data, and shift the latitude and longitude columns 
     """
-    production = xr.open_dataset(path).sel(band=1)
+    production = xr.open_dataset(path).sel(band=1).drop_vars('band')
     production = production.rename_vars({'band_data': 'production'})
     production.rio.write_crs(4326, inplace=True)
     production = shift_data(production)
