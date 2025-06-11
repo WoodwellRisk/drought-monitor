@@ -8,7 +8,7 @@ on:
   # Runs on pushes targeting the default branch, excluding the data processing files
   # We only want to re-deploy the site when the site's code changes.
   push:
-    branches: ["main"]
+    branches: ["react-v1"]
     paths-ignore:
       - 'README.md'
       - 'LICENSE'
