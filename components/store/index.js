@@ -112,12 +112,6 @@ const useStore = create((set, get) => ({
     showWarning: false,
     setShowWarning: (showWarning) => set({ showWarning }),
 
-    showAbout: false,
-    setShowAbout: (showAbout) => set({ showAbout }),
-
-    showMenu: false,
-    setShowMenu: (showMenu) => set({ showMenu }),
-
     showOverlays: false,
     setShowOverlays: (showOverlays) => set({ showOverlays }),
 

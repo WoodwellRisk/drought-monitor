@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { Box, Flex, Grid } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
-import { Left } from '@carbonplan/icons'
-import { Button, Tray, FadeIn } from '@carbonplan/components'
+import { Tray } from '@carbonplan/components'
 import Map from '../map'
 import Layers from '../sidebar/layers'
-import Content from '../sidebar/about/content'
 import Loading from './loading'
 
 function Mobile({ expanded }) {
@@ -28,37 +26,18 @@ function Mobile({ expanded }) {
         </Box>
       )}
 
-      <Tray
+      {/* this logic will need to be a display: none call */}
+      {/* <Tray
         expanded={expanded}
         sx={{
           pb: expanded ? [4] : [0],
           pt: expanded ? [5] : [0],
-          transform: expanded ? 'translateY(0)' : 'translateY(-550px)',
+          // transform: expanded ? 'translateY(-64px)' : 'translateY(0)',
+          transform: expanded ? 'translateY(0px)' : 'translateY(-64px)',
         }}
       >
         <Layers />
-      </Tray>
-
-      {section === 'about' && (
-        <>
-          <FadeIn>
-            <Box sx={{ mt: [3], }} className='spacer' />
-            <Button
-              size='xs'
-              inverted
-              prefix={<Left />}
-              onClick={() => setSection('map')}
-              sx={{ mt: [1], cursor: 'pointer' }}
-            >
-              Back
-            </Button>
-
-            <Box sx={{height:'100%'}}>
-              <Content />
-            </Box>
-          </FadeIn>
-        </>
-      )}
+      </Tray> */}
 
       {/* This section defines the boxes at the bottom of the mobile view. */}
       <Box
@@ -98,19 +77,6 @@ function Mobile({ expanded }) {
             Map
           </Flex>
 
-          <Flex
-            onClick={() => setSection('about')}
-            sx={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '64px',
-              // height: '100%',
-              cursor: 'pointer',
-              bg: section === 'about' ? alpha('muted', 0.5) : 'background',
-            }}
-          >
-            About
-          </Flex>
         </Grid>
       </Box>
     </>

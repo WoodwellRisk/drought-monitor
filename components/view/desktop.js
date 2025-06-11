@@ -1,6 +1,5 @@
 import { Flex} from 'theme-ui'
 import Sidebar from '../sidebar'
-import About from '../sidebar/about'
 import Map from '../map'
 import Loading from './loading'
 
@@ -20,8 +19,6 @@ function Desktop() {
       }}
     >
       <Sidebar />
-
-      <About mobile={false}/>
 
       <Map mobile={false} />
       

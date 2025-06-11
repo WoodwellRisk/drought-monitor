@@ -1,14 +1,10 @@
-import { useState } from 'react'
-import { Box, Text } from 'theme-ui'
+import { Box } from 'theme-ui'
 import { SidebarDivider } from '@carbonplan/layouts'
 
-import SidebarHeader from './sidebar-header'
-import Menu from './menu'
 import Layers from './layers'
 import ExpandingSection from './expanding-section'
 import Overlays from './overlays'
 import Charts from './charts/index'
-import Footer from './footer'
 
 import useStore from '../store/index'
 
@@ -17,10 +13,6 @@ const Sidebar = () => {
   const time = useStore((state) => state.time)
   const showRegionPicker = useStore((state) => state.showRegionPicker)
   const setShowRegionPicker = useStore((state) => state.setShowRegionPicker)
-  const showAbout = useStore((state) => state.showAbout)
-  const setShowAbout = useStore((state) => state.setShowAbout)
-  const showMenu = useStore((state) => state.showMenu)
-  const setShowMenu = useStore((state) => state.setShowMenu)
   const showOverlays = useStore((state) => state.showOverlays)
   const setShowOverlays = useStore((state) => state.setShowOverlays)
 
@@ -58,15 +50,6 @@ const Sidebar = () => {
         color: 'secondary',
       },
     },
-    'arrow': {
-      display: 'inline-block',
-      fontSize: [4],
-      ml: [2],
-      top: '3px',
-      position: 'relative',
-      transition: 'transform 0.2s',
-      transform: showAbout ? 'scaleX(-1)' : 'scaleX(1)',
-    },
     'expander': {
       '&:hover > #charts-expander, &:hover > #overlays-expander': {
         fill: 'secondary',
@@ -83,16 +66,7 @@ const Sidebar = () => {
 
   return (
     <Box sx={sx['sidebar-container']}>
-      <SidebarHeader showMenu={showMenu} toggleMenu={() => setShowMenu(!showMenu)} />
-
       <Box id='sidebar' sx={{ position: 'relative', flex: 1, overflowY: 'scroll', }} >
-        <Menu visible={showMenu} />
-
-        <Box onClick={() => setShowAbout(!showAbout)} sx={sx['click-section']} >
-          How to use this site <Text sx={sx.arrow}>→</Text>
-        </Box>
-        <SidebarDivider sx={{ width: '100%', my: 4 }} />
-
         <Layers />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
@@ -115,7 +89,6 @@ const Sidebar = () => {
         </ExpandingSection>
         <SidebarDivider sx={{ width: '100%', mt: 4 }} />
 
-        <Footer />
       </Box>
 
     </Box>

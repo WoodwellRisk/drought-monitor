@@ -24,11 +24,8 @@ function Index() {
         <Layout
           description={description}
           title={title}
-          header={false}
           dimmer={false}
-          footer={false}
           metadata={false}
-          guide={'teal'}
         >
           <Desktop />
         </Layout> 
@@ -39,11 +36,8 @@ function Index() {
             description={description}
             title={title}
             card={logoURL}
-            header={true}
-            dimmer={true}
+            dimmer={false}
             metadata={false}
-            footer={false}
-            guide={'teal'}
             settings={{
               value: expanded,
               onClick: () => setExpanded(!expanded),

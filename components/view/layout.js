@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { useThemeUI, Container, Flex, Box } from 'theme-ui'
 import { Dimmer, FadeIn, Footer, Guide, Scrollbar, Settings }  from '@carbonplan/components'
-import Header from './header'
 import Meta from './meta'
 
 const Layout = ({
@@ -13,8 +12,6 @@ const Layout = ({
   status,
   nav,
   settings,
-  footer = true,
-  header = true,
   metadata = 'mouse',
   dimmer = 'bottom',
   guide = true,
@@ -101,33 +98,6 @@ const Layout = ({
           minHeight: '100vh',
         }}
       >
-        {header && (
-          <Box
-            as='header'
-            sx={{
-              width: '100%',
-              borderStyle: 'solid',
-              borderColor: 'muted',
-              borderWidth: '0px',
-              borderBottomWidth: '1px',
-              position: 'sticky',
-              top: 0,
-              bg: 'background',
-              height: '56px',
-              zIndex: 2000,
-              ...hideOnPrint,
-            }}
-          >
-            <Container>
-              <Header
-                status={status}
-                nav={nav}
-                menuItems={menuItems}
-              />
-            </Container>
-          </Box>
-        )}
-
         <Box
           sx={{
             width: '100%',
@@ -136,24 +106,6 @@ const Layout = ({
         >
           {content}
         </Box>
-
-        {footer && (
-          <Box
-            as='footer'
-            sx={{
-              width: '100%',
-              borderStyle: 'solid',
-              borderColor: 'muted',
-              borderWidth: '0px',
-              borderTopWidth: '1px',
-              ...hideOnPrint,
-            }}
-          >
-            <Container>
-              <Footer />
-            </Container>
-          </Box>
-        )}
 
         {dimmer === 'bottom' && (
           <Box

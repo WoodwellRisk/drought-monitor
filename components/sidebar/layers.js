@@ -128,7 +128,7 @@ function Layers() {
   }, [year, month])
 
   return (
-    <>
+    <Box sx={{pt: [2]}}>
       <Box sx={sx.group}>
         <Box sx={{ mt: -3 }} className='var-container'>
           <Box as='h2' variant='styles.h4' className='var-title'>
@@ -322,7 +322,7 @@ function Layers() {
         </Box>
 
       </Box>
-    </>
+    </Box>
   )
 }
 
