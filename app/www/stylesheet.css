@@ -101,9 +101,65 @@ body {
     margin: auto 0;
 }
 
+#settings_button {
+    margin: 0 5px;
+}
+
+#load_data_button {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem 0.25rem;
+}
+
+#process-data-container {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+.bslib-task-button {
+    --bs-btn-color: var(--black);
+    --bs-btn-bg: var(--white);
+    --bs-btn-border-color: None;
+
+    --bs-btn-hover-color: var(--white);
+    --bs-btn-hover-bg: var(--gray);
+    --bs-btn-hover-border-color: None;
+
+    --bs-btn-active-color: var(--white);
+    --bs-btn-active-bg: var(--black);
+    --bs-btn-active-border-color: None;
+    --bs-btn-active-shadow: None;
+    --bs-btn-focus-shadow-rgb: None;
+
+    --bs-btn-disabled-color: var(--white);
+    --bs-btn-disabled-bg: var(--black);
+    --bs-btn-disabled-border-color: None;
+    --bs-btn-disabled-opacity: 1.0;
+
+    outline: 1px solid var(--black);
+}
+
+.bslib-task-button[case="ready"] {
+    color: var(--black);
+    background-color: var(--white);
+    outline: 1px solid var(--black);
+}
+
+/* .bslib-task-button[case="busy"] {
+    color: var(--white);
+    background-color: var(--black);
+    outline: None;
+} */
+
 .action-button {
     border: 0rem;
     padding: 0 1rem;
+    --bs-btn-color: var(--black);
+    --bs-btn-bg: var(--white);
+    --bs-btn-border-color: None;
 }
 
 .action-button:disabled {
@@ -111,8 +167,24 @@ body {
     background-color: var(--black)
 }
 
-#settings_button {
-    margin: 0 5px;
+#process_data_button {
+    width: 100%;
+    outline: 1px solid var(--black);
+    padding: 0.5rem 0rem;
+}
+
+#process_data_button:hover {
+    border-width: 0px;
+    outline-width: 0px;
+}
+
+.bslib-task-button:hover {
+    border-width: 0px;
+    outline-width: 0px;
+}
+
+span > svg.py-shiny-spin {
+    display: none;
 }
 
 #menu-icon-container {
@@ -147,7 +219,22 @@ body {
     margin: 0;
     border-radius: 0px;
     padding: 0rem; /* this was 1rem before, could be useful for element inside boxes */
-    /* background-color: var(--light-gray) */
+    background-color: var(--white);
+    overflow-y: auto;
+}
+
+#load-data-container {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+}
+
+#load-data-screen {
+    border: 1px solid red;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(247, 247, 247, 0.25);
 }
 
 #sidebar-inner-container {
@@ -231,7 +318,7 @@ select option:active, select option:checked, select option:focus, select option:
     position: absolute;
     background-color: var(--background-color);
     inset: 1rem;
-    z-index: 1000;
+    z-index: 10;
 }
 
 #main {
@@ -257,12 +344,17 @@ select option:active, select option:checked, select option:focus, select option:
     border-radius: 0;
 }
 
-.action-button:hover {
+.action-button{
+    color: var(--black);
+    background-color: var(--white);
+}
+
+.action-button:hover, .bslib-task-button:hover {
     color: var(--white);
     background-color: var(--gray);
 }
 
-.action-button:active, .action-button:target {
+.action-button:active, .action-button:target, .bslib-task-button:active, .bslib-task-button:target {
     --bs-btn-active-color: var(--white);
     --bs-btn-active-bg: var(--black);
 }
@@ -283,6 +375,28 @@ select option:active, select option:checked, select option:focus, select option:
     font-size: 1.5rem;
 }
 
+#tab_menu {
+    margin: 0px 10px;
+}
+
+.nav-tabs {
+    --bs-nav-tabs-border-width: 0px;
+    --bs-nav-tabs-border-color: none;
+    --bs-nav-tabs-border-radius: none;
+    --bs-nav-tabs-link-active-bg: var(--white);
+    --bs-nav-tabs-link-active-color: var(--black);
+    --bs-nav-tabs-link-hover-border-color: none;
+}
+
+.nav {
+    --bs-nav-link-color: var(--gray);
+    --bs-nav-link-hover-color: none;
+}
+
+.nav-item > .nav-link.active {
+    border-bottom: 1px solid var(--black);
+}
+
 #country_filter_text, #country_name_text, #country_bbox_text, #crop_name_text {
     border: 1px solid var(--border-color);
     height: 30px;
@@ -301,7 +415,7 @@ select option:active, select option:checked, select option:focus, select option:
 #forecast-map-container {
     border: 1px solid var(--border-color);
     height: 450px;
-    margin: 5px 10px;
+    margin: 30px 10px 5px 10px;
 }
 
 /* https://community.plotly.com/t/plotly-6-map-attribution-box-positioning/91228 */
@@ -324,7 +438,7 @@ select option:active, select option:checked, select option:focus, select option:
 }
   
 .maplibregl-ctrl-attrib-inner {
-    background-color: lightgray;
+    background-color: #d4dadc;
     border-radius: 10px;
     padding: 2px 5px;
 }
@@ -345,7 +459,7 @@ select option:active, select option:checked, select option:focus, select option:
     margin: 30px 10px 10px 10px;
 }
 
-#crop_explorer {
+#crop_map {
     height: 100%;
 }
 

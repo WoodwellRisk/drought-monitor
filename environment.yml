@@ -3,10 +3,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - python=3.12
   - anywidget
   - fiona
   - folium
-  - gdal
+  - geocube
   - geopandas
   - h5netcdf
   - matplotlib
@@ -18,10 +19,10 @@ dependencies:
   - proj
   - pyarrow
   - pyproj
-  - python
   - rasterio
   - rioxarray
   - shapely
   - shiny
   - shinywidgets
   - xarray
+  - zarr

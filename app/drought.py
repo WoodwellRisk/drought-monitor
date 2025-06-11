@@ -1,3 +1,4 @@
+import asyncio
 import io
 import glob
 import json
@@ -17,7 +18,6 @@ import matplotlib.font_manager as font_manager
 
 import plotly.express as px
 import plotly.graph_objects as go
-
 from shiny import App, Inputs, Outputs, Session, ui, render, reactive
 from shinywidgets import render_plotly, render_widget, output_widget
 
@@ -27,40 +27,40 @@ from utils import *
 
 # shiny run --reload drought.py
 
-# open historical data for both integration windows
-historical_files = sorted(glob.glob('../data/raster/historical/*w3*.nc'))
-h_3 = xr.concat(
-    [xr.open_dataset(file).assign_coords({'time': pd.to_datetime(file[-13:-3])}) for file in historical_files],
-    dim='time'
-)
-h_3 = process_dataset(h_3)
+# open historical and forecast data for both integration windows
+h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
 
-historical_files = sorted(glob.glob('../data/raster/historical/*w12*.nc'))
-h_12 = xr.concat(
-    [xr.open_dataset(file).assign_coords({'time': pd.to_datetime(file[-13:-3])}) for file in historical_files],
-    dim='time'
-)
-h_12 = process_dataset(h_12)
+# the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
+f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+f12 = f12[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
 
-# open forecast data for both integration windows
-f_3 = xr.open_dataset('../data/raster/forecast/nmme_ensemble_water-balance-perc-w3_mon_2025-04-01_plus5.nc')
-f_3 = process_dataset(f_3)
-f_3 = f_3.rename({ '50%': 'perc' })
+# open country boundary layer
+countries = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
 
-f_12 = xr.open_dataset('../data/raster/forecast/nmme_ensemble_water-balance-perc-w12_mon_2025-04-01_plus5.nc')
-f_12 = process_dataset(f_12)
-f_12 = f_12.rename({ '50%': 'perc' })
+# open crop polygon layers
+barley = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/barley.parquet')
+cocoa = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cocoa.parquet')
+coffee = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/coffee.parquet')
+cotton = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cotton.parquet')
+maize = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/maize.parquet')
+rice = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/rice.parquet')
+soy = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/soybean.parquet')
+sugarcane = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/sugarcane.parquet')
+wheat = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/wheat.parquet')
 
-# open crop data layers
-barley = gpd.read_parquet('../data/vector/barley.parquet')
-cocoa = gpd.read_parquet('../data/vector/cocoa.parquet')
-coffee = gpd.read_parquet('../data/vector/coffee.parquet')
-cotton = gpd.read_parquet('../data/vector/cotton.parquet')
-maize = gpd.read_parquet('../data/vector//maize.parquet')
-rice = gpd.read_parquet('../data/vector/rice.parquet')
-soy = gpd.read_parquet('../data/vector/soybean.parquet')
-sugar = gpd.read_parquet('../data/vector/sugar.parquet')
-wheat = gpd.read_parquet('../data/vector//wheat.parquet')
+# open crop raster layers
+barley_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_barley.tif')
+cocoa_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cocoa.tif')
+coffee_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_coffee-all.tif')
+cotton_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cotton.tif')
+maize_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_maize.tif')
+rice_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_rice.tif')
+soy_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_soybean.tif')
+sugarcane_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif')
+wheat_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -96,13 +96,14 @@ app_ui = ui.page_fluid(
         # wrapper container for sidebar and main panel
         ui.div({'id': 'container'},
             # sidebar
-            ui.panel_well({'id': 'sidebar-container', 'class': 'show'},
+            ui.div({'id': 'sidebar-container', 'class': 'show'},
                 ui.div({'id': 'sidebar'}, 
                     ui.div({'id': 'sidebar-inner-container'},
+
                         ui.div({'class': 'select-label-container'},
                             ui.p({'class': 'select-label'}, 'Select an integration window:')
                         ),
-                        ui.input_select('window_select', '', {3:'3 month', 12:'12 month'}, selected=3),
+                        ui.input_select('window_select', '', {3:'3 month', 12:'12 month'}, size=2),
 
                         ui.div({'class': 'select-label-container'},
                             ui.p({'class': 'select-label'}, 'Select a country:')
@@ -115,6 +116,11 @@ app_ui = ui.page_fluid(
                             ui.p({'class': 'select-label'}, 'Select a crop:')
                         ),
                         ui.input_select('crop_select', '', [], size=5),
+
+                        ui.div({'id': 'process-data-container'},
+                            ui.input_task_button("process_data_button", label="Run"),
+                        ),
+
                     )
                 ),
             ),
@@ -155,64 +161,96 @@ app_ui = ui.page_fluid(
                             ),
                         ),
                     ),
-                    {'id': 'about-container'}
+                    {'id': 'about-container'},
                 ), 
 
-                ui.div({"id": 'main'},
-                    ui.output_text('country_filter_text'),
-                    ui.output_text('country_name_text'),
-                    ui.output_text('country_bbox_text'),
-                    ui.output_text('crop_name_text'),
-
-                    ui.div({'id': 'forecast-map-container'},
-                        ui.output_ui('forecast_map'),
+                ui.div({'id': 'main'},
+                ui.navset_tab(
+                    ui.nav_panel('Timeseries', 
+                        ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
+                            ui.download_link("download_timeseries_link", 'Download timeseries')
+                        ),
+                        ui.div({'id': 'timeseries-container'},
+                            ui.div({'id': 'timeseries-toggle-container'},
+                                ui.input_checkbox("historical_checkbox", "Historical", True),
+                                ui.input_checkbox("forecast_checkbox", "Forecast", True),
+                            ),
+                            ui.card({'id': 'timeseries-inner-container'},
+                                ui.output_plot('timeseries', width='100%', height='100%'),
+                            ),
+                        ),
+                        
+                        ui.div({'id': 'download-csv-container', 'class': 'download-container'},
+                            ui.download_link("download_csv_link", 'Download CSV')
+                        ),
+                        ui.div({'id': 'timeseries-table-container'},
+                            ui.output_data_frame("timeseries_table"),
+                        ),
                     ),
 
-                    # ui.div({'id': 'crop-map-container'},
-                    #     # output_widget('crop_explorer'),
-                    #     ui.output_ui('crop_explorer_folium'),
-                    # ),
+                    ui.nav_panel('Crop maps', 
+                        ui.div({'id': 'crop-map-container'},
+                            output_widget('crop_map'),
+                            # ui.output_ui('crop_map'),
+                        ),
+                    ),
+
+                    ui.nav_panel('Forecast map', 
+                        ui.div({'id': 'forecast-map-container'},
+                            ui.output_ui('forecast_map'),
+                        ),
+                    ),
+
+                    id='tab_menu'
+                ),
+
+
+                    # ui.output_text('country_filter_text'),
+                    # ui.output_text('country_name_text'),
+                    # ui.output_text('country_bbox_text'),
+                    # ui.output_text('crop_name_text'),
 
                     # ui.div({'id': 'viz-test'},
                     #     ui.include_js('drought-monitor/pages/index.js', method="inline"),
                     # ),
 
-                    ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
-                        ui.download_link("download_timeseries_link", 'Download timeseries')
-                    ),
-                    ui.div({'id': 'timeseries-container'},
-                        ui.div({'id': 'timeseries-toggle-container'},
-                            ui.input_checkbox("historical_checkbox", "Historical", True),
-                            ui.input_checkbox("forecast_checkbox", "Forecast", True),
-                        ),
-                        ui.card({'id': 'timeseries-inner-container'},
-                            ui.output_plot('timeseries', width='100%', height='100%'),
-                        ),
-                    ),
+                    # ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
+                    #     ui.download_link("download_timeseries_link", 'Download timeseries')
+                    # ),
+                    # ui.div({'id': 'timeseries-container'},
+                    #     ui.div({'id': 'timeseries-toggle-container'},
+                    #         ui.input_checkbox("historical_checkbox", "Historical", True),
+                    #         ui.input_checkbox("forecast_checkbox", "Forecast", True),
+                    #     ),
+                    #     ui.card({'id': 'timeseries-inner-container'},
+                    #         ui.output_plot('timeseries', width='100%', height='100%'),
+                    #     ),
+                    # ),
                     
-                    ui.div({'id': 'download-csv-container', 'class': 'download-container'},
-                        ui.download_link("download_csv_link", 'Download CSV')
-                    ),
-                    ui.div({'id': 'timeseries-table-container'},
-                        ui.output_data_frame("timeseries_table"),
-                    ),
+                    # ui.div({'id': 'download-csv-container', 'class': 'download-container'},
+                    #     ui.download_link("download_csv_link", 'Download CSV')
+                    # ),
+                    # ui.div({'id': 'timeseries-table-container'},
+                    #     ui.output_data_frame("timeseries_table"),
+                    # ),
                 ),
             ),
         ),
     ),
 )
 
-def server(input: Inputs, output: Outputs, session: Session):    
-    # countries = gpd.read_file('../data/vector/countries.gpkg', crs=4326)
-    countries = gpd.read_parquet('../data/vector/countries.parquet')
+def server(input: Inputs, output: Outputs, session: Session):
+    
     countries_list = sorted(countries.name.values)
     country_options = reactive.value(countries_list)
 
     crop_list = [
         'None', 'Barley', 'Cocoa', 'Coffee', 'Cotton',
-        'Maize', 'Rice', 'Soy', 'Sugar', 'Wheat',
+        'Maize', 'Rice', 'Soy', 'Sugarcane', 'Wheat',
     ]
     crop_options = reactive.value(crop_list)
+    crop_layer = reactive.value(None)
+    crop_production = reactive.value(None)
 
     country_name = reactive.value('')
     crop_name = reactive.value('')
@@ -226,6 +264,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # these values change the data between the 3-month and 12-month integration windows
     integration_window = reactive.value(input.window_select)
+
     h = reactive.value(None)
     f = reactive.value(None)
 
@@ -239,12 +278,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     add_download_links = reactive.value(True)
     crop_figure = reactive.value(None)
 
-    # bounds_error = ui.div(
-    #     {'id': 'bounds-error-container'},
-    #     ui.div({'class': 'bounds-error'},
-    #         f'No water balance data to show. This is likely because {crop} is not grown in {country} or the data resoultion is too low.'
-    #         ),
-    #     )
+    bounds_error = reactive.value('')
     display_bounds_error = reactive.value(False)
 
 
@@ -261,11 +295,11 @@ def server(input: Inputs, output: Outputs, session: Session):
         window_size = integration_window()
 
         if(window_size == '3'):
-            h.set(h_3)
-            f.set(f_3)
+            h.set(h3)
+            f.set(f3)
         elif(window_size == '12'):
-            h.set(h_12)
-            f.set(f_12) 
+            h.set(h12)
+            f.set(f12)
         else:
             raise ValueError("The integration window should be either 3 or 12 months.")
 
@@ -352,8 +386,46 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.crop_select)
     def update_crop():
-        new_crop = input.crop_select()
-        crop_name.set(new_crop.lower())
+        new_crop = input.crop_select().lower()
+        crop_name.set(new_crop)
+
+        match new_crop:
+            case '':
+                crop_layer.set(None)
+                crop_production.set(None)
+            case 'none':
+                crop_layer.set(None)
+                crop_production.set(None)
+            case 'barley':
+                crop_layer.set(barley)
+                crop_production.set(barley_production)
+            case 'cocoa':
+                crop_layer.set(cocoa)
+                crop_production.set(cocoa_production)
+            case 'coffee':
+                crop_layer.set(coffee)
+                crop_production.set(coffee_production)
+            case 'cotton':
+                crop_layer.set(cotton)
+                crop_production.set(cotton_production)
+            case 'maize':
+                crop_layer.set(maize)
+                crop_production.set(maize_production)
+            case 'rice':
+                crop_layer.set(rice)
+                crop_production.set(rice_production)
+            case 'soy':
+                crop_layer.set(soy)
+                crop_production.set(soy_production)
+            case 'sugarcane':
+                crop_layer.set(sugarcane)
+                crop_production.set(sugarcane_production)
+            case 'wheat':
+                crop_layer.set(wheat)
+                crop_production.set(wheat_production)
+            # case _:
+            #     return
+
 
     @render.text
     def crop_name_text():
@@ -361,10 +433,17 @@ def server(input: Inputs, output: Outputs, session: Session):
 
 
     @reactive.effect
-    @reactive.event(country_name, crop_name, h, f)
+    @reactive.event(input.process_data_button)
     def update_wb_data():
-        name = country_name()
         crop = crop_name()
+        crop_extent = crop_layer()
+        # production = crop_production().rio.write_crs(4326, inplace=True)
+        # production.rio.write_crs(4326, inplace=True)
+
+        name = country_name()
+
+        window_size = integration_window()
+
         historical = h()
         forecast = f()
 
@@ -377,51 +456,27 @@ def server(input: Inputs, output: Outputs, session: Session):
         country = countries.query(" name == @name ")
 
         # we have already filtered countries where we don't have data, so clipping by country extent 
-        # should never produce a rioxarray.exceptions.NoDataInBounds error
-        # first clip by the bounding box to get the figure extent (drop=True)
-        # then clip by country geometry for just the data in that country (drop=False)
-        # historical = historical.rio.clip(bounding_box.geometry, all_touched=True, drop=True)
-        # historical = historical.rio.clip(country.geometry, all_touched=True, drop=False)
+        # should never produce a rioxarray.exceptions.NoDataInBounds error at this step
         historical = historical.rio.clip(country.geometry, all_touched=True, drop=True)
         historical = historical.assign_attrs({'crop': crop})
 
-        # forecast = forecast.rio.clip(bounding_box.geometry, all_touched=True, drop=True)
-        # forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=False)
         forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
         forecast = forecast.assign_attrs({'crop': crop})
 
         if(crop == 'none'):
+            display_bounds_error.set(False)
             historical_wb.set(historical)
             forecast_wb.set(forecast)
+            return
         else:
-            match crop:
-                case 'barley':
-                    crop_layer = barley
-                case 'cocoa':
-                    crop_layer = cocoa
-                case 'coffee':
-                    crop_layer = coffee
-                case 'cotton':
-                    crop_layer = cotton
-                case 'maize':
-                    crop_layer = maize
-                case 'rice':
-                    crop_layer = rice
-                case 'soy':
-                    crop_layer = soy
-                case 'sugar':
-                    crop_layer = sugar
-                case 'wheat':
-                    crop_layer = wheat
-            
             try:
-                historical = historical.rio.clip(crop_layer.geometry, all_touched=True, drop=True)
-                forecast = forecast.rio.clip(crop_layer.geometry, all_touched=True, drop=True)
-            
+                historical = historical.rio.clip(crop_extent.geometry, all_touched=True, drop=True)
+                forecast = forecast.rio.clip(crop_extent.geometry, all_touched=True, drop=True)
+
             except rioxarray.exceptions.NoDataInBounds:
                 print('No data in bounds!')
-                print("SHOULD BE INSERTING ERROR")
                 display_bounds_error.set(True)
+                # bounds_error.set(f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.')
                 historical_wb.set(None)
                 forecast_wb.set(None)
                 return
@@ -429,33 +484,6 @@ def server(input: Inputs, output: Outputs, session: Session):
             display_bounds_error.set(False)
             historical_wb.set(historical)
             forecast_wb.set(forecast)
-
-
-    @reactive.effect
-    @reactive.event(table_to_save)
-    def set_download_button_states():
-        """
-        If there is nothing to download, then we want to disable the user's ability to download empty figures and tables.
-        """
-        df = table_to_save()
-
-        if df.empty:
-            ui.remove_ui(selector="#download_timeseries_link")
-            ui.remove_ui(selector="#download_csv_link")
-            add_download_links.set(True)
-        else:
-            if(add_download_links()):
-                ui.insert_ui(
-                    ui.download_link("download_timeseries_link", 'Download timeseries'),
-                    selector="#download-timeseries-container",
-                    where="beforeEnd",
-                ),
-                ui.insert_ui(
-                    ui.download_link("download_csv_link", 'Download CSV'),
-                    selector="#download-csv-container",
-                    where="beforeEnd",
-                ),
-                add_download_links.set(False)
 
 
     @reactive.effect
@@ -467,14 +495,15 @@ def server(input: Inputs, output: Outputs, session: Session):
         if(crop == '' or name == ''):
             return
 
+        error_message = bounds_error()
         show_error = display_bounds_error()
-        error_message = f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
         
-        if(show_error):
+        if(error_message != '' or show_error):
             ui.insert_ui(
                 ui.div({'id': 'bounds-error-container'},
                     ui.div({'class': 'bounds-error'},
-                        error_message
+                        # error_message
+                        f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
                     ),
                 ),
                 selector='#forecast-map-container',
@@ -483,37 +512,85 @@ def server(input: Inputs, output: Outputs, session: Session):
         else:
             ui.remove_ui('#bounds-error-container')
 
-    @reactive.calc
+
+    @reactive.effect
+    @reactive.event(historical_wb, forecast_wb, input.historical_checkbox, input.forecast_checkbox)
     def update_dataframe():
+        crop = crop_name()
+        production = crop_production()
         name = country_name()
-
         window_size = integration_window()
-
-        historical = historical_wb()
-        forecast = forecast_wb()
 
         show_historical = input.historical_checkbox()
         show_forecast = input.forecast_checkbox()
 
-        # if the xarray data is empty (on initial load), then return empty dataframe
-        if(forecast is None and historical is None):
+        historical = historical_wb()
+        forecast = forecast_wb()
+
+        # if the xarray data is empty (on initial load) or if the toggles controlling which datasets to show are both false, then return empty dataframe
+        if((forecast is None and historical is None) or (show_forecast == False and show_historical == False)):
             df = pd.DataFrame({
                 'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
                 '5%': [], '20%': [], '80%': [], '95%': [],
                 })
-                    
         else:
-            crop = historical.crop
+            # else, we need to check if we need to production-weight the timeseries
+            if(crop == '' or crop == 'none'):
+                pass
+            else:
+                # clip production data to country extent, then standardize
+                country = countries.query(" name == @name ")
+                production = production.rio.write_crs(4236)
+                country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
+                standardized_production = country_level_production / country_level_production.sum(skipna=True)
+                standardized_production = standardized_production[['x', 'y', 'production']]
 
-            # if the toggles controlling which datasets to show are both false, then return empty dataframe
-            if (show_forecast == False and show_historical == False):
-                df = pd.DataFrame({
-                    'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
-                    '5%': [], '20%': [], '80%': [], '95%': [],
-                    })
+                # multiply water balance data by standardized production values
+                historical = xr.merge([historical, standardized_production])
+                historical = historical * historical.production
+
+                forecast = xr.merge([forecast, standardized_production])
+                forecast['mean'] = forecast['mean'] * forecast.production
+                forecast['mode'] = forecast['mode'] * forecast.production
+                forecast['5%'] = forecast['5%'] * forecast.production
+                forecast['20%'] = forecast['20%'] * forecast.production
+                forecast['perc'] = forecast['perc'] * forecast.production
+                forecast['80%'] = forecast['80%'] * forecast.production
+                forecast['95%'] = forecast['95%'] * forecast.production
+
+                # next, multiply the water balance data by the number of rows in the dataset
+                # in this case, it is the number of rows in the first (and every individual) month
+                nrows_historical = historical.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@historical.time.values[0]) ").shape[0]
+                nrows_forecast = forecast.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@forecast.time.values[0]) ").shape[0]
+                print("NUMBER OF ROWS")
+                print(nrows_historical, nrows_forecast)
+                print()
+
+                # assert(nrows_historical == nrows_forecast)
+                
+                historical *= nrows_historical
+                
+                forecast['mean'] = forecast['mean'] * nrows_forecast
+                forecast['mode'] = forecast['mode'] * nrows_forecast
+                forecast['5%'] = forecast['5%'] * nrows_forecast
+                forecast['20%'] = forecast['20%'] * nrows_forecast
+                forecast['perc'] = forecast['perc'] * nrows_forecast
+                forecast['80%'] = forecast['80%'] * nrows_forecast
+                forecast['95%'] = forecast['95%'] * nrows_forecast
+                
+                # lastly, drop the production row from the dataframes
+                historical = historical.drop_vars('production')
+                historical = historical[['time', 'x', 'y', 'perc']]
+
+                forecast = forecast.drop_vars('production')
+                forecast = forecast[['time', 'x', 'y', 'mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+
+                print("HISTORICAL:")
+                print(historical)
+                print()
 
             # include just historical
-            elif(show_historical == True and show_forecast == False):
+            if(show_historical == True and show_forecast == False):
                 df = historical.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df['perc'] = df['perc'].astype(float).round(4)
                 df['agree'] = np.nan
@@ -527,7 +604,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['20%'] = np.nan
                 df['80%'] = np.nan
                 df['95%'] = np.nan
-
+                
                 df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
             
             # include just forecast
@@ -548,6 +625,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['crop'] = crop
                 df['type'] = 'forecast'
                 df['window'] = int(window_size)
+                
                 df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
 
             # else both are active, include both
@@ -590,7 +668,35 @@ def server(input: Inputs, output: Outputs, session: Session):
         return df
 
 
+    @reactive.effect
+    @reactive.event(table_to_save)
+    def set_download_button_states():
+        """
+        If there is nothing to download, then we want to disable the user's ability to download empty figures and tables.
+        """
+        df = table_to_save()
+
+        if df.empty:
+            ui.remove_ui(selector="#download_timeseries_link")
+            ui.remove_ui(selector="#download_csv_link")
+            add_download_links.set(True)
+        else:
+            if(add_download_links()):
+                ui.insert_ui(
+                    ui.download_link("download_timeseries_link", 'Download timeseries'),
+                    selector="#download-timeseries-container",
+                    where="beforeEnd",
+                ),
+                ui.insert_ui(
+                    ui.download_link("download_csv_link", 'Download CSV'),
+                    selector="#download-csv-container",
+                    where="beforeEnd",
+                ),
+                add_download_links.set(False)
+
+
     @render.plot
+    @reactive.event(table_to_save)
     def timeseries(alt="A graph showing a timeseries of historical and forecasted water balance"):
         # later if we want to make it so that we can dynamically change the timeframe:
         # https://plotly.com/python/range-slider/
@@ -603,7 +709,8 @@ def server(input: Inputs, output: Outputs, session: Session):
         show_historical = input.historical_checkbox()
         show_forecast = input.forecast_checkbox()
 
-        df = update_dataframe()
+        # df = update_dataframe()
+        df = table_to_save()
 
         timeseries_color = '#1b1e23'
         high_certainty_color = '#f4c1c1'
@@ -665,6 +772,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         ax.set_ylim(-0.05, 1.05)
 
         if(not show_forecast and not show_historical):
+            ax.set_xticks([0, 1, 2, 3, 4, 5])
             ax.set_xticklabels(['', '', '', '', '', ''])
 
         # you need both of these to change the colors
@@ -719,55 +827,55 @@ def server(input: Inputs, output: Outputs, session: Session):
             yield buffer.getvalue()
 
 
-    # @render.plot
-    # # @reactive.event(country)
-    # def forecast_map(alt="a map showing the borders of a country of interest"):
-    #     name = country_name()
+    # # @render.plot
+    # # # @reactive.event(country)
+    # # def forecast_map(alt="a map showing the borders of a country of interest"):
+    # #     name = country_name()
 
-    #     # on app start or page reload, these variables will be empty
-    #     if(name == ''):
-    #         return
+    # #     # on app start or page reload, these variables will be empty
+    # #     if(name == ''):
+    # #         return
 
-    #     # plot_raster = None
-    #     xmin, ymin, xmax, ymax = bounds.get()
-    #     bounding_box = bbox()
-    #     plot_country = countries.query(" name == @name ")
+    # #     # plot_raster = None
+    # #     xmin, ymin, xmax, ymax = bounds.get()
+    # #     bounding_box = bbox()
+    # #     plot_country = countries.query(" name == @name ")
 
-    #     # try:
-    #     #     # first clip by the bounding box to get the figure extent (drop=True)
-    #     #     # then clip by country geometry for just the data in that country (drop=False)
-    #     #     plot_raster = ds.rio.clip(bounding_box.geometry, all_touched=True, drop=True)
-    #     #     plot_raster = plot_raster.rio.clip(plot_country.geometry, all_touched=True, drop=False)
-    #     #     print(plot_raster)
-    #     #     plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu_r', add_colorbar=False, ax=ax)
-    #     # except:
-    #     #     print("No data in bounds")
+    # #     # try:
+    # #     #     # first clip by the bounding box to get the figure extent (drop=True)
+    # #     #     # then clip by country geometry for just the data in that country (drop=False)
+    # #     #     plot_raster = ds.rio.clip(bounding_box.geometry, all_touched=True, drop=True)
+    # #     #     plot_raster = plot_raster.rio.clip(plot_country.geometry, all_touched=True, drop=False)
+    # #     #     print(plot_raster)
+    # #     #     plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu_r', add_colorbar=False, ax=ax)
+    # #     # except:
+    # #     #     print("No data in bounds")
 
-    #     # plotting
-    #     fig, ax = plt.subplots()
+    # #     # plotting
+    # #     fig, ax = plt.subplots()
 
-    #     countries.plot(facecolor='white', edgecolor='none', ax=ax)
-    #     # if(plot_raster):
-    #     #     plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu_r', add_colorbar=False, ax=ax)
-    #     try:
-    #         # first clip by the bounding box to get the figure extent (drop=True)
-    #         # then clip by country geometry for just the data in that country (drop=False)
-    #         plot_raster = f().rio.clip(bounding_box.geometry, all_touched=True, drop=True)
-    #         plot_raster = plot_raster.rio.clip(plot_country.geometry, all_touched=True, drop=False)
-    #         plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu', add_colorbar=False, ax=ax)
-    #     except:
-    #         print("No data in bounds")
+    # #     countries.plot(facecolor='white', edgecolor='none', ax=ax)
+    # #     # if(plot_raster):
+    # #     #     plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu_r', add_colorbar=False, ax=ax)
+    # #     try:
+    # #         # first clip by the bounding box to get the figure extent (drop=True)
+    # #         # then clip by country geometry for just the data in that country (drop=False)
+    # #         plot_raster = f().rio.clip(bounding_box.geometry, all_touched=True, drop=True)
+    # #         plot_raster = plot_raster.rio.clip(plot_country.geometry, all_touched=True, drop=False)
+    # #         plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu', add_colorbar=False, ax=ax)
+    # #     except:
+    # #         print("No data in bounds")
         
-    #     countries.plot(facecolor='none', edgecolor='black', ax=ax)
-    #     # plot_country.plot(facecolor='none', edgecolor='black', ax=ax)
+    # #     countries.plot(facecolor='none', edgecolor='black', ax=ax)
+    # #     # plot_country.plot(facecolor='none', edgecolor='black', ax=ax)
 
-    #     ax.set_xlim(xmin, xmax)
-    #     ax.set_ylim(ymin, ymax)
+    # #     ax.set_xlim(xmin, xmax)
+    # #     ax.set_ylim(ymin, ymax)
 
-    #     # and this removes white background in figure
-    #     fig.patch.set_alpha(0)
+    # #     # and this removes white background in figure
+    # #     fig.patch.set_alpha(0)
 
-    #     return fig 
+    # #     return fig 
 
     # @render_plotly
     @render.ui
@@ -811,8 +919,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             lat = df.y, 
             lon = df.x, 
             color = df['Percentile'],
-            # color_continuous_scale = px.colors.diverging.RdYlBu_r, 
-            color_continuous_scale = px.colors.sequential.Plasma,
+            color_continuous_scale = px.colors.diverging.RdYlBu, 
+            # color_continuous_scale = px.colors.sequential.Plasma,
             range_color = [0, 1],
             hover_data = {'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
             map_style = 'carto-positron-nolabels',
@@ -880,15 +988,16 @@ def server(input: Inputs, output: Outputs, session: Session):
         return ui.HTML(fig.to_html(config=config, auto_play=False))
 
 
-    # @reactive.effect
-    # def _():
-    #     # map.widget.center = city_centers[input.center()]
-    #     print(forecast_map)
+    # # @reactive.effect
+    # # def _():
+    # #     # map.widget.center = city_centers[input.center()]
+    # #     print(forecast_map)
 
 
     @render_plotly
-    def crop_explorer():
+    def crop_map():
         crop = crop_name()
+        crop_extent = crop_layer()
 
         config = {
             # 'staticPlot': False, 
@@ -929,52 +1038,31 @@ def server(input: Inputs, output: Outputs, session: Session):
         # or: fig.add_traces(...)
         # return fig
 
-        if(crop == '' or crop == 'none'):
+        if(crop_extent is None):
+        # if(crop == '' or crop == 'none'):
             figurewidget = go.FigureWidget(fig)
             figurewidget._config = config
             return figurewidget
-
-        match crop:
-            case 'barley':
-                crop_layer = barley.to_geo_dict()
-            case 'cocoa':
-                crop_layer = cocoa.to_geo_dict()
-            case 'coffee':
-                crop_layer = coffee.to_geo_dict()
-            case 'cotton':
-                crop_layer = cotton.to_geo_dict()
-            case 'maize':
-                crop_layer = maize.to_geo_dict()
-            case 'rice':
-                crop_layer = rice.to_geo_dict()
-            case 'soy':
-                crop_layer = soy.to_geo_dict()
-            case 'sugar':
-                crop_layer = sugar.to_geo_dict()
-            case 'wheat':
-                crop_layer = wheat.to_geo_dict()
-            case _:
-                return
-
+        
         fig.update_layout(
             map = {
                 'style': "carto-positron-nolabels",
                 'layers': [
                     {
-                        'source': crop_layer,
+                        'source': crop_extent.to_geo_dict(),
                         'type': 'fill', 
                         'below': 'traces', 
-                        'fill': {'outlinecolor': 'black'},
+                        # 'fill': {'outlinecolor': 'black'},
                         'color': 'black', 
-                        'opacity': 0.3,
+                        'opacity': 0.4,
                     },
-                    # {
-                    #     'source': crop_layer,
-                    #     'type': 'line', 
-                    #     # 'below': 'traces', 
-                    #     'color': 'black', 
-                    #     'line': {'width': 1.5},
-                    # },
+                    {
+                        'source': crop_extent.to_geo_dict(),
+                        'type': 'line', 
+                        'below': 'traces', 
+                        'color': 'black', 
+                        'line': {'width': 1.5},
+                    },
                 ]
             },
         )
@@ -990,7 +1078,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
 
     # @reactive.effect
-    # def update_crop_explorer():
+    # def update_crop_map():
     #     """
     #     """
 
@@ -998,7 +1086,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     #     if(crop == ''):
     #         return
 
-    #     print(crop_explorer.widget.center)
+    #     print(crop_map.widget.center)
 
     #     fig = crop_figure()
     #     print(type(fig))
@@ -1058,73 +1146,105 @@ def server(input: Inputs, output: Outputs, session: Session):
     #     return fig
 
 
+    # @render_widget
+    # def crop_map():
+    #     from ipyleaflet import basemaps, LayersControl, TileLayer, Map, GeoData, GeoJSON
 
-    @render.ui
-    def crop_explorer_folium():
-        crop = crop_name()
+    #     # basemap = TileLayer(
+    #     #     url='https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+    #     #     # attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    #     #     subdomains='abcd',
+    #     #     maxZoom=20,
+    #     # )
 
-        if(crop == '' or crop == 'none'):
-            # create empty GeoDataFrame
-            empty = gpd.GeoDataFrame(columns=['id', 'geometry'], geometry='geometry', crs='4326')
-            m = empty.explore(tiles='CartoDB positron-nolabels', min_zoom=1, min_lat=-90, max_lat=90)
-            # sw = [-60, -180]
-            # ne = [60, 180]
-            # m.fit_bounds([sw, ne]) 
+    #     zoom = 2
 
-            map_html = m._repr_html_()
-            # https://stackoverflow.com/questions/64116339/trying-to-remove-bottom-padding-in-map-repr-html-in-my-python-web-app
-            map_html = map_html.replace('height:0;padding-bottom:60%', 'height:100%;padding-bottom:0', 1)
-            map_html = map_html.replace('<div style="width:100%;">', '<div style="width:100%; height:100%">', 1)
+    #     m = Map(basemap=basemaps.CartoDB.Positron, zoom=zoom, scroll_wheel_zoom=True,  attribution_control=False)
 
-            return ui.HTML(
-                f"""
-                <div id='folium-map-container' style="width:100%; height: 100%;">
-                    {map_html}
-                </div>
-                """
-            )
+    #     geo_data = GeoData(geo_dataframe=wheat, style={'color': 'black','weight': 1, 'opacity': 1}, name='Wheat')
+    #     # geo_data = GeoJSON(
+    #     #     data=wheat.to_geo_dict(),
+    #     #     style={'color': 'black', 'fillColor': '#3366cc', 'weight': 1, 'opacity': 1},
+    #     #     name = 'Wheat'
+    #     # )
+    #     m.add(geo_data)
+    #     m.add(LayersControl())
 
-        match crop:
-            case 'barley':
-                crop_layer = barley
-            case 'cocoa':
-                crop_layer = cocoa
-            case 'coffee':
-                crop_layer = coffee
-            case 'cotton':
-                crop_layer = cotton
-            case 'maize':
-                crop_layer = maize
-            case 'rice':
-                crop_layer = rice
-            case 'soy':
-                crop_layer = soy
-            case 'sugar':
-                crop_layer = sugar
-            case 'wheat':
-                crop_layer = wheat
-            case _:
-                return
+    #     return m
 
-        m = crop_layer.explore(tiles='CartoDB positron-nolabels', tooltip=False, highlight=False, style_kwds={'color': '#1b1e23'})
 
-        # we could redesign this so that the map stays rendered, but we add crop layers later
-        # https://stackoverflow.com/questions/79079049/retaining-zoom-and-map-center-in-shiny-for-python-with-folium-when-changing-map
-        map_html = m._repr_html_()
-        map_html = map_html.replace('height:0;padding-bottom:60%', 'height:100%;padding-bottom:0', 1)
-        map_html = map_html.replace('<div style="width:100%;">', '<div style="width:100%; height:100%">', 1)
+    # @reactive.effect
+    # # @reactive.event(crop_name)
+    # def _():
+    #     from ipyleaflet import LayersControl, TileLayer, Map, GeoData, GeoJSON
 
-        return ui.HTML(
-            f"""
-            <div id='folium-map-container' style="width:100%; height: 100%;">
-                {map_html}
-            </div>
-            """
-        )
+    #     crop = crop_name()
+    #     basemap = crop_map.widget.layers[0]
+    #     # basemap.redraw()
+    #     zoom = crop_map.widget.zoom
+    #     center = crop_map.widget.center
+    #     print(zoom, center)
+
+    #     # if(len(crop_map.widget.layers) > 1):
+    #     #     print(crop_map.widget.layers)
+    #     #     print()
+    #     #     crop_map.widget.remove(crop_map.widget.layers[1])
+        
+    #     if(crop == '' or crop == 'none'):
+    #         # geo_data = GeoData(geo_dataframe=wheat, style={'color':'black','weight':1},)
+    #         # geo_data = GeoJSON(
+    #         #     data=wheat.to_geo_dict(),
+    #         #     style={'color': 'black','weight':1},
+    #         # )
+
+    #         # crop_map.widget.add_layer(geo_data)
+    #         # crop_map.widget.add_control(LayersControl())
+    #         # crop_map.widget = Map(layers=(basemap,), zoom=zoom, center=center, scroll_wheel_zoom=True,  attribution_control=False)
+    #         crop_map.widget.layers = (basemap,)
+        
+    #     else:
+    #         print(crop)
+    #         print("TRUE! SHOULD BE UPDATING MAP LAYERS")
+    #         match crop:
+    #             case 'barley':
+    #                 crop_layer = barley
+    #                 # m.layers = [GeoData(geo_dataframe=barley, style={'color': 'black','weight':1},)]
+    #                 # m.add(GeoData(geo_dataframe=barley, style={'color': 'black','weight':1},))
+    #             case 'cocoa':
+    #                 crop_layer = cocoa
+    #                 # m.add(GeoData(geo_dataframe=cocoa, style={'color': 'black','weight':1},))
+    #             case 'coffee':
+    #                 crop_layer = coffee
+    #                 # m.add(GeoData(geo_dataframe=coffee, style={'color': 'black','weight':1},))
+    #             case 'cotton':
+    #                 crop_layer = cotton
+    #                 # m.add(GeoData(geo_dataframe=cotton, style={'color': 'black','weight':1},))
+    #             case 'maize':
+    #                 crop_layer = maize
+    #                 # m.add(GeoData(geo_dataframe=sugarcane, style={'color': 'black','weight':1},))
+    #             case 'rice':
+    #                 crop_layer = rice
+    #                 # m.add(GeoData(geo_dataframe=rice, style={'color': 'black','weight':1},))
+    #             case 'soy':
+    #                 crop_layer = soy
+    #                 # m.add(GeoData(geo_dataframe=soy, style={'color': 'black','weight':1},))
+    #             case 'sugarcane':
+    #                 crop_layer = sugarcane
+    #                 # m.add(GeoData(geo_dataframe=sugarcane, style={'color': 'black','weight':1},))
+    #             case 'wheat':
+    #                 crop_layer = wheat
+    #                 # m.add(GeoData(geo_dataframe=wheat, style={'color': 'black','weight':1},))
+    #                 # m.add(LayersControl())
+
+    #         geo_data = GeoData(geo_dataframe=crop_layer, style={'color': 'black','weight':1},)
+    #         crop_map.widget.layers = (basemap, geo_data)
+    #         # crop_map.widget
+         
 
     @render.data_frame
+    @reactive.event(table_to_save)
     def timeseries_table():
-        df = update_dataframe()
+        df = table_to_save()
 
         return render.DataTable( df.drop(['5%', '20%', '80%', '95%'], axis=1), width='100%', height='375px', editable=False, )
     
@@ -1138,6 +1258,4 @@ def server(input: Inputs, output: Outputs, session: Session):
             yield buffer.getvalue()
 
 
-# www_dir = Path(__file__).parent / "www"
 app = App(app_ui, server, static_assets=static_dir)
-# app.run()
