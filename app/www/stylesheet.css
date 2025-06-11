@@ -683,6 +683,7 @@ shiny-data-frame#timeseries_table {
     }
 
     #timeseries-container {
+        margin-top: 30px;
         margin-bottom: 25px;
         overflow: hidden;
     }
