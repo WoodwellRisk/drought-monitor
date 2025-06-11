@@ -133,7 +133,7 @@ function Layers() {
         <Box sx={{ mt: -3 }} className='var-container'>
           <Box as='h2' variant='styles.h4' className='var-title'>
             Crops <Info>
-              Select any either coffee, cocoa, or maize to see an overlay of where it is grown.
+              Select any of the crops below to see an overlay of where it is grown.
             </Info>
           </Box>
 

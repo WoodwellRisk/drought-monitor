@@ -73,7 +73,7 @@ const useStore = create((set, get) => ({
     setShowRegionPicker: (showRegionPicker) => set({ showRegionPicker }),
 
     // crop-specific state variables
-    crops: ["barley", "cocoa", "coffee", "cotton", "maize", "rice", "soybean", "sugar", "wheat"],
+    crops: ["barley", "cocoa", "coffee", "cotton", "maize", "rice", "soybean", "sugarcane", "wheat"],
     cropValues: {
         "barley": false,
         "cocoa": false,
@@ -82,7 +82,7 @@ const useStore = create((set, get) => ({
         "maize": false,
         "rice": false,
         "soybean": false,
-        "sugar": false,
+        "sugarcane": false,
         "wheat": false
     },
     setCropValues: (cropValues) => set({ cropValues }),
