@@ -186,6 +186,8 @@ app_ui = ui.page_fluid(
                         ui.div({'id': 'timeseries-table-container'},
                             ui.output_data_frame("timeseries_table"),
                         ),
+
+                        ui.busy_indicators.options(),
                     ),
 
                     ui.nav_panel('Crop maps', 
@@ -193,6 +195,10 @@ app_ui = ui.page_fluid(
                             output_widget('crop_map'),
                             # ui.output_ui('crop_map'),
                         ),
+
+                        # ui.div({'id': 'iframe-container'},
+                        #     ui.tags.iframe(src='https://woodwellrisk.github.io/drought-monitor', height='100%', width='100%')
+                        # )
                     ),
 
                     ui.nav_panel('Forecast map', 
@@ -203,36 +209,7 @@ app_ui = ui.page_fluid(
 
                     id='tab_menu'
                 ),
-
-
-                    # ui.output_text('country_filter_text'),
-                    # ui.output_text('country_name_text'),
-                    # ui.output_text('country_bbox_text'),
-                    # ui.output_text('crop_name_text'),
-
-                    # ui.div({'id': 'viz-test'},
-                    #     ui.include_js('drought-monitor/pages/index.js', method="inline"),
-                    # ),
-
-                    # ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
-                    #     ui.download_link("download_timeseries_link", 'Download timeseries')
-                    # ),
-                    # ui.div({'id': 'timeseries-container'},
-                    #     ui.div({'id': 'timeseries-toggle-container'},
-                    #         ui.input_checkbox("historical_checkbox", "Historical", True),
-                    #         ui.input_checkbox("forecast_checkbox", "Forecast", True),
-                    #     ),
-                    #     ui.card({'id': 'timeseries-inner-container'},
-                    #         ui.output_plot('timeseries', width='100%', height='100%'),
-                    #     ),
-                    # ),
-                    
-                    # ui.div({'id': 'download-csv-container', 'class': 'download-container'},
-                    #     ui.download_link("download_csv_link", 'Download CSV')
-                    # ),
-                    # ui.div({'id': 'timeseries-table-container'},
-                    #     ui.output_data_frame("timeseries_table"),
-                    # ),
+                
                 ),
             ),
         ),
@@ -268,9 +245,13 @@ def server(input: Inputs, output: Outputs, session: Session):
     h = reactive.value(None)
     f = reactive.value(None)
 
-    # these values represent the data clipped to a specific area
+    # these values represent the data clipped to a specific area, used for the timeseries figures
     historical_wb = reactive.value(None)
     forecast_wb = reactive.value(None)
+
+    # these values represent the data clipped to a specific area for the unweighted forecast map
+    unweighted_historical_wb = reactive.value(None)
+    unweighted_forecast_wb = reactive.value(None)
 
     # values for quickly storing and downloading figures and tables
     timeseries_to_save = reactive.value(None)
@@ -278,7 +259,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     add_download_links = reactive.value(True)
     crop_figure = reactive.value(None)
 
-    bounds_error = reactive.value('')
     display_bounds_error = reactive.value(False)
 
 
@@ -423,8 +403,6 @@ def server(input: Inputs, output: Outputs, session: Session):
             case 'wheat':
                 crop_layer.set(wheat)
                 crop_production.set(wheat_production)
-            # case _:
-            #     return
 
 
     @render.text
@@ -449,6 +427,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # on app start or page reload, these variables will be empty
         if(name == '' or crop == '' or historical is None or forecast is None):
+        # if(name == '' or crop == ''):
             return
 
         xmin, ymin, xmax, ymax = bounds.get()
@@ -467,19 +446,83 @@ def server(input: Inputs, output: Outputs, session: Session):
             display_bounds_error.set(False)
             historical_wb.set(historical)
             forecast_wb.set(forecast)
+            unweighted_historical_wb.set(historical)
+            unweighted_forecast_wb.set(forecast)
+
             return
-        else:
+        else: # we need to production weight the timeseries
             try:
                 historical = historical.rio.clip(crop_extent.geometry, all_touched=True, drop=True)
                 forecast = forecast.rio.clip(crop_extent.geometry, all_touched=True, drop=True)
 
+                # sometimes, this is silently failing when there is no data to show, but instead returns an empty dataset
+                if(historical.perc.isnull().all() or forecast.perc.isnull().all()):
+                    print('No data in bounds, but silently failing!')
+                    display_bounds_error.set(True)
+                    historical_wb.set(None)
+                    forecast_wb.set(None)
+                    unweighted_historical_wb.set(None)
+                    unweighted_forecast_wb.set(None)
+                    return
+
+                # but we don't need to production weight the forecast map data
+                unweighted_historical_wb.set(historical)
+                unweighted_forecast_wb.set(forecast)
+
+                # clip production data to country extent, then standardize
+                production = crop_production()
+                production = production.rio.write_crs(4236)
+                country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
+                standardized_production = country_level_production / country_level_production.sum(skipna=True)
+                standardized_production = standardized_production[['x', 'y', 'production']]
+
+                # multiply water balance data by standardized production values
+                historical = xr.merge([historical, standardized_production])
+                historical = historical * historical.production
+
+                forecast = xr.merge([forecast, standardized_production])
+                forecast['mean'] = forecast['mean'] * forecast.production
+                forecast['mode'] = forecast['mode'] * forecast.production
+                forecast['5%'] = forecast['5%'] * forecast.production
+                forecast['20%'] = forecast['20%'] * forecast.production
+                forecast['perc'] = forecast['perc'] * forecast.production
+                forecast['80%'] = forecast['80%'] * forecast.production
+                forecast['95%'] = forecast['95%'] * forecast.production
+
+                # next, multiply the water balance data by the number of rows in the dataset
+                # in this case, it is the number of rows in the first (and every individual) month
+                nrows_historical = historical.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@historical.time.values[0]) ").shape[0]
+                nrows_forecast = forecast.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@forecast.time.values[0]) ").shape[0]
+                print(f"NUMBER OF ROWS: {nrows_historical} {nrows_forecast}\n")
+                
+                historical *= nrows_historical
+                
+                forecast['mean'] = forecast['mean'] * nrows_forecast
+                forecast['mode'] = forecast['mode'] * nrows_forecast
+                forecast['5%'] = forecast['5%'] * nrows_forecast
+                forecast['20%'] = forecast['20%'] * nrows_forecast
+                forecast['perc'] = forecast['perc'] * nrows_forecast
+                forecast['80%'] = forecast['80%'] * nrows_forecast
+                forecast['95%'] = forecast['95%'] * nrows_forecast
+                
+                # lastly, drop the production row from the dataframes
+                historical = historical.drop_vars('production')
+                historical = historical[['time', 'x', 'y', 'perc']]
+
+                forecast = forecast.drop_vars('production')
+                forecast = forecast[['time', 'x', 'y', 'mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+
             except rioxarray.exceptions.NoDataInBounds:
                 print('No data in bounds!')
                 display_bounds_error.set(True)
-                # bounds_error.set(f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.')
                 historical_wb.set(None)
                 forecast_wb.set(None)
+                unweighted_historical_wb.set(None)
+                unweighted_forecast_wb.set(None)
                 return
+
+            except Exception as error:
+                print(error)
 
             display_bounds_error.set(False)
             historical_wb.set(historical)
@@ -495,22 +538,34 @@ def server(input: Inputs, output: Outputs, session: Session):
         if(crop == '' or name == ''):
             return
 
-        error_message = bounds_error()
         show_error = display_bounds_error()
         
-        if(error_message != '' or show_error):
+        if(show_error):
             ui.insert_ui(
-                ui.div({'id': 'bounds-error-container'},
+                ui.div({'class': 'bounds-error-container'},
                     ui.div({'class': 'bounds-error'},
-                        # error_message
-                        f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
+                        # f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
+                        'No water balance data to show. This is likely because the crop you chose is not grown in the country in question or the data resoultion is too low.'
+
                     ),
                 ),
                 selector='#forecast-map-container',
                 where='beforeEnd',
             )
+
+            ui.insert_ui(
+                ui.div({'class': 'bounds-error-container'},
+                    ui.div({'class': 'bounds-error'},
+                        # f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
+                        'No water balance data to show. This is likely because the crop you chose is not grown in the country in question or the data resoultion is too low.'
+
+                    ),
+                ),
+                selector='#timeseries-inner-container',
+                where='beforeEnd',
+            )
         else:
-            ui.remove_ui('#bounds-error-container')
+            ui.remove_ui('.bounds-error-container', multiple=True)
 
 
     @reactive.effect
@@ -534,60 +589,60 @@ def server(input: Inputs, output: Outputs, session: Session):
                 '5%': [], '20%': [], '80%': [], '95%': [],
                 })
         else:
-            # else, we need to check if we need to production-weight the timeseries
-            if(crop == '' or crop == 'none'):
-                pass
-            else:
-                # clip production data to country extent, then standardize
-                country = countries.query(" name == @name ")
-                production = production.rio.write_crs(4236)
-                country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
-                standardized_production = country_level_production / country_level_production.sum(skipna=True)
-                standardized_production = standardized_production[['x', 'y', 'production']]
+            # # else, we need to check if we need to production-weight the timeseries
+            # if(crop == '' or crop == 'none'):
+            #     pass
+            # else:
+            #     # clip production data to country extent, then standardize
+            #     country = countries.query(" name == @name ")
+            #     production = production.rio.write_crs(4236)
+            #     country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
+            #     standardized_production = country_level_production / country_level_production.sum(skipna=True)
+            #     standardized_production = standardized_production[['x', 'y', 'production']]
 
-                # multiply water balance data by standardized production values
-                historical = xr.merge([historical, standardized_production])
-                historical = historical * historical.production
+            #     # multiply water balance data by standardized production values
+            #     historical = xr.merge([historical, standardized_production])
+            #     historical = historical * historical.production
 
-                forecast = xr.merge([forecast, standardized_production])
-                forecast['mean'] = forecast['mean'] * forecast.production
-                forecast['mode'] = forecast['mode'] * forecast.production
-                forecast['5%'] = forecast['5%'] * forecast.production
-                forecast['20%'] = forecast['20%'] * forecast.production
-                forecast['perc'] = forecast['perc'] * forecast.production
-                forecast['80%'] = forecast['80%'] * forecast.production
-                forecast['95%'] = forecast['95%'] * forecast.production
+            #     forecast = xr.merge([forecast, standardized_production])
+            #     forecast['mean'] = forecast['mean'] * forecast.production
+            #     forecast['mode'] = forecast['mode'] * forecast.production
+            #     forecast['5%'] = forecast['5%'] * forecast.production
+            #     forecast['20%'] = forecast['20%'] * forecast.production
+            #     forecast['perc'] = forecast['perc'] * forecast.production
+            #     forecast['80%'] = forecast['80%'] * forecast.production
+            #     forecast['95%'] = forecast['95%'] * forecast.production
 
-                # next, multiply the water balance data by the number of rows in the dataset
-                # in this case, it is the number of rows in the first (and every individual) month
-                nrows_historical = historical.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@historical.time.values[0]) ").shape[0]
-                nrows_forecast = forecast.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@forecast.time.values[0]) ").shape[0]
-                print("NUMBER OF ROWS")
-                print(nrows_historical, nrows_forecast)
-                print()
+            #     # next, multiply the water balance data by the number of rows in the dataset
+            #     # in this case, it is the number of rows in the first (and every individual) month
+            #     nrows_historical = historical.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@historical.time.values[0]) ").shape[0]
+            #     nrows_forecast = forecast.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@forecast.time.values[0]) ").shape[0]
+            #     print("NUMBER OF ROWS")
+            #     print(nrows_historical, nrows_forecast)
+            #     print()
 
-                # assert(nrows_historical == nrows_forecast)
+            #     # assert(nrows_historical == nrows_forecast)
                 
-                historical *= nrows_historical
+            #     historical *= nrows_historical
                 
-                forecast['mean'] = forecast['mean'] * nrows_forecast
-                forecast['mode'] = forecast['mode'] * nrows_forecast
-                forecast['5%'] = forecast['5%'] * nrows_forecast
-                forecast['20%'] = forecast['20%'] * nrows_forecast
-                forecast['perc'] = forecast['perc'] * nrows_forecast
-                forecast['80%'] = forecast['80%'] * nrows_forecast
-                forecast['95%'] = forecast['95%'] * nrows_forecast
+            #     forecast['mean'] = forecast['mean'] * nrows_forecast
+            #     forecast['mode'] = forecast['mode'] * nrows_forecast
+            #     forecast['5%'] = forecast['5%'] * nrows_forecast
+            #     forecast['20%'] = forecast['20%'] * nrows_forecast
+            #     forecast['perc'] = forecast['perc'] * nrows_forecast
+            #     forecast['80%'] = forecast['80%'] * nrows_forecast
+            #     forecast['95%'] = forecast['95%'] * nrows_forecast
                 
-                # lastly, drop the production row from the dataframes
-                historical = historical.drop_vars('production')
-                historical = historical[['time', 'x', 'y', 'perc']]
+            #     # lastly, drop the production row from the dataframes
+            #     historical = historical.drop_vars('production')
+            #     historical = historical[['time', 'x', 'y', 'perc']]
 
-                forecast = forecast.drop_vars('production')
-                forecast = forecast[['time', 'x', 'y', 'mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+            #     forecast = forecast.drop_vars('production')
+            #     forecast = forecast[['time', 'x', 'y', 'mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
 
-                print("HISTORICAL:")
-                print(historical)
-                print()
+            #     print("HISTORICAL:")
+            #     print(historical)
+            #     print()
 
             # include just historical
             if(show_historical == True and show_forecast == False):
@@ -879,7 +934,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # @render_plotly
     @render.ui
-    @reactive.event(forecast_wb)
+    @reactive.event(unweighted_forecast_wb)
     def forecast_map(alt="a map showing the borders of a country of interest"):
 
         name = country_name()
