@@ -939,7 +939,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         name = country_name()
         country = countries.query(" name == @name ")
-        forecast = forecast_wb()
+        forecast = unweighted_forecast_wb()
 
         if(name == '' or forecast is None):
             return
