@@ -27,40 +27,53 @@ from utils import *
 
 # shiny run --reload drought.py
 
-# open historical and forecast data for both integration windows
-h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+updating = True
 
-# the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
-f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
-f12 = f12[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+if updating:
+    h3 = None
+    h12 = None
+    f3 = None
+    f12 = None
 
-# open country boundary layer
-countries = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
+    countries = gpd.GeoDataFrame(columns=['name', 'geometry'])
 
-# open crop polygon layers
-barley = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/barley.parquet')
-cocoa = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cocoa.parquet')
-coffee = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/coffee.parquet')
-cotton = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cotton.parquet')
-maize = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/maize.parquet')
-rice = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/rice.parquet')
-soy = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/soybean.parquet')
-sugarcane = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/sugarcane.parquet')
-wheat = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/wheat.parquet')
+if not updating:
+    # open historical and forecast data for both integration windows
+    h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+    h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+    f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+    f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
 
-# open crop raster layers
-barley_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_barley.tif')
-cocoa_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cocoa.tif')
-coffee_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_coffee-all.tif')
-cotton_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cotton.tif')
-maize_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_maize.tif')
-rice_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_rice.tif')
-soy_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_soybean.tif')
-sugarcane_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif')
-wheat_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
+    # the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
+    # f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+    # f12 = f12[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+    f3 = f3[['5%', '20%', 'perc', '80%', '95%']]
+    f12 = f12[['5%', '20%', 'perc', '80%', '95%']]
+
+    # open country boundary layer
+    countries = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
+
+    # open crop polygon layers
+    barley = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/barley.parquet')
+    cocoa = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cocoa.parquet')
+    coffee = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/coffee.parquet')
+    cotton = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cotton.parquet')
+    maize = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/maize.parquet')
+    rice = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/rice.parquet')
+    soy = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/soybean.parquet')
+    sugarcane = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/sugarcane.parquet')
+    wheat = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/wheat.parquet')
+
+    # open crop raster layers
+    barley_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_barley.tif')
+    cocoa_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cocoa.tif')
+    coffee_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_coffee-all.tif')
+    cotton_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cotton.tif')
+    maize_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_maize.tif')
+    rice_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_rice.tif')
+    soy_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_soybean.tif')
+    sugarcane_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif')
+    wheat_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -95,6 +108,7 @@ app_ui = ui.page_fluid(
 
         # wrapper container for sidebar and main panel
         ui.div({'id': 'container'},
+
             # sidebar
             ui.div({'id': 'sidebar-container', 'class': 'show'},
                 ui.div({'id': 'sidebar'}, 
@@ -127,43 +141,6 @@ app_ui = ui.page_fluid(
 
             # figures and tables
             ui.div({"id": "main-container"},
-                ui.panel_conditional(
-                    "input.about_button > input.close_about_button",
-                    ui.div({'id': 'about-inner-container'},
-                        ui.div({'id': 'about-header'},
-                            ui.input_action_button("close_about_button", "X"),
-                        ),
-                        ui.div({'id': 'about-body'},
-                            ui.markdown(
-                                """
-                                ## Water balance
-                                This site displays near real-time moisture anomalies along with an experimental 6-month forecast. 
-                                Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. 
-                                Values close to 0.5 represent normal conditions. Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. 
-                                Moisture anomalies are monitored on a monthly basis, from 2001 to present.
-
-
-                                ## Applications
-                                An integration window of 3 months is well suited for applications in agriculture, where shorter cycles of water balance are important. 
-                                For sectors like the hydropower industry where longer-term patterns in water balance are more relevant, an integration window of 12 months is more appropriate.
-
-
-                                ## Data sources
-                                The water balance layers were created using <a href="https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en" target="_blank">ERA5 monthly averaged data</a>.
-
-                                National and state outlines were downloaded from <a href="https://www.naturalearthdata.com/" target="_blank">Natural Earth</a>. 
-                                Crop masks were created using a modified version of the <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/SWPENT" target="_blank">SPAM 2020</a> combined rainfed- and irrigated production data for specific crops.
-
-                                ## Woodwell Risk
-                                You can find out more about the Woodwell Risk group and the work that we do on our <a href="https://www.woodwellclimate.org/research-area/risk/" target="_blank">website</a>. 
-                                Whenever possible, we publish our <a href="https://woodwellrisk.github.io/" target="_blank">methodologies</a> and <a href="https://github.com/WoodwellRisk" target="_blank">code</a> on GitHub.
-                                """
-                            ),
-                        ),
-                    ),
-                    {'id': 'about-container'},
-                ), 
-
                 ui.div({'id': 'main'},
                 ui.navset_tab(
                     ui.nav_panel('Timeseries', 
@@ -210,6 +187,49 @@ app_ui = ui.page_fluid(
                     id='tab_menu'
                 ),
                 
+                ),
+            ),
+
+            ui.panel_conditional(
+                "input.about_button > input.close_about_button",
+                ui.div({'id': 'about-inner-container'},
+                    ui.div({'id': 'about-header'},
+                        ui.input_action_button("close_about_button", "X"),
+                    ),
+                    ui.div({'id': 'about-body'},
+                        ui.markdown(
+                            """
+                            ## Water balance
+                            This site displays near real-time moisture anomalies along with an experimental 6-month forecast. 
+                            Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. 
+                            Values close to 0.5 represent normal conditions. Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. 
+                            Moisture anomalies are monitored on a monthly basis, from 2001 to present.
+
+
+                            ## Applications
+                            An integration window of 3 months is well suited for applications in agriculture, where shorter cycles of water balance are important. 
+                            For sectors like the hydropower industry where longer-term patterns in water balance are more relevant, an integration window of 12 months is more appropriate.
+
+
+                            ## Data sources
+                            The water balance layers were created using <a href="https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en" target="_blank">ERA5 monthly averaged data</a>.
+
+                            National and state outlines were downloaded from <a href="https://www.naturalearthdata.com/" target="_blank">Natural Earth</a>. 
+                            Crop masks were created using a modified version of the <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/SWPENT" target="_blank">SPAM 2020</a> combined rainfed- and irrigated production data for specific crops.
+
+                            ## Woodwell Risk
+                            You can find out more about the Woodwell Risk group and the work that we do on our <a href="https://www.woodwellclimate.org/research-area/risk/" target="_blank">website</a>. 
+                            Whenever possible, we publish our <a href="https://woodwellrisk.github.io/" target="_blank">methodologies</a> and <a href="https://github.com/WoodwellRisk" target="_blank">code</a> on GitHub.
+                            """
+                        ),
+                    ),
+                ),
+                {'id': 'about-container'},
+            ), 
+            
+            ui.div({'id': 'update-message-container'},
+                ui.div({'id': 'update-message'}, 
+                    'The website is currently being updated. Please check back later.'
                 ),
             ),
         ),
@@ -481,8 +501,6 @@ def server(input: Inputs, output: Outputs, session: Session):
                 historical = historical * historical.production
 
                 forecast = xr.merge([forecast, standardized_production])
-                forecast['mean'] = forecast['mean'] * forecast.production
-                forecast['mode'] = forecast['mode'] * forecast.production
                 forecast['5%'] = forecast['5%'] * forecast.production
                 forecast['20%'] = forecast['20%'] * forecast.production
                 forecast['perc'] = forecast['perc'] * forecast.production
@@ -497,8 +515,6 @@ def server(input: Inputs, output: Outputs, session: Session):
                 
                 historical *= nrows_historical
                 
-                forecast['mean'] = forecast['mean'] * nrows_forecast
-                forecast['mode'] = forecast['mode'] * nrows_forecast
                 forecast['5%'] = forecast['5%'] * nrows_forecast
                 forecast['20%'] = forecast['20%'] * nrows_forecast
                 forecast['perc'] = forecast['perc'] * nrows_forecast
@@ -510,7 +526,9 @@ def server(input: Inputs, output: Outputs, session: Session):
                 historical = historical[['time', 'x', 'y', 'perc']]
 
                 forecast = forecast.drop_vars('production')
-                forecast = forecast[['time', 'x', 'y', 'mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+                # forecast = forecast[['time', 'x', 'y', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+                forecast = forecast[['time', 'x', 'y', '5%', '20%', 'perc', '80%', '95%']]
+
 
             except rioxarray.exceptions.NoDataInBounds:
                 print('No data in bounds!')
@@ -584,73 +602,23 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # if the xarray data is empty (on initial load) or if the toggles controlling which datasets to show are both false, then return empty dataframe
         if((forecast is None and historical is None) or (show_forecast == False and show_historical == False)):
+            # df = pd.DataFrame({
+            #     'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
+            #     '5%': [], '20%': [], '80%': [], '95%': [],
+            # })
             df = pd.DataFrame({
-                'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
+                'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [],
                 '5%': [], '20%': [], '80%': [], '95%': [],
-                })
+            })
         else:
-            # # else, we need to check if we need to production-weight the timeseries
-            # if(crop == '' or crop == 'none'):
-            #     pass
-            # else:
-            #     # clip production data to country extent, then standardize
-            #     country = countries.query(" name == @name ")
-            #     production = production.rio.write_crs(4236)
-            #     country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
-            #     standardized_production = country_level_production / country_level_production.sum(skipna=True)
-            #     standardized_production = standardized_production[['x', 'y', 'production']]
-
-            #     # multiply water balance data by standardized production values
-            #     historical = xr.merge([historical, standardized_production])
-            #     historical = historical * historical.production
-
-            #     forecast = xr.merge([forecast, standardized_production])
-            #     forecast['mean'] = forecast['mean'] * forecast.production
-            #     forecast['mode'] = forecast['mode'] * forecast.production
-            #     forecast['5%'] = forecast['5%'] * forecast.production
-            #     forecast['20%'] = forecast['20%'] * forecast.production
-            #     forecast['perc'] = forecast['perc'] * forecast.production
-            #     forecast['80%'] = forecast['80%'] * forecast.production
-            #     forecast['95%'] = forecast['95%'] * forecast.production
-
-            #     # next, multiply the water balance data by the number of rows in the dataset
-            #     # in this case, it is the number of rows in the first (and every individual) month
-            #     nrows_historical = historical.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@historical.time.values[0]) ").shape[0]
-            #     nrows_forecast = forecast.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@forecast.time.values[0]) ").shape[0]
-            #     print("NUMBER OF ROWS")
-            #     print(nrows_historical, nrows_forecast)
-            #     print()
-
-            #     # assert(nrows_historical == nrows_forecast)
-                
-            #     historical *= nrows_historical
-                
-            #     forecast['mean'] = forecast['mean'] * nrows_forecast
-            #     forecast['mode'] = forecast['mode'] * nrows_forecast
-            #     forecast['5%'] = forecast['5%'] * nrows_forecast
-            #     forecast['20%'] = forecast['20%'] * nrows_forecast
-            #     forecast['perc'] = forecast['perc'] * nrows_forecast
-            #     forecast['80%'] = forecast['80%'] * nrows_forecast
-            #     forecast['95%'] = forecast['95%'] * nrows_forecast
-                
-            #     # lastly, drop the production row from the dataframes
-            #     historical = historical.drop_vars('production')
-            #     historical = historical[['time', 'x', 'y', 'perc']]
-
-            #     forecast = forecast.drop_vars('production')
-            #     forecast = forecast[['time', 'x', 'y', 'mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
-
-            #     print("HISTORICAL:")
-            #     print(historical)
-            #     print()
-
             # include just historical
             if(show_historical == True and show_forecast == False):
                 df = historical.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df['perc'] = df['perc'].astype(float).round(4)
-                df['agree'] = np.nan
+                # df['agree'] = np.nan
                 df['time'] = df['time'].dt.date
-                df.columns = ['time', 'percentile', 'agreement']
+                # df.columns = ['time', 'percentile', 'agreement']
+                df.columns = ['time', 'percentile']
                 df['country'] = name
                 df['crop'] = crop
                 df['type'] = 'historical'
@@ -660,36 +628,40 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['80%'] = np.nan
                 df['95%'] = np.nan
                 
-                df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                # df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+
             
             # include just forecast
             elif(show_historical == False and show_forecast == True):
                 df = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 # this is the 50% line in the forecast data
                 df['perc'] = df['perc'].astype(float).round(4)
-                df['mean'] = df['mean'].astype(float).round(4)
-                df['mode'] = df['mode'].astype(float).round(4)
-                df['agree'] = df['agree'].astype(float).round(4)
+                # df['agree'] = df['agree'].astype(float).round(4)
                 df['5%'] = df['5%'].astype(float).round(4)
                 df['20%'] = df['20%'].astype(float).round(4)
                 df['80%'] = df['80%'].astype(float).round(4)
                 df['95%'] = df['95%'].astype(float).round(4)
                 df['time'] = df['time'].dt.date
-                df.columns = ['time', 'mean', 'mode', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
+                # df.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
+                df.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df['country'] = name
                 df['crop'] = crop
                 df['type'] = 'forecast'
                 df['window'] = int(window_size)
                 
-                df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                # df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+
 
             # else both are active, include both
             else:
                 df_historical = historical.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df_historical['perc'] = df_historical['perc'].astype(float).round(4)
-                df_historical['agree'] = np.nan
+                # df_historical['agree'] = np.nan
                 df_historical['time'] = df_historical['time'].dt.date
-                df_historical.columns = ['time', 'percentile', 'agreement']
+                # df_historical.columns = ['time', 'percentile', 'agreement']
+                df_historical.columns = ['time', 'percentile']
                 df_historical['country'] = name
                 df_historical['crop'] = crop
                 df_historical['type'] = 'historical'
@@ -702,20 +674,20 @@ def server(input: Inputs, output: Outputs, session: Session):
 
                 df_forecast = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df_forecast['perc'] = df_forecast['perc'].astype(float).round(4)
-                df_forecast['mean'] = df_forecast['mean'].astype(float).round(4)
-                df_forecast['mode'] = df_forecast['mode'].astype(float).round(4)
-                df_forecast['agree'] = df_forecast['agree'].astype(float).round(4)
+                # df_forecast['agree'] = df_forecast['agree'].astype(float).round(4)
                 df_forecast['5%'] = df_forecast['5%'].astype(float).round(4)
                 df_forecast['20%'] = df_forecast['20%'].astype(float).round(4)
                 df_forecast['80%'] = df_forecast['80%'].astype(float).round(4)
                 df_forecast['95%'] = df_forecast['95%'].astype(float).round(4)
                 df_forecast['time'] = df_forecast['time'].dt.date
-                df_forecast.columns = ['time', 'mean', 'mode', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
+                # df_forecast.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
+                df_forecast.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast['country'] = name
                 df_forecast['crop'] = crop
                 df_forecast['type'] = 'forecast'
                 df_forecast['window'] = int(window_size)
-                df_forecast = df_forecast[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
+                # df_forecast = df_forecast[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
+                df_forecast = df_forecast[['country', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']]
 
                 df = pd.concat([df_historical, df_forecast]).sort_values('time', ascending=False).reset_index(drop=True)
 

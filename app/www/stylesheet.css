@@ -6,6 +6,7 @@
     --dark-gray: #393a3d;
     --black: #1b1e23;
     --white: #f7f7f7;
+    --red: #B71C1C;
     --bs-input-outline: #8d959e;
 
     --border-color: var(--black);
@@ -45,6 +46,7 @@ body {
 #layout {
     display: flex;
     flex-direction: column;
+    position: relative;
     width: 100vw;
     min-width: 250px;
     height: 100vh;
@@ -199,9 +201,30 @@ body {
 }
 
 #container {
+    position: relative;
     width: 100%;
     height: calc(100% - var(--navbar-height));
     display: flex;
+}
+
+#update-message-container {
+    position: absolute;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    background-color: var(--white);
+    justify-content: center;
+    align-items: center;
+}
+
+#update-message {
+    border: 1px solid var(--red);
+    color: var(--red);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    margin: 1rem;
 }
 
 .well {
@@ -574,8 +597,8 @@ select option:active, select option:checked, select option:focus, select option:
 }
 
 .bounds-error {
-    border: 1px solid #B71C1C;
-    color: #B71C1C;
+    border: 1px solid var(--red);
+    color: var(--red);
     width: 70%;
     margin: 10px auto;
 }
@@ -646,6 +669,11 @@ shiny-data-frame#timeseries_table {
         display: inline;
         margin: 0 5px;
     } */
+
+    #about-container {
+        inset: 0rem;
+        border-top: 0rem;
+    }
 
     #sidebar-container {
         display: none;
