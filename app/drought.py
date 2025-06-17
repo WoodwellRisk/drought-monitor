@@ -27,7 +27,7 @@ from utils import *
 
 # shiny run --reload drought.py
 
-updating = True
+updating = False
 
 if updating:
     h3 = None
@@ -227,11 +227,11 @@ app_ui = ui.page_fluid(
                 {'id': 'about-container'},
             ), 
             
-            ui.div({'id': 'update-message-container'},
-                ui.div({'id': 'update-message'}, 
-                    'The website is currently being updated. Please check back later.'
-                ),
-            ),
+            # ui.div({'id': 'update-message-container'},
+            #     ui.div({'id': 'update-message'}, 
+            #         'The website is currently being updated. Please check back later.'
+            #     ),
+            # ),
         ),
     ),
 )
@@ -257,7 +257,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     
     # this is used in the the filename for downloading plots and tables, but
     # may also be used later in slider values
-    forecast_date = '04-2025'
+    forecast_date = None if updating else pd.to_datetime(sorted(f3.time.values)[0]).strftime('%Y-%m-%d')
 
     # these values change the data between the 3-month and 12-month integration windows
     integration_window = reactive.value(input.window_select)
@@ -670,7 +670,8 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_historical['20%'] = np.nan
                 df_historical['80%'] = np.nan
                 df_historical['95%'] = np.nan
-                df_historical = df_historical[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
+                # df_historical = df_historical[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
+                df_historical = df_historical[['country', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']]
 
                 df_forecast = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df_forecast['perc'] = df_forecast['perc'].astype(float).round(4)
@@ -738,6 +739,9 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # df = update_dataframe()
         df = table_to_save()
+        print(df.head(20)[['country', 'crop', 'time', 'window', 'percentile']])
+        print()
+
 
         timeseries_color = '#1b1e23'
         high_certainty_color = '#f4c1c1'
@@ -759,8 +763,13 @@ def server(input: Inputs, output: Outputs, session: Session):
         # if both are true, we need to stitch together the historical and forecast timeseries
         if(show_historical == True and show_forecast == True):
             df_historical = df.query(" type == 'historical' ")
+            print(df_historical[['country', 'crop', 'time', 'window', 'percentile']])
+            print()
+
             # this is the 6-month forecast plus the last data entry for historical data
             df_forecast = df.iloc[0:7, :]
+            print(df_forecast[['country', 'crop', 'time', 'window', 'percentile']])
+            print()
             
             # forecast data needs to be plotted first because of the uncertainty bounds
             ax.fill_between(df_forecast['time'], df_forecast['5%'], df_forecast['95%'], color=high_certainty_color)
@@ -935,7 +944,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         zoom = 11 - np.log(max_bounds)
 
         country_forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
-        df = country_forecast['mean'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
+        df = country_forecast['perc'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
         df.columns = ['time', 'y', 'x', 'Percentile']
 
         forecast_dates = df.time.unique().tolist()
