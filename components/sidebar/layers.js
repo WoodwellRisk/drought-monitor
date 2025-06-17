@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
-import { Colorbar, Tag, Slider } from '@carbonplan/components'
+import { Colorbar, Filter, Tag, Slider } from '@carbonplan/components'
 import { SidebarDivider } from '@carbonplan/layouts'
 import Info from './info'
 
@@ -24,6 +24,13 @@ function Layers() {
   const setMonthIdx = useStore((state) => state.setMonthIdx)
   const time = useStore((state) => state.time)
   const setTime = useStore((state) => state.setTime)
+
+  // const waterBalance = useStore((state) => state.waterBalance)
+  // const cropValues = useStore((state) => state.cropValues)
+  // const setCropValues = useStore((state) => state.setCropValues)
+  // const cropLayer = useStore((state) => state.cropLayer)
+  // const setCropLayer = useStore((state) => state.setCropLayer)
+  // const setShowCropLayer = useStore((state) => state.setShowCropLayer)
 
   const crops = useStore((state) => state.crops)
   const cropValues = useStore((state) => state.cropValues)
@@ -160,7 +167,7 @@ function Layers() {
 
       <Box sx={sx.group}>
         <Box as='h2' variant='styles.h4' className='var-subtitle'>
-          {'Drought Monitor'} <Info>
+          {'Water balance'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
                 Near real-time monitor of moisture anomalies. Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. Values close to 50 represent normal conditions.
@@ -188,6 +195,24 @@ function Layers() {
         >
           Water balance
         </Tag>
+
+        {/* <Box className='var-layers'>
+            {['Historical', 'Forecast'].map((waterBalance) => {
+              return (
+                <Tag
+                  key={waterBalance}
+                  id={`tag-${waterBalance}`}
+                  color={'primary'}
+                  value={waterBalance}
+                  // onClick={handleCropClick}
+                  sx={{ mr: [2], mb: [2], borderColor: 'primary', width: 'max-content', }}
+                >
+                  {waterBalance}
+                </Tag>
+              )
+            }
+            )}
+          </Box> */}
 
         <Box sx={{ ...sx.label, }}>
           <Colorbar

@@ -26,14 +26,14 @@ const useStore = create((set, get) => ({
     updatingData: false,
 
     // general / raster state variables
-    variable: 'drought',
+    variable: 'h3',
     setVariable: (variable) => set({ variable }),
 
     opacity: 1,
     setOpacity: (opacity) => set({ opacity }),
 
-    minDate: '2001-01-01',
-    maxDate: '2025-02-01',
+    minDate: '1991-01-01',
+    maxDate: '2025-05-01',
 
     minYear: () => {
         const {minDate} = get()
@@ -44,7 +44,7 @@ const useStore = create((set, get) => ({
         return `${ new Date(maxDate + 'T00:00:00').getFullYear() }`
     },
 
-    year: '2001',
+    year: '1991',
     setYear: (year) => set({ year }),
 
     monthValues: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],

@@ -38,6 +38,8 @@ const Map = ({ mobile }) => {
   const showStatesOutline = useStore((state) => state.showStatesOutline)
   const showWarning = useStore((state) => state.showWarning)
 
+  let band = 1.5;
+
   const sx = {
     label: {
       fontFamily: 'mono',
@@ -155,8 +157,8 @@ const Map = ({ mobile }) => {
             display={display}
             opacity={opacity}
             mode={'texture'}
-            source={`https://storage.googleapis.com/drought-monitor/zarr/${variable}.zarr`}
-            variable={variable}
+            source={`https://storage.googleapis.com/drought-monitor/zarr/test.zarr`}
+            variable={'perc'}
             selector={{ time }}
             regionOptions={{ setData: handleRegionData, selector: {} }}
           />
