@@ -50,9 +50,14 @@ function Layers() {
 
   const sx = {
     group: {
-      my: [3],
+      mt: [2, 2, 3],
+      mb: [3],
       pl: [0, 4, 5, 6],
       pr: [0, 5, 5, 6],
+      fontSize: [4, 4, 4, 5],
+      fontFamily: 'heading',
+      fontWeight: 'heading',
+      lineHeight: 'h3',
       width: '100%',
     },
     label: {
@@ -135,10 +140,11 @@ function Layers() {
   }, [year, month])
 
   return (
-    <Box sx={{pt: [2]}}>
+    <Box>
       <Box sx={sx.group}>
-        <Box sx={{ mt: -3 }} className='var-container'>
-          <Box as='h2' variant='styles.h4' className='var-title'>
+        <Box sx={{ mt: 0 }} className='var-container'>
+          {/* <Box as='h2' variant='styles.h4' className='var-title'> */}
+          <Box className='var-title'>
             Crops <Info>
               Select any of the crops below to see an overlay of where it is grown.
             </Info>
@@ -166,7 +172,7 @@ function Layers() {
       <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
       <Box sx={sx.group}>
-        <Box as='h2' variant='styles.h4' className='var-subtitle'>
+        <Box sx={{mb: [2]}} className='var-subtitle'>
           {'Water balance'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
@@ -213,6 +219,26 @@ function Layers() {
             }
             )}
           </Box> */}
+
+        <Box sx={{mt: [2], mb: [2]}} className='var-subtitle'>
+          {'Integration window'} <Info>
+            <Box className='layer-description' sx={sx.data_description}>
+              <Box>
+                The number of months taken into account when calculating water balance anomalies.
+              </Box>
+            </Box>
+          </Info>
+        </Box>
+
+        <Tag
+          color={'red'}
+          value={updatingData == true ? false : showDrought}
+          onClick={handleDroughtChange}
+          sx={{ mr: [2], mb: [4], borderColor: 'red', width: 'max-content' }}
+          disabled={updatingData}
+        >
+          Integration window
+        </Tag>
 
         <Box sx={{ ...sx.label, }}>
           <Colorbar

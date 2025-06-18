@@ -26,7 +26,7 @@ const useStore = create((set, get) => ({
     updatingData: false,
 
     // general / raster state variables
-    variable: 'h3',
+    variable: 'perc',
     setVariable: (variable) => set({ variable }),
 
     opacity: 1,
