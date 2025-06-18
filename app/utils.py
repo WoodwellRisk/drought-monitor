@@ -14,6 +14,25 @@ def shift_data(ds):
     return ds
 
 
+def process_dataset(dataset):
+    """
+    Take in an Xarray dataset, rename the latitude and longitude columns, and shift the latitudes by 180 degrees.
+    """
+    if('longitude' in dataset.coords and 'latitude' in dataset.coords):
+        dataset = dataset.rename({ 'longitude':'x', 'latitude':'y'})
+    
+    if('L' in dataset.coords):
+        dataset = dataset.rename({ 'L':'time'})
+    
+    if('50%' in dataset.data_vars):
+        dataset = dataset.rename({ '50%':'perc'})
+    
+    dataset.rio.write_crs("epsg:4326", inplace=True)
+    dataset = shift_data(dataset)
+
+    return dataset
+
+
 def open_production_data(path):
     """
     Read in a crop production raster, rename the band data, and shift the latitude and longitude columns 
