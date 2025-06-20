@@ -1,5 +1,5 @@
 import { Box } from 'theme-ui'
-import { SidebarDivider } from '@carbonplan/layouts'
+import SidebarDivider from './sidebar-divider'
 
 import Layers from './layers'
 import ExpandingSection from './expanding-section'
@@ -68,7 +68,7 @@ const Sidebar = () => {
     <Box sx={sx['sidebar-container']}>
       <Box id='sidebar' sx={{ position: 'relative', flex: 1, overflowY: 'scroll', }} >
         <Layers />
-        <SidebarDivider sx={{ width: '100%', my: 4 }} />
+        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
         <ExpandingSection 
           label='Charts' 
@@ -82,12 +82,12 @@ const Sidebar = () => {
             </Box>
           )}
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', my: 4 }} /> 
+        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} /> 
 
         <ExpandingSection label='Overlays' expanded={showOverlays} setExpanded={setShowOverlays}>
           <Overlays />
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', mt: 4 }} />
+        <SidebarDivider sx={{ width: '100%', ml: 0, mt: 4 }} />
 
       </Box>
 

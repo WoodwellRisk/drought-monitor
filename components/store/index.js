@@ -29,6 +29,12 @@ const useStore = create((set, get) => ({
     variable: 'perc',
     setVariable: (variable) => set({ variable }),
 
+    windowOptions: { '3': true, '12': false, },
+    setWindowOptions: (windowOptions) => set({ windowOptions }),
+
+    window: '3',
+    setWindow: (window) => set({ window }),
+
     opacity: 1,
     setOpacity: (opacity) => set({ opacity }),
 

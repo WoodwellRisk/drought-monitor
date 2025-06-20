@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react'
 import { Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Colorbar, Filter, Tag, Slider } from '@carbonplan/components'
-import { SidebarDivider } from '@carbonplan/layouts'
+import SidebarDivider from './sidebar-divider'
 import Info from './info'
 
 import useStore from '../store/index'
@@ -11,6 +11,9 @@ function Layers() {
   const colormapName = useStore((state) => state.colormapName)
   const colormap = useThemedColormap(colormapName)
 
+  const windowOptions = useStore((state) => state.windowOptions)
+  const setWindowOptions = useStore((state) => state.setWindowOptions)
+  const setWindow = useStore((state) => state.setWindow)
   const minDate = useStore((state) => state.minDate)
   const maxDate = useStore((state) => state.maxDate)
   const minYear = useStore((state) => state.minYear)()
@@ -106,6 +109,11 @@ function Layers() {
     }
   }
 
+  const handleWindowClick = (event) => {
+    let windowLabel = event.target.innerText;
+    setWindow(windowLabel.substring(0, windowLabel.indexOf('-')))
+  }
+
   const handleYearChange = (event) => {
     setYear(event.target.value)
   }
@@ -142,7 +150,7 @@ function Layers() {
   return (
     <Box>
       <Box sx={sx.group}>
-        <Box sx={{ mt: 0 }} className='var-container'>
+        <Box sx={{ pt: 2 }} className='var-container'>
           {/* <Box as='h2' variant='styles.h4' className='var-title'> */}
           <Box className='var-title'>
             Crops <Info>
@@ -169,7 +177,7 @@ function Layers() {
           </Box>
         </Box>
       </Box>
-      <SidebarDivider sx={{ width: '100%', my: 4 }} />
+      <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
       <Box sx={sx.group}>
         <Box sx={{mb: [2]}} className='var-subtitle'>
@@ -196,7 +204,7 @@ function Layers() {
           color={'red'}
           value={updatingData == true ? false : showDrought}
           onClick={handleDroughtChange}
-          sx={{ mr: [2], mb: [4], borderColor: 'red', width: 'max-content' }}
+          sx={{ mr: [2], mb: [3], borderColor: 'red', width: 'max-content' }}
           disabled={updatingData}
         >
           Water balance
@@ -230,19 +238,18 @@ function Layers() {
           </Info>
         </Box>
 
-        <Tag
-          color={'red'}
-          value={updatingData == true ? false : showDrought}
-          onClick={handleDroughtChange}
-          sx={{ mr: [2], mb: [4], borderColor: 'red', width: 'max-content' }}
-          disabled={updatingData}
-        >
-          Integration window
-        </Tag>
+        <Filter
+          values={windowOptions}
+          setValues={setWindowOptions}
+          labels={{ 3: '3-month', 12: '12-month' }}
+          multiSelect={false}
+          onClick={handleWindowClick}
+          sx={{ mr: [2], mb: [4], borderColor: 'primary', width: 'max-content', }}
+        />
 
-        <Box sx={{ ...sx.label, }}>
+        <Box sx={sx.label}>
           <Colorbar
-            sx={{ width: '250px', display: 'inline-block', flexShrink: 1, }}
+            sx={{ width: '100%', display: 'inline-block', flexShrink: 1, }}
             sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
             width='100%'
             colormap={colormap}

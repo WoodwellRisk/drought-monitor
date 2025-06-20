@@ -1,8 +1,7 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useEffect } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
-import { Dimmer } from '@carbonplan/components'
 import Ruler from './ruler'
 import ZoomReset from './zoom-reset'
 import TimeWarning from './time-warning'
@@ -20,6 +19,7 @@ const Map = ({ mobile }) => {
   const bounds = useStore((state) => state.bounds)
 
   const variable = useStore((state) => state.variable)
+  const window = useStore((state) => state.window)
   const maxDate = useStore((state) => state.maxDate)
   const time = useStore((state) => state.time)
   const opacity = useStore((state) => state.opacity)
@@ -37,8 +37,6 @@ const Map = ({ mobile }) => {
   const showCountriesOutline = useStore((state) => state.showCountriesOutline)
   const showStatesOutline = useStore((state) => state.showStatesOutline)
   const showWarning = useStore((state) => state.showWarning)
-
-  let band = 1.5;
 
   const sx = {
     label: {
@@ -63,6 +61,10 @@ const Map = ({ mobile }) => {
     [setRegionData, setRegionDataLoading]
   )
 
+  useEffect(() => {
+    console.log(window)
+  }, [window])
+
   return (
     <Box ref={container} sx={{ flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
       <MapContainer zoom={zoom} maxZoom={maxZoom} center={center} maxBounds={bounds} >
@@ -74,10 +76,10 @@ const Map = ({ mobile }) => {
 
         {showStatesOutline && (
           <Line
-            color={theme.rawColors.primary}
+            color={'gray'}
             source={'https://storage.googleapis.com/drought-monitor/vector/states'}
             variable={'states'}
-            width={1}
+            width={zoom < 3.5 ? 0.5 : 1}
           />
         )}
 
@@ -86,7 +88,7 @@ const Map = ({ mobile }) => {
             color={theme.rawColors.primary}
             source={'https://storage.googleapis.com/drought-monitor/vector/countries'}
             variable={'countries'}
-            width={1}
+            width={showStatesOutline && zoom > 3.5 ? 1.5 : 1}
           />
         )}
 
@@ -151,13 +153,13 @@ const Map = ({ mobile }) => {
 
         {new Date(time + 'T00:00:00') <= new Date(maxDate + 'T00:00:00') && !updatingData && (
           <Raster
-            key={variable}
+            key={`${variable}-${window}`}
             colormap={colormap}
             clim={clim}
             display={display}
             opacity={opacity}
             mode={'texture'}
-            source={`https://storage.googleapis.com/drought-monitor/zarr/h3-viz.zarr`}
+            source={`https://storage.googleapis.com/drought-monitor/zarr/h${window}-viz.zarr`}
             variable={variable}
             selector={{ time }}
             regionOptions={{ setData: handleRegionData, selector: {} }}
@@ -176,17 +178,6 @@ const Map = ({ mobile }) => {
         <Router />
 
       </MapContainer>
-
-      {!mobile && (<Dimmer
-        sx={{
-          display: ['initial', 'initial', 'initial', 'initial'],
-          position: 'absolute',
-          color: 'primary',
-          right: [70],
-          bottom: [20, 20, 20, 20],
-        }}
-      />
-      )}
 
     </Box>
   )
