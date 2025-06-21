@@ -20,9 +20,8 @@ const Sidebar = () => {
     'sidebar-container': {
       maxWidth: [
         0,
+        '300px',
         '350px',
-        '350px',
-        '400px',
       ],
       height: '100%',
       flexBasis: '100%',
