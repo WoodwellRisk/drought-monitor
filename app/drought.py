@@ -86,7 +86,8 @@ app_ui = ui.page_fluid(
      ui.tags.head(
         ui.include_css(static_dir / 'stylesheet.css'),        
         ui.include_js('./scripts/reset-sidebar-visibility.js', method='inline'),
-        ui.include_js('./scripts/settings-button-click.js', method='inline'),
+        ui.include_js('./scripts/sidebar-visibility.js', method='inline'),
+
     ),
 
     ui.div({'id': 'layout'},
@@ -100,8 +101,8 @@ app_ui = ui.page_fluid(
             ),
             ui.div({'id': 'menu-container'},
                 ui.div({'id': 'menu-inner-container'},
-                ui.input_action_button("about_button", "About",),
-                ui.input_action_button("settings_button", "Settings", onclick="onSettingsClick()"),
+                ui.input_action_button('about_button', 'About',),
+                ui.input_action_button('settings_button', 'Settings', disabled=True),
                 ),
             ),
         ),
@@ -142,50 +143,46 @@ app_ui = ui.page_fluid(
             # figures and tables
             ui.div({"id": "main-container"},
                 ui.div({'id': 'main'},
-                ui.navset_tab(
-                    ui.nav_panel('Timeseries', 
-                        ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
-                            ui.download_link("download_timeseries_link", 'Download timeseries')
-                        ),
-                        ui.div({'id': 'timeseries-container'},
-                            ui.div({'id': 'timeseries-toggle-container'},
-                                ui.input_checkbox("historical_checkbox", "Historical", True),
-                                ui.input_checkbox("forecast_checkbox", "Forecast", True),
-                            ),
-                            ui.card({'id': 'timeseries-inner-container'},
-                                ui.output_plot('timeseries', width='100%', height='100%'),
-                            ),
-                        ),
+                    ui.navset_tab(
                         
-                        ui.div({'id': 'download-csv-container', 'class': 'download-container'},
-                            ui.download_link("download_csv_link", 'Download CSV')
-                        ),
-                        ui.div({'id': 'timeseries-table-container'},
-                            ui.output_data_frame("timeseries_table"),
+                        ui.nav_panel('Historical data', 
+                            ui.div({'id': 'iframe-container'},
+                                ui.tags.iframe(src='https://woodwellrisk.github.io/drought-monitor', height='100%', width='100%')
+                            ),
                         ),
 
-                        ui.busy_indicators.options(),
+                        ui.nav_panel('Timeseries', 
+                            ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
+                                ui.download_link("download_timeseries_link", 'Download timeseries')
+                            ),
+                            ui.div({'id': 'timeseries-container'},
+                                ui.div({'id': 'timeseries-toggle-container'},
+                                    ui.input_checkbox("historical_checkbox", "Historical", True),
+                                    ui.input_checkbox("forecast_checkbox", "Forecast", True),
+                                ),
+                                ui.card({'id': 'timeseries-inner-container'},
+                                    ui.output_plot('timeseries', width='100%', height='100%'),
+                                ),
+                            ),
+                            
+                            ui.div({'id': 'download-csv-container', 'class': 'download-container'},
+                                ui.download_link("download_csv_link", 'Download CSV')
+                            ),
+                            ui.div({'id': 'timeseries-table-container'},
+                                ui.output_data_frame("timeseries_table"),
+                            ),
+
+                            ui.busy_indicators.options(),
+                        ),
+
+                        ui.nav_panel('Forecast map', 
+                            ui.div({'id': 'forecast-map-container'},
+                                ui.output_ui('forecast_map'),
+                            ),
+                        ),
+
+                        id='tab_menu'
                     ),
-
-                    ui.nav_panel('Crop maps', 
-                        ui.div({'id': 'crop-map-container'},
-                            output_widget('crop_map'),
-                            # ui.output_ui('crop_map'),
-                        ),
-
-                        # ui.div({'id': 'iframe-container'},
-                        #     ui.tags.iframe(src='https://woodwellrisk.github.io/drought-monitor', height='100%', width='100%')
-                        # )
-                    ),
-
-                    ui.nav_panel('Forecast map', 
-                        ui.div({'id': 'forecast-map-container'},
-                            ui.output_ui('forecast_map'),
-                        ),
-                    ),
-
-                    id='tab_menu'
-                ),
                 
                 ),
             ),

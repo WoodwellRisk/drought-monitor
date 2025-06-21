@@ -347,7 +347,6 @@ select option:active, select option:checked, select option:focus, select option:
 #main {
     background-color: var(--background-color);
     width: 90%;
-    max-width: 900px;
     height: 100%;
     margin: 20px auto 10px auto;
     padding-bottom: 10px;
@@ -439,6 +438,7 @@ select option:active, select option:checked, select option:focus, select option:
 #forecast-map-container {
     border: 1px solid var(--border-color);
     height: 450px;
+    /* max-width: 900px; */
     margin: 30px 10px 5px 10px;
 }
 
@@ -489,19 +489,8 @@ select option:active, select option:checked, select option:focus, select option:
 
 #iframe-container {
     border: 1px solid var(--border-color);
-    height: 450px;
+    height: 550px;
     margin: 30px 10px 10px 10px;
-}
-
-#viz-test {
-    border: 1px solid var(--border-color);
-    background-color: var(--background-color);
-    display: inline-block;
-    /* width: 350px; */
-    width: 100%;
-    height: 400px;
-    margin: 5px 10px;
-    overflow: auto;
 }
 
 .download-container {
@@ -650,11 +639,11 @@ shiny-data-frame#timeseries_table {
     }
 }
 
-@media (min-width: 577px) {
+/* @media (min-width: 577px) {
     #sidebar-container {
         display: block;
     }
-}
+} */
 
 @media (max-width: 576px) {
     #container {

@@ -7,7 +7,13 @@ let windowSizeMatch = window.matchMedia("(min-width: 576px)");
 windowSizeMatch.addEventListener('change', function(m) {
     if (m.matches) {
         let sidebarContainer = document.querySelector('#sidebar-container');
-        sidebarContainer.style.display = 'block';
+        let historicalDataTab = document.querySelector('.nav-item:first-child > .nav-link');
+        
+        if(historicalDataTab.classList.contains('active')) {
+            sidebarContainer.style.display = 'none';
+        } else {
+            sidebarContainer.style.display = 'block';
+        }
     }
     else {
         let sidebarContainer = document.querySelector('#sidebar-container');
