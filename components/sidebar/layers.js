@@ -14,7 +14,6 @@ function Layers() {
   const windowOptions = useStore((state) => state.windowOptions)
   const setWindowOptions = useStore((state) => state.setWindowOptions)
   const setWindow = useStore((state) => state.setWindow)
-  const minDate = useStore((state) => state.minDate)
   const maxDate = useStore((state) => state.maxDate)
   const minYear = useStore((state) => state.minYear)()
   const maxYear = useStore((state) => state.maxYear)()

@@ -50,14 +50,18 @@ const useStore = create((set, get) => ({
         return `${ new Date(maxDate + 'T00:00:00').getFullYear() }`
     },
 
-    year: '1991',
+    // year: () => {
+    //     const {maxYear} = get()
+    //     return maxYear()
+    // },
+    year: 2025,
     setYear: (year) => set({ year }),
 
     monthValues: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
-    month: '01',
+    month: '05',
     setMonth: (month) => set({ month }),
     
-    monthIdx: 0,
+    monthIdx: 4,
     setMonthIdx: (monthIdx) => set({ monthIdx }),
 
     time: (year, month) => set(`${year}-${month}-01`),

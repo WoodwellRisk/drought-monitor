@@ -61,10 +61,6 @@ const Map = ({ mobile }) => {
     [setRegionData, setRegionDataLoading]
   )
 
-  useEffect(() => {
-    console.log(window)
-  }, [window])
-
   return (
     <Box ref={container} sx={{ flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
       <MapContainer zoom={zoom} maxZoom={maxZoom} center={center} maxBounds={bounds} >
