@@ -27,7 +27,7 @@ from utils import *
 
 # shiny run --reload drought.py
 
-updating = False
+updating = True
 
 if updating:
     h3 = None
@@ -227,11 +227,11 @@ app_ui = ui.page_fluid(
                 {'id': 'about-container'},
             ), 
             
-            # ui.div({'id': 'update-message-container'},
-            #     ui.div({'id': 'update-message'}, 
-            #         'The website is currently being updated. Please check back later.'
-            #     ),
-            # ),
+            ui.div({'id': 'update-message-container'},
+                ui.div({'id': 'update-message'}, 
+                    'The website is currently being updated. Please check back later.'
+                ),
+            ),
         ),
     ),
 )
