@@ -39,7 +39,7 @@ const useStore = create((set, get) => ({
     setOpacity: (opacity) => set({ opacity }),
 
     minDate: '1991-01-01',
-    maxDate: '2025-05-01',
+    maxDate: '2025-06-01',
 
     minYear: () => {
         const {minDate} = get()
@@ -58,10 +58,10 @@ const useStore = create((set, get) => ({
     setYear: (year) => set({ year }),
 
     monthValues: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
-    month: '05',
+    month: '06',
     setMonth: (month) => set({ month }),
     
-    monthIdx: 4,
+    monthIdx: 5,
     setMonthIdx: (monthIdx) => set({ monthIdx }),
 
     time: (year, month) => set(`${year}-${month}-01`),
