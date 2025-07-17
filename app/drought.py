@@ -105,7 +105,7 @@ app_ui = ui.page_fluid(
             ui.div({'id': 'menu-container'},
                 ui.div({'id': 'menu-inner-container'},
                 ui.input_action_button('about_button', 'About',),
-                ui.input_action_button('settings_button', 'Settings', disabled=True),
+                ui.input_action_button('settings_button', 'Settings', disabled=True), # this could also be called options or controls
                 ),
             ),
         ),
@@ -207,7 +207,10 @@ app_ui = ui.page_fluid(
 
 
                             ## Applications
-                            An integration window of 3 months is well suited for applications in agriculture, where shorter cycles of water balance are important. 
+                            An integration window of 3 months is well suited for applications in agriculture, where shorter cycles of water balance are important.
+                            In order to examine the relationship between water balance anomalies and agriculture, we have provided the spatial extents of several crops.
+                            These can be used to get water balance data within a given country where a specific crop is currently grown (as of 2020).
+                            
                             For sectors like the hydropower industry where longer-term patterns in water balance are more relevant, an integration window of 12 months is more appropriate.
 
 
