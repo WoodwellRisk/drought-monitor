@@ -359,14 +359,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(country_name)
     def update_bounds():
-        name = country_name()
+        cname = country_name()
 
         # on app start or page reload, these variables will be empty
         if(name == ''):
             return
 
         # https://stackoverflow.com/questions/1894269/how-to-convert-string-representation-of-list-to-a-list#1894296
-        new_bounds = json.loads(countries.query(" name == @name ").bbox.values[0])
+        new_bounds = json.loads(countries.query(" name == @cname ").bbox.values[0])
         bounds.set(new_bounds)
 
         xmin, ymin, xmax, ymax = new_bounds
@@ -441,7 +441,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # production = crop_production().rio.write_crs(4326, inplace=True)
         # production.rio.write_crs(4326, inplace=True)
 
-        name = country_name()
+        ccountry_name()
 
         window_size = integration_window()
 
@@ -455,7 +455,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         xmin, ymin, xmax, ymax = bounds.get()
         bounding_box = bbox()
-        country = countries.query(" name == @name ")
+        country = countries.query(" name == @cname ")
 
         # we have already filtered countries where we don't have data, so clipping by country extent 
         # should never produce a rioxarray.exceptions.NoDataInBounds error at this step
@@ -554,7 +554,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(display_bounds_error)
     def update_bounds_error():
         crop = crop_name()
-        name = country_name()
+        cname = country_name()
         
         if(crop == '' or name == ''):
             return
@@ -594,7 +594,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     def update_dataframe():
         crop = crop_name()
         production = crop_production()
-        name = country_name()
+        cname = country_name()
         window_size = integration_window()
 
         show_historical = input.historical_checkbox()
@@ -622,7 +622,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['time'] = df['time'].dt.date
                 # df.columns = ['time', 'percentile', 'agreement']
                 df.columns = ['time', 'percentile']
-                df['country'] = name
+                df['country'] = cname
                 df['crop'] = crop
                 df['type'] = 'historical'
                 df['window'] = int(window_size)
@@ -648,7 +648,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['time'] = df['time'].dt.date
                 # df.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
                 df.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
-                df['country'] = name
+                df['country'] = cname
                 df['crop'] = crop
                 df['type'] = 'forecast'
                 df['window'] = int(window_size)
@@ -665,7 +665,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_historical['time'] = df_historical['time'].dt.date
                 # df_historical.columns = ['time', 'percentile', 'agreement']
                 df_historical.columns = ['time', 'percentile']
-                df_historical['country'] = name
+                df_historical['country'] = cname
                 df_historical['crop'] = crop
                 df_historical['type'] = 'historical'
                 df_historical['window'] = int(window_size)
@@ -686,7 +686,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_forecast['time'] = df_forecast['time'].dt.date
                 # df_forecast.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
-                df_forecast['country'] = name
+                df_forecast['country'] = cname
                 df_forecast['crop'] = crop
                 df_forecast['type'] = 'forecast'
                 df_forecast['window'] = int(window_size)
@@ -831,7 +831,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.download(filename=lambda: f'drought-timeseries-{country_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.png'.replace(' ', '-').replace('--', '-').replace('--', '-'))
     def download_timeseries_link():
 
-        name = country_name()
+        cname = country_name()
 
         forecast = forecast_wb()
         historical = historical_wb()
@@ -856,7 +856,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         elif(show_historical == True and show_forecast == True):
             historical_and_forecast_label = 'Historical and forecasted'
 
-        title = f'{historical_and_forecast_label} water balance for {name}'
+        title = f'{historical_and_forecast_label} water balance for {cname}'
         ax.set_title(title, fontproperties=ginto_medium)
 
         fig.subplots_adjust(top=0.9)
@@ -921,8 +921,8 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(unweighted_forecast_wb)
     def forecast_map(alt="a map showing the borders of a country of interest"):
 
-        name = country_name()
-        country = countries.query(" name == @name ")
+        cname = country_name()
+        country = countries.query(" name == @cname ")
         forecast = unweighted_forecast_wb()
 
         if(name == '' or forecast is None):
@@ -938,7 +938,6 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         }
 
-        country = countries.query(" name == @name ")
         centroid = country.centroid.values[0]
         bbox = json.loads(country.bbox.values[0])
         bounding_box = create_bbox_from_coords(*bbox).to_geo_dict()
