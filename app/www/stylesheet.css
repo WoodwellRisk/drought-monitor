@@ -173,6 +173,7 @@ body {
     width: 100%;
     outline: 1px solid var(--black);
     padding: 0.5rem 0rem;
+    margin-bottom: 40px;
 }
 
 #process_data_button:hover {
@@ -264,6 +265,7 @@ body {
     height: 100%;
     max-width: 300px;
     margin: 20px auto;
+    margin-bottom: 30px;
     padding: 0px 5px;
     /* margin-bottom: 20px; */
 }

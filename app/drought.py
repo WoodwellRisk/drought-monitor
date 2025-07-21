@@ -36,6 +36,7 @@ if updating:
     f12 = None
 
     countries = gpd.GeoDataFrame(columns=['name', 'geometry'])
+    states = gpd.GeoDataFrame(columns=['name', 'country', 'geometry'])
 
 if not updating:
     # open historical and forecast data for both integration windows
@@ -56,6 +57,7 @@ if not updating:
 
     # open country boundary layer
     countries = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
+    states = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/states.parquet')
 
     # open crop polygon layers
     barley = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/barley.parquet')
@@ -131,6 +133,11 @@ app_ui = ui.page_fluid(
                         ui.input_select('country_select', '', [], size=5),
 
                         ui.div({'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select a state:')
+                        ),
+                        ui.input_select('state_select', '', [], size=5),
+
+                        ui.div({'class': 'select-label-container'},
                             ui.p({'class': 'select-label'}, 'Select a crop:')
                         ),
                         ui.input_select('crop_select', '', [], size=5),
@@ -147,13 +154,14 @@ app_ui = ui.page_fluid(
             ui.div({"id": "main-container"},
                 ui.div({'id': 'main'},
                     ui.navset_tab(
-                        
+                        # historical data tab
                         ui.nav_panel('Historical data', 
                             ui.div({'id': 'iframe-container'},
                                 ui.tags.iframe(src='https://woodwellrisk.github.io/drought-monitor', height='100%', width='100%')
                             ),
                         ),
 
+                        # timeseries and table tab
                         ui.nav_panel('Timeseries', 
                             ui.div({'id': 'download-timeseries-container', 'class': 'download-container'},
                                 ui.download_link("download_timeseries_link", 'Download timeseries')
@@ -178,6 +186,7 @@ app_ui = ui.page_fluid(
                             ui.busy_indicators.options(),
                         ),
 
+                        # forecast map tab
                         ui.nav_panel('Forecast map', 
                             ui.div({'id': 'forecast-map-container'},
                                 ui.output_ui('forecast_map'),
@@ -243,6 +252,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     
     countries_list = sorted(countries.name.values)
     country_options = reactive.value(countries_list)
+    state_options = reactive.value([])
 
     crop_list = [
         'None', 'Barley', 'Cocoa', 'Coffee', 'Cotton',
@@ -253,6 +263,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     crop_production = reactive.value(None)
 
     country_name = reactive.value('')
+    state_name = reactive.value('')
     crop_name = reactive.value('')
     filter_text = reactive.value('')
     bounds = reactive.value([])
@@ -349,41 +360,76 @@ def server(input: Inputs, output: Outputs, session: Session):
     def update_country_name():
         new_country = input.country_select()
         country_name.set(new_country)
+        state_name.set('')
 
 
     @render.text
     def country_name_text():
         return country_name()
-    
+
 
     @reactive.effect
     @reactive.event(country_name)
+    def update_state_list():
+        cname = country_name()
+        sname = state_name()
+        print(sname)
+
+        if(cname == ''): return
+
+        df = states.query(" country == @cname ")
+        states_list = sorted(df.name.values.tolist())
+        # some countries have no administrative states / regions
+        if(len(states_list) == 0 ):
+            new_options = ['All']
+        else: 
+            new_options = ['All'] + states_list
+        
+        state_options.set(new_options)
+
+    @reactive.effect
+    @reactive.event(state_options)
+    def update_state_select():
+        new_options = state_options()
+        ui.update_select('state_select', label=None, choices=new_options, selected=None)
+
+
+    @reactive.effect
+    @reactive.event(input.state_select)
+    def update_state_name():
+        new_state = input.state_select()
+        state_name.set(new_state)
+        print(new_state)
+    
+
+    @reactive.effect
+    @reactive.event(country_name, state_name)
     def update_bounds():
         cname = country_name()
+        sname = state_name()
 
         # on app start or page reload, these variables will be empty
-        if(name == ''):
+        if(cname == '' or sname == ''):
             return
 
         # https://stackoverflow.com/questions/1894269/how-to-convert-string-representation-of-list-to-a-list#1894296
-        new_bounds = json.loads(countries.query(" name == @cname ").bbox.values[0])
+        if(sname == 'All'):
+            new_bounds = json.loads(countries.query(" name == @cname ").bbox.values[0])
+        else:
+            new_bounds = json.loads(states.query(" name == @sname and country == @cname ").bbox.values[0])
         bounds.set(new_bounds)
+        print(new_bounds)
 
         xmin, ymin, xmax, ymax = new_bounds
         new_bbox = create_bbox_from_coords(xmin, xmax, ymin, ymax)
         bbox.set(new_bbox)
 
 
-    @render.text
-    def country_bbox_text():
-        return bounds()
-
-
     @reactive.effect
     @reactive.event(crop_options)
     def update_crop_select():
         new_options = crop_options()
-        ui.update_select('crop_select', label=None, choices=new_options, selected=None)
+        ui.update_select('crop_select', label=None, choices=new_options, selected='None')
 
 
     @reactive.effect
@@ -438,10 +484,9 @@ def server(input: Inputs, output: Outputs, session: Session):
     def update_wb_data():
         crop = crop_name()
         crop_extent = crop_layer()
-        # production = crop_production().rio.write_crs(4326, inplace=True)
-        # production.rio.write_crs(4326, inplace=True)
 
-        ccountry_name()
+        cname = country_name()
+        sname = state_name()
 
         window_size = integration_window()
 
@@ -449,20 +494,25 @@ def server(input: Inputs, output: Outputs, session: Session):
         forecast = f()
 
         # on app start or page reload, these variables will be empty
-        if(name == '' or crop == '' or historical is None or forecast is None):
+        if(cname == '' or sname == '' or crop == '' or historical is None or forecast is None):
         # if(name == '' or crop == ''):
             return
 
         xmin, ymin, xmax, ymax = bounds.get()
         bounding_box = bbox()
         country = countries.query(" name == @cname ")
+        state = states.query(" name == @sname and country == @cname ")
 
         # we have already filtered countries where we don't have data, so clipping by country extent 
         # should never produce a rioxarray.exceptions.NoDataInBounds error at this step
-        historical = historical.rio.clip(country.geometry, all_touched=True, drop=True)
-        historical = historical.assign_attrs({'crop': crop})
+        if(sname == 'All'):
+            historical = historical.rio.clip(country.geometry, all_touched=True, drop=True)
+            forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
+        else:
+            historical = historical.rio.clip(state.geometry, all_touched=True, drop=True)
+            forecast = forecast.rio.clip(state.geometry, all_touched=True, drop=True)
 
-        forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
+        historical = historical.assign_attrs({'crop': crop})
         forecast = forecast.assign_attrs({'crop': crop})
 
         if(crop == 'none'):
@@ -495,7 +545,10 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # clip production data to country extent, then standardize
                 production = crop_production()
                 production = production.rio.write_crs(4236)
-                country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
+                if(sname == 'All'):
+                    country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
+                else:
+                    country_level_production = production.rio.clip(state.geometry, all_touched=True, drop=True)
                 standardized_production = country_level_production / country_level_production.sum(skipna=True)
                 standardized_production = standardized_production[['x', 'y', 'production']]
 
@@ -556,7 +609,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         crop = crop_name()
         cname = country_name()
         
-        if(crop == '' or name == ''):
+        if(crop == '' or cname == ''):
             return
 
         show_error = display_bounds_error()
@@ -566,7 +619,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 ui.div({'class': 'bounds-error-container'},
                     ui.div({'class': 'bounds-error'},
                         # f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
-                        'No water balance data to show. This is likely because the crop you chose is not grown in the country in question or the data resoultion is too low.'
+                        'No water balance data to show. This is likely because the crop you chose is not grown in the country / state in question or the data resoultion is too low.'
 
                     ),
                 ),
@@ -578,7 +631,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 ui.div({'class': 'bounds-error-container'},
                     ui.div({'class': 'bounds-error'},
                         # f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
-                        'No water balance data to show. This is likely because the crop you chose is not grown in the country in question or the data resoultion is too low.'
+                        'No water balance data to show. This is likely because the crop you chose is not grown in the country / state in question or the data resoultion is too low.'
 
                     ),
                 ),
@@ -595,6 +648,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         crop = crop_name()
         production = crop_production()
         cname = country_name()
+        sname = state_name()
         window_size = integration_window()
 
         show_historical = input.historical_checkbox()
@@ -606,12 +660,12 @@ def server(input: Inputs, output: Outputs, session: Session):
         # if the xarray data is empty (on initial load) or if the toggles controlling which datasets to show are both false, then return empty dataframe
         if((forecast is None and historical is None) or (show_forecast == False and show_historical == False)):
             # df = pd.DataFrame({
-            #     'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
+            #     'country': [], 'state': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
             #     '5%': [], '20%': [], '80%': [], '95%': [],
             # })
             df = pd.DataFrame({
-                'country': [], 'type': [], 'crop': [], 'time': [], 'percentile': [],
-                '5%': [], '20%': [], '80%': [], '95%': [],
+                'country': [], 'state': [], 'type': [], 'crop': [], 'window': [], 'time': [], 
+                'percentile': [], '5%': [], '20%': [], '80%': [], '95%': [],
             })
         else:
             # include just historical
@@ -623,6 +677,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # df.columns = ['time', 'percentile', 'agreement']
                 df.columns = ['time', 'percentile']
                 df['country'] = cname
+                df['state'] = sname
                 df['crop'] = crop
                 df['type'] = 'historical'
                 df['window'] = int(window_size)
@@ -631,8 +686,8 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['80%'] = np.nan
                 df['95%'] = np.nan
                 
-                # df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
-                df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                # df = df[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                df = df[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
 
             
             # include just forecast
@@ -649,12 +704,13 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # df.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
                 df.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df['country'] = cname
+                df['state'] = sname
                 df['crop'] = crop
                 df['type'] = 'forecast'
                 df['window'] = int(window_size)
                 
-                # df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
-                df = df[['country', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                # df = df[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                df = df[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
 
 
             # else both are active, include both
@@ -666,6 +722,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # df_historical.columns = ['time', 'percentile', 'agreement']
                 df_historical.columns = ['time', 'percentile']
                 df_historical['country'] = cname
+                df_historical['state'] = sname
                 df_historical['crop'] = crop
                 df_historical['type'] = 'historical'
                 df_historical['window'] = int(window_size)
@@ -673,8 +730,8 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_historical['20%'] = np.nan
                 df_historical['80%'] = np.nan
                 df_historical['95%'] = np.nan
-                # df_historical = df_historical[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
-                df_historical = df_historical[['country', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']]
+                # df_historical = df_historical[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
+                df_historical = df_historical[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']]
 
                 df_forecast = forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 df_forecast['perc'] = df_forecast['perc'].astype(float).round(4)
@@ -687,11 +744,12 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # df_forecast.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast['country'] = cname
+                df_forecast['state'] = sname
                 df_forecast['crop'] = crop
                 df_forecast['type'] = 'forecast'
                 df_forecast['window'] = int(window_size)
-                # df_forecast = df_forecast[['country', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
-                df_forecast = df_forecast[['country', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']]
+                # df_forecast = df_forecast[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
+                df_forecast = df_forecast[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', '5%', '20%', '80%', '95%']]
 
                 df = pd.concat([df_historical, df_forecast]).sort_values('time', ascending=False).reset_index(drop=True)
 
@@ -740,9 +798,9 @@ def server(input: Inputs, output: Outputs, session: Session):
         show_historical = input.historical_checkbox()
         show_forecast = input.forecast_checkbox()
 
-        # df = update_dataframe()
         df = table_to_save()
-        print(df.head(20)[['country', 'crop', 'time', 'window', 'percentile']])
+        print(df)
+        print(df.head(20)[['country', 'state', 'crop', 'time', 'window', 'percentile']])
         print()
 
 
@@ -766,12 +824,12 @@ def server(input: Inputs, output: Outputs, session: Session):
         # if both are true, we need to stitch together the historical and forecast timeseries
         if(show_historical == True and show_forecast == True):
             df_historical = df.query(" type == 'historical' ")
-            print(df_historical[['country', 'crop', 'time', 'window', 'percentile']])
+            print(df_historical[['country', 'state', 'crop', 'time', 'window', 'percentile']])
             print()
 
             # this is the 6-month forecast plus the last data entry for historical data
             df_forecast = df.iloc[0:7, :]
-            print(df_forecast[['country', 'crop', 'time', 'window', 'percentile']])
+            print(df_forecast[['country', 'state', 'crop', 'time', 'window', 'percentile']])
             print()
             
             # forecast data needs to be plotted first because of the uncertainty bounds
@@ -828,10 +886,11 @@ def server(input: Inputs, output: Outputs, session: Session):
         return fig
 
 
-    @render.download(filename=lambda: f'drought-timeseries-{country_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.png'.replace(' ', '-').replace('--', '-').replace('--', '-'))
+    @render.download(filename=lambda: f'drought-timeseries-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.png'.replace(' ', '-').replace('--', '-').replace('--', '-'))
     def download_timeseries_link():
 
         cname = country_name()
+        sname = state_name()
 
         forecast = forecast_wb()
         historical = historical_wb()
@@ -856,7 +915,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         elif(show_historical == True and show_forecast == True):
             historical_and_forecast_label = 'Historical and forecasted'
 
-        title = f'{historical_and_forecast_label} water balance for {cname}'
+        title = f"{historical_and_forecast_label} water balance for {sname + ', ' if sname != '' and sname != 'All' else ''}{cname}"
         ax.set_title(title, fontproperties=ginto_medium)
 
         fig.subplots_adjust(top=0.9)
@@ -864,68 +923,19 @@ def server(input: Inputs, output: Outputs, session: Session):
         with io.BytesIO() as buffer:
             plt.savefig(buffer, format="png", dpi=300)
             yield buffer.getvalue()
+    
 
-
-    # # @render.plot
-    # # # @reactive.event(country)
-    # # def forecast_map(alt="a map showing the borders of a country of interest"):
-    # #     name = country_name()
-
-    # #     # on app start or page reload, these variables will be empty
-    # #     if(name == ''):
-    # #         return
-
-    # #     # plot_raster = None
-    # #     xmin, ymin, xmax, ymax = bounds.get()
-    # #     bounding_box = bbox()
-    # #     plot_country = countries.query(" name == @name ")
-
-    # #     # try:
-    # #     #     # first clip by the bounding box to get the figure extent (drop=True)
-    # #     #     # then clip by country geometry for just the data in that country (drop=False)
-    # #     #     plot_raster = ds.rio.clip(bounding_box.geometry, all_touched=True, drop=True)
-    # #     #     plot_raster = plot_raster.rio.clip(plot_country.geometry, all_touched=True, drop=False)
-    # #     #     print(plot_raster)
-    # #     #     plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu_r', add_colorbar=False, ax=ax)
-    # #     # except:
-    # #     #     print("No data in bounds")
-
-    # #     # plotting
-    # #     fig, ax = plt.subplots()
-
-    # #     countries.plot(facecolor='white', edgecolor='none', ax=ax)
-    # #     # if(plot_raster):
-    # #     #     plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu_r', add_colorbar=False, ax=ax)
-    # #     try:
-    # #         # first clip by the bounding box to get the figure extent (drop=True)
-    # #         # then clip by country geometry for just the data in that country (drop=False)
-    # #         plot_raster = f().rio.clip(bounding_box.geometry, all_touched=True, drop=True)
-    # #         plot_raster = plot_raster.rio.clip(plot_country.geometry, all_touched=True, drop=False)
-    # #         plot_raster.perc.drop_vars('spatial_ref').plot(cmap='RdBu', add_colorbar=False, ax=ax)
-    # #     except:
-    # #         print("No data in bounds")
-        
-    # #     countries.plot(facecolor='none', edgecolor='black', ax=ax)
-    # #     # plot_country.plot(facecolor='none', edgecolor='black', ax=ax)
-
-    # #     ax.set_xlim(xmin, xmax)
-    # #     ax.set_ylim(ymin, ymax)
-
-    # #     # and this removes white background in figure
-    # #     fig.patch.set_alpha(0)
-
-    # #     return fig 
-
-    # @render_plotly
     @render.ui
     @reactive.event(unweighted_forecast_wb)
     def forecast_map(alt="a map showing the borders of a country of interest"):
 
         cname = country_name()
+        sname = state_name()
         country = countries.query(" name == @cname ")
+        state = states.query(" name == @sname and country == @cname ")
         forecast = unweighted_forecast_wb()
 
-        if(name == '' or forecast is None):
+        if(cname == '' or sname == '' or forecast is None):
             return
 
         config = {
@@ -1030,253 +1040,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     # # def _():
     # #     # map.widget.center = city_centers[input.center()]
     # #     print(forecast_map)
-
-
-    @render_plotly
-    def crop_map():
-        crop = crop_name()
-        crop_extent = crop_layer()
-
-        config = {
-            # 'staticPlot': False, 
-            'displaylogo': False, 
-            # 'displayModeBar': False, 
-            'scrollZoom': True,
-            # https://stackoverflow.com/questions/59817118/how-to-trigger-zoom-in-and-zoom-out-in-plotly-chart-using-user-created-on-click
-            # https://plotly.com/javascript/zoom-events/
-            'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'toImage'],
-            'modeBarButtonsToAdd': ["zoomInGeo", "zoomInMap", "zoomInMapbox"],
-            # 'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'] if crop == 'none' or crop == '' else ['zoom', 'pan', 'select', 'lasso2d'],
-            # 'toImageButtonOptions': {
-            #     'filename': f'{crop}_extent',
-            #     'format': 'svg', # one of png, svg, jpeg, webp
-            #     # 'height': 500,
-            #     # 'width': 700,
-            #     'height': None,
-            #     'width': None,
-            #     'scale': 1 # multiply title/legend/axis/canvas sizes by this factor
-            # }
-            # https://community.plotly.com/t/image-export-how-to-set-dpi-alternatively-how-to-scale-down-using-width-and-height/49536/2
-        }
-
-        fig = go.Figure(go.Scattermap())
-
-        fig.update_layout(
-            map = {'style': "carto-positron-nolabels",},
-            margin = {'l':0, 'r':0, 'b':0, 't':0},
-        )
-
-        # save the figure (not the widget!) so that we can update the layers later
-        # crop_figure.set(fig)
-
-        # crop_map.save(fig) # ??
-        # and then something later like:
-        # fig = crop_map()
-        # most likely: fig.update_layout(map = {...'layers': [{'source': crop_layer, 'type': 'fill', 'below': 'traces', 'color': 'royalblue', 'opacity': 0.7,}]},)
-        # or: fig.add_traces(...)
-        # return fig
-
-        if(crop_extent is None):
-        # if(crop == '' or crop == 'none'):
-            figurewidget = go.FigureWidget(fig)
-            figurewidget._config = config
-            return figurewidget
-        
-        fig.update_layout(
-            map = {
-                'style': "carto-positron-nolabels",
-                'layers': [
-                    {
-                        'source': crop_extent.to_geo_dict(),
-                        'type': 'fill', 
-                        'below': 'traces', 
-                        # 'fill': {'outlinecolor': 'black'},
-                        'color': 'black', 
-                        'opacity': 0.4,
-                    },
-                    {
-                        'source': crop_extent.to_geo_dict(),
-                        'type': 'line', 
-                        'below': 'traces', 
-                        'color': 'black', 
-                        'line': {'width': 1.5},
-                    },
-                ]
-            },
-        )
-
-        # https://github.com/plotly/plotly.py/issues/1074#issuecomment-1471486307
-        figurewidget = go.FigureWidget(fig)
-        figurewidget._config = config
-
-        # fig.write_image('figure.png', engine='kaleido')
-        # figurewidget.write_image('widget.png')
-
-        return figurewidget
-
-
-    # @reactive.effect
-    # def update_crop_map():
-    #     """
-    #     """
-
-    #     crop = crop_name()
-    #     if(crop == ''):
-    #         return
-
-    #     print(crop_map.widget.center)
-
-    #     fig = crop_figure()
-    #     print(type(fig))
-    #     print(fig)
-    #     print(fig.layout)
-    #     print()
-
-    #     if(crop == 'none'):
-    #         fig.update_layout(map = {'layers': []})
-    #         return
-
-    #     match crop:
-    #         case 'barley':
-    #             crop_layer = barley.to_geo_dict()
-    #         case 'cocoa':
-    #             crop_layer = cocoa.to_geo_dict()
-    #         case 'coffee':
-    #             crop_layer = coffee.to_geo_dict()
-    #         case 'cotton':
-    #             crop_layer = cotton.to_geo_dict()
-    #         case 'maize':
-    #             crop_layer = maize.to_geo_dict()
-    #         case 'rice':
-    #             crop_layer = rice.to_geo_dict()
-    #         case 'soy':
-    #             crop_layer = soy.to_geo_dict()
-    #         case 'sugar':
-    #             crop_layer = sugar.to_geo_dict()
-    #         case 'wheat':
-    #             crop_layer = wheat.to_geo_dict()
-    #         case _:
-    #             return
-
-    #     fig.update_layout(
-    #         map = {
-    #             'style': "carto-positron-nolabels",
-    #             'layers': [
-    #                 {
-    #                     'source': crop_layer,
-    #                     'type': 'fill', 
-    #                     'below': 'traces', 
-    #                     'fill': {'outlinecolor': 'black'},
-    #                     'color': 'black', 
-    #                     'opacity': 0.7,
-    #                 },
-    #                 # {
-    #                 #     'source': crop_layer,
-    #                 #     'type': 'line', 
-    #                 #     # 'below': 'traces', 
-    #                 #     'color': 'black', 
-    #                 #     'line': {'width': 1.5},
-    #                 # },
-    #             ]
-    #         },
-    #     )
-
-    #     return fig
-
-
-    # @render_widget
-    # def crop_map():
-    #     from ipyleaflet import basemaps, LayersControl, TileLayer, Map, GeoData, GeoJSON
-
-    #     # basemap = TileLayer(
-    #     #     url='https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
-    #     #     # attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    #     #     subdomains='abcd',
-    #     #     maxZoom=20,
-    #     # )
-
-    #     zoom = 2
-
-    #     m = Map(basemap=basemaps.CartoDB.Positron, zoom=zoom, scroll_wheel_zoom=True,  attribution_control=False)
-
-    #     geo_data = GeoData(geo_dataframe=wheat, style={'color': 'black','weight': 1, 'opacity': 1}, name='Wheat')
-    #     # geo_data = GeoJSON(
-    #     #     data=wheat.to_geo_dict(),
-    #     #     style={'color': 'black', 'fillColor': '#3366cc', 'weight': 1, 'opacity': 1},
-    #     #     name = 'Wheat'
-    #     # )
-    #     m.add(geo_data)
-    #     m.add(LayersControl())
-
-    #     return m
-
-
-    # @reactive.effect
-    # # @reactive.event(crop_name)
-    # def _():
-    #     from ipyleaflet import LayersControl, TileLayer, Map, GeoData, GeoJSON
-
-    #     crop = crop_name()
-    #     basemap = crop_map.widget.layers[0]
-    #     # basemap.redraw()
-    #     zoom = crop_map.widget.zoom
-    #     center = crop_map.widget.center
-    #     print(zoom, center)
-
-    #     # if(len(crop_map.widget.layers) > 1):
-    #     #     print(crop_map.widget.layers)
-    #     #     print()
-    #     #     crop_map.widget.remove(crop_map.widget.layers[1])
-        
-    #     if(crop == '' or crop == 'none'):
-    #         # geo_data = GeoData(geo_dataframe=wheat, style={'color':'black','weight':1},)
-    #         # geo_data = GeoJSON(
-    #         #     data=wheat.to_geo_dict(),
-    #         #     style={'color': 'black','weight':1},
-    #         # )
-
-    #         # crop_map.widget.add_layer(geo_data)
-    #         # crop_map.widget.add_control(LayersControl())
-    #         # crop_map.widget = Map(layers=(basemap,), zoom=zoom, center=center, scroll_wheel_zoom=True,  attribution_control=False)
-    #         crop_map.widget.layers = (basemap,)
-        
-    #     else:
-    #         print(crop)
-    #         print("TRUE! SHOULD BE UPDATING MAP LAYERS")
-    #         match crop:
-    #             case 'barley':
-    #                 crop_layer = barley
-    #                 # m.layers = [GeoData(geo_dataframe=barley, style={'color': 'black','weight':1},)]
-    #                 # m.add(GeoData(geo_dataframe=barley, style={'color': 'black','weight':1},))
-    #             case 'cocoa':
-    #                 crop_layer = cocoa
-    #                 # m.add(GeoData(geo_dataframe=cocoa, style={'color': 'black','weight':1},))
-    #             case 'coffee':
-    #                 crop_layer = coffee
-    #                 # m.add(GeoData(geo_dataframe=coffee, style={'color': 'black','weight':1},))
-    #             case 'cotton':
-    #                 crop_layer = cotton
-    #                 # m.add(GeoData(geo_dataframe=cotton, style={'color': 'black','weight':1},))
-    #             case 'maize':
-    #                 crop_layer = maize
-    #                 # m.add(GeoData(geo_dataframe=sugarcane, style={'color': 'black','weight':1},))
-    #             case 'rice':
-    #                 crop_layer = rice
-    #                 # m.add(GeoData(geo_dataframe=rice, style={'color': 'black','weight':1},))
-    #             case 'soy':
-    #                 crop_layer = soy
-    #                 # m.add(GeoData(geo_dataframe=soy, style={'color': 'black','weight':1},))
-    #             case 'sugarcane':
-    #                 crop_layer = sugarcane
-    #                 # m.add(GeoData(geo_dataframe=sugarcane, style={'color': 'black','weight':1},))
-    #             case 'wheat':
-    #                 crop_layer = wheat
-    #                 # m.add(GeoData(geo_dataframe=wheat, style={'color': 'black','weight':1},))
-    #                 # m.add(LayersControl())
-
-    #         geo_data = GeoData(geo_dataframe=crop_layer, style={'color': 'black','weight':1},)
-    #         crop_map.widget.layers = (basemap, geo_data)
-    #         # crop_map.widget
          
 
     @render.data_frame
