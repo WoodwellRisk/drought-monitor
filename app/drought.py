@@ -383,7 +383,11 @@ def server(input: Inputs, output: Outputs, session: Session):
         if(len(states_list) == 0 ):
             new_options = ['All']
         else: 
-            new_options = ['All'] + states_list
+            if(cname == 'USA'):
+                states_list = [state for state in states_list if state != 'CONUS']
+                new_options = ['All', 'CONUS'] + states_list
+            else:
+                new_options = ['All'] + states_list
         
         state_options.set(new_options)
 
@@ -1050,7 +1054,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         return render.DataTable( df.drop(['5%', '20%', '80%', '95%'], axis=1), width='100%', height='375px', editable=False, )
     
 
-    @render.download(filename=lambda: f'drought-table-{country_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.csv'.replace(' ', '-').replace('--', '-').replace('--', '-'))
+    @render.download(filename=lambda: f'drought-table-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.csv'.replace(' ', '-').replace('--', '-').replace('--', '-'))
     def download_csv_link():
         df = table_to_save()
 
