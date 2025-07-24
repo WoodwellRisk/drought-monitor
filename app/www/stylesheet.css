@@ -11,29 +11,35 @@
 
     --border-color: var(--black);
     --background-color: var(--white);
+
+    .irs--shiny .irs-handle {
+        background-color: var(--black);
+        width: 12px;
+        height: 12px;
+        top: 0px;
+        /* top: 26px; */
+    }
+
+    .irs-line {
+        top: 6px;
+        bottom: 0px;
+    }
+    
+    .irs.irs--shiny .irs-bar {
+        top: 5px;
+        bottom: 0px;
+    }
 }
 
 /* woodwell font */
 @font-face {
     font-family: "Ginto normal";
-    /* src: url('https://storage.googleapis.com/drought-monitor/media/fonts/GintoNormal-Regular.ttf'); */
     src: url('/GintoNormal-Regular.ttf');
 }
-
-/* @font-face {
-    font-family: "Ginto bold";
-    src: url('https://storage.googleapis.com/risk-maps/media/fonts/GintoNormal-Bold.ttf');
-}
-
-@font-face {
-    font-family: "Ginto italic";
-    src: url('https://storage.googleapis.com/risk-maps/media/fonts/GintoNormal-RegularIta.ttf');
-} */
 
 body { 
     margin: 0; 
     padding: 0; 
-    /* background-color: var(--background-color); */
     font-family: 'Ginto normal', monospace;
     --bs-body-font-family: 'Ginto normal', monospace;
 }
@@ -239,7 +245,6 @@ body {
     width: 25vw;
     min-width: 225px;
     max-width: 350px;
-    /* height: calc(100% - var(--navbar-height)); */
     margin: 0;
     border-radius: 0px;
     padding: 0rem; /* this was 1rem before, could be useful for element inside boxes */
@@ -267,16 +272,13 @@ body {
     margin: 20px auto;
     margin-bottom: 30px;
     padding: 0px 5px;
-    /* margin-bottom: 20px; */
 }
 
 #sidebar {
-    /* height: calc(100% - var(--navbar-height)); */
     height: 100%;
     width: 100%;
     position: relative;
     background-color: var(--background-color);
-    /* justify-items: center; */
 }
 
 .select-label {
@@ -324,7 +326,6 @@ select option:active, select option:checked, select option:focus, select option:
 } */
 
 #main-container {
-    /* border: 1px solid red; */
     flex: 1;
     height: 100%;
     background-color: var(--background-color);
@@ -594,8 +595,73 @@ select option:active, select option:checked, select option:focus, select option:
     margin: 10px auto;
 }
 
-#static-image-container {
-    border: 1px solid greenyellow;
+#time-slider-container {
+    margin: 20px 10px 5px 10px;
+}
+
+#time-slider-container:disabled {
+    pointer-events: none;
+    background-color: var(--light-gray);
+}
+
+#time-slider-container > * {
+    width: 100%;
+}
+
+#reset_skip_button, #skip_years_button, #skip_months_button {
+    position: relative;
+    float: right;
+    width: auto;
+    padding: 3px 6px;
+    margin: 5px 0px 5px 5px;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+#reset_skip_button:hover, #skip_years_button:hover, #skip_months_button:hover {
+    outline: 1px solid var(--gray);
+    background-color: var(--background-color);
+    color: var(--gray)
+}
+
+#reset_skip_button:active, #skip_years_button:active, #skip_months_button:active {
+    outline: 1px solid var(--black);
+    background-color: var(--black);
+    color: var(--white);
+}
+
+.irs--shiny .irs-bar {
+    background: var(--black);
+}
+
+.irs--shiny {
+    height: 1rem;
+}
+
+#time-slider-labels-container {
+    /* outline: 1px solid orange; */
+    height: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+.time-slider-label {
+    border-radius: 0.25rem;
+    line-height: 1.3333;
+    background-color: var(--light-gray);
+    padding: 3px 6px;
+}
+
+#time_slider_output {
+    padding: 3px 0px;
+    line-height: 1.3333;
+}
+
+.irs-min, .irs-max, .irs-to, .irs-from, .irs-single {
+    display: none;
 }
 
 #timeseries-table-container {
@@ -728,6 +794,10 @@ shiny-data-frame#timeseries_table {
 
     #timeseries-inner-container {
         width: 100%;
+    }
+
+    #time-slider-container {
+        margin-bottom: 25px;
     }
 
     #timeseries-table-container {

@@ -81,6 +81,17 @@ if not updating:
     sugarcane_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif')
     wheat_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
 
+    # this is used in the the filename for downloading plots and tables, but is also used in slider values
+    min_slider_date = '1991-01-01'
+    max_slider_date = pd.to_datetime(h3.time.values[-5]).strftime('%Y-%m-%d')
+    forecast_date = None if updating else pd.to_datetime(sorted(f3.time.values)[0]).strftime('%Y-%m-%d')
+    dates = [pd.to_datetime(date).strftime('%Y-%m-%d') for date in sorted(h3.time.values[:-4])]
+    
+    min_index = 0
+    max_year = pd.to_datetime(h3.time.values[-1]).year
+    skip_index = dates.index(f'{max_year - 4}-01-01')
+    max_index = len(dates) - 1
+
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
 # get the font based on the path
@@ -174,6 +185,26 @@ app_ui = ui.page_fluid(
                                 ui.card({'id': 'timeseries-inner-container'},
                                     ui.output_plot('timeseries', width='100%', height='100%'),
                                 ),
+                            ),
+
+                            ui.panel_conditional('input.historical_checkbox == true',
+                                ui.div({'id': 'time-slider-container'}, 
+                                    ui.input_action_link('skip_months_button', 'Last 5 months', class_='skip-button'),
+                                    ui.input_action_link('skip_years_button', 'Last 5 years', class_='skip-button'),
+                                    ui.input_action_link('reset_skip_button', 'All data', class_='skip-button'),
+
+                                    ui.div({'id': 'time-slider-labels-container'},
+                                        ui.div({'class': 'time-slider-label'}, min_slider_date),
+                                        ui.output_text('time_slider_output'),
+                                        ui.div({'class': 'time-slider-label'}, max_slider_date),
+                                    ),
+                                    ui.input_slider('time_slider', '',
+                                        min=0,
+                                        max=len(dates) - 1,
+                                        value=skip_index,
+                                    ),
+                                ),
+                            {'id': 'show-slider-container'},
                             ),
                             
                             ui.div({'id': 'download-csv-container', 'class': 'download-container'},
@@ -269,9 +300,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     bounds = reactive.value([])
     bbox = reactive.value([])
     
-    # this is used in the the filename for downloading plots and tables, but
-    # may also be used later in slider values
-    forecast_date = None if updating else pd.to_datetime(sorted(f3.time.values)[0]).strftime('%Y-%m-%d')
+    slider_date = reactive.value(min_slider_date)
 
     # these values change the data between the 3-month and 12-month integration windows
     integration_window = reactive.value(input.window_select)
@@ -373,7 +402,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     def update_state_list():
         cname = country_name()
         sname = state_name()
-        print(sname)
 
         if(cname == ''): return
 
@@ -391,6 +419,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         
         state_options.set(new_options)
 
+
     @reactive.effect
     @reactive.event(state_options)
     def update_state_select():
@@ -403,7 +432,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     def update_state_name():
         new_state = input.state_select()
         state_name.set(new_state)
-        print(new_state)
     
 
     @reactive.effect
@@ -422,7 +450,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         else:
             new_bounds = json.loads(states.query(" name == @sname and country == @cname ").bbox.values[0])
         bounds.set(new_bounds)
-        print(new_bounds)
 
         xmin, ymin, xmax, ymax = new_bounds
         new_bbox = create_bbox_from_coords(xmin, xmax, ymin, ymax)
@@ -481,6 +508,35 @@ def server(input: Inputs, output: Outputs, session: Session):
     @render.text
     def crop_name_text():
         return crop_name()
+
+    
+    @reactive.effect
+    @reactive.event(input.reset_skip_button)
+    def reset_skip_button():
+        ui.update_slider('time_slider', value=min_index)
+
+    
+    @reactive.effect
+    @reactive.event(input.skip_years_button)
+    def update_skip_years_button():
+        ui.update_slider('time_slider', value=skip_index)
+
+    
+    @reactive.effect
+    @reactive.event(input.skip_months_button)
+    def update_skip_years_button():
+        ui.update_slider('time_slider', value=max_index)
+
+
+    @reactive.effect
+    @reactive.event(input.time_slider)
+    def update_slider_date():
+        slider_date.set(dates[input.time_slider()])
+
+
+    @render.text
+    def time_slider_output():
+        return slider_date()
 
 
     @reactive.effect
@@ -571,7 +627,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # in this case, it is the number of rows in the first (and every individual) month
                 nrows_historical = historical.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@historical.time.values[0]) ").shape[0]
                 nrows_forecast = forecast.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@forecast.time.values[0]) ").shape[0]
-                print(f"NUMBER OF ROWS: {nrows_historical} {nrows_forecast}\n")
+                # print(f"NUMBER OF ROWS: {nrows_historical} {nrows_forecast}\n")
                 
                 historical *= nrows_historical
                 
@@ -789,7 +845,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
 
     @render.plot
-    @reactive.event(table_to_save)
+    @reactive.event(table_to_save, slider_date)
     def timeseries(alt="A graph showing a timeseries of historical and forecasted water balance"):
         # later if we want to make it so that we can dynamically change the timeframe:
         # https://plotly.com/python/range-slider/
@@ -801,11 +857,12 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         show_historical = input.historical_checkbox()
         show_forecast = input.forecast_checkbox()
+        filter_date = slider_date()
 
         df = table_to_save()
-        print(df)
-        print(df.head(20)[['country', 'state', 'crop', 'time', 'window', 'percentile']])
-        print()
+        df = df.query(" @pd.to_datetime(@df['time'], format='%Y-%m-%d') >= @pd.Timestamp(@filter_date) ")
+        # print(df.head(20)[['country', 'state', 'crop', 'time', 'window', 'percentile']])
+        # print()
 
 
         timeseries_color = '#1b1e23'
@@ -827,14 +884,14 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # if both are true, we need to stitch together the historical and forecast timeseries
         if(show_historical == True and show_forecast == True):
-            df_historical = df.query(" type == 'historical' ")
-            print(df_historical[['country', 'state', 'crop', 'time', 'window', 'percentile']])
-            print()
+            df_historical = df.iloc[6:, :]
+            # print(df_historical[['country', 'state', 'crop', 'time', 'window', 'percentile']])
+            # print()
 
             # this is the 6-month forecast plus the last data entry for historical data
             df_forecast = df.iloc[0:7, :]
-            print(df_forecast[['country', 'state', 'crop', 'time', 'window', 'percentile']])
-            print()
+            # print(df_forecast[['country', 'state', 'crop', 'time', 'window', 'percentile']])
+            # print()
             
             # forecast data needs to be plotted first because of the uncertainty bounds
             ax.fill_between(df_forecast['time'], df_forecast['5%'], df_forecast['95%'], color=high_certainty_color)
@@ -846,6 +903,9 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         if(show_historical == True and show_forecast == False):
             ax.plot(df['time'], df['percentile'], color=timeseries_color)
+
+            if(len(df) == 5):
+                ax.set_xticks([date for date in df.time.values])
             
             legend_elements = [historical_label]
 
@@ -861,6 +921,12 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         ax.set_xlabel('Time', fontproperties=ginto_medium)
         ax.set_ylabel('Mean water balance', fontproperties=ginto_medium)
+
+        # when there are 60 or more entries in the dataframe, 
+        # the date labels along the x-axis get crowded and difficult to read
+        if(len(df) <= 60):
+            date_format = mdates.DateFormatter('%m-%y')
+            ax.xaxis.set_major_formatter(date_format)
 
         # use custom fonts for x and y axes labels
         for label in ax.get_xticklabels():
