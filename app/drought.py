@@ -40,14 +40,14 @@ if updating:
 
 if not updating:
     # open historical and forecast data for both integration windows
-    # h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-    # h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-    # f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-    # f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-    h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
-    h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
-    f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
-    f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
+    h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+    h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+    f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+    f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+    # h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
+    # h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
+    # f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
+    # f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
 
     # the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
     # f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
