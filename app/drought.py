@@ -29,69 +29,56 @@ from utils import *
 
 updating = False
 
-if updating:
-    h3 = None
-    h12 = None
-    f3 = None
-    f12 = None
+# open historical and forecast data for both integration windows
+h3 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+h12 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f3 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f12 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
 
-    countries = gpd.GeoDataFrame(columns=['name', 'geometry'])
-    states = gpd.GeoDataFrame(columns=['name', 'country', 'geometry'])
-
+# the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
+# f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
+# f12 = f12[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
 if not updating:
-    # open historical and forecast data for both integration windows
-    h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-    h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-    f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-    f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-    # h3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
-    # h12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
-    # f3 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
-    # f12 = xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,)
-
-    # the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
-    # f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
-    # f12 = f12[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
     f3 = f3[['5%', '20%', 'perc', '80%', '95%']]
     f12 = f12[['5%', '20%', 'perc', '80%', '95%']]
 
-    # open country boundary layer
-    countries = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
-    states = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/states.parquet')
+# open country boundary layer
+countries = gpd.GeoDataFrame(columns=['name', 'geometry']) if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
+states = gpd.GeoDataFrame(columns=['name', 'country', 'geometry']) if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/states.parquet')
 
-    # open crop polygon layers
-    barley = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/barley.parquet')
-    cocoa = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cocoa.parquet')
-    coffee = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/coffee.parquet')
-    cotton = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cotton.parquet')
-    maize = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/maize.parquet')
-    rice = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/rice.parquet')
-    soy = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/soybean.parquet')
-    sugarcane = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/sugarcane.parquet')
-    wheat = gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/wheat.parquet')
+# open crop polygon layers
+barley = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/barley.parquet')
+cocoa = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cocoa.parquet')
+coffee = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/coffee.parquet')
+cotton = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cotton.parquet')
+maize = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/maize.parquet')
+rice = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/rice.parquet')
+soy = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/soybean.parquet')
+sugarcane = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/sugarcane.parquet')
+wheat = None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/wheat.parquet')
 
-    # open crop raster layers
-    barley_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_barley.tif')
-    cocoa_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cocoa.tif')
-    coffee_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_coffee-all.tif')
-    cotton_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cotton.tif')
-    maize_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_maize.tif')
-    rice_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_rice.tif')
-    soy_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_soybean.tif')
-    sugarcane_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif')
-    wheat_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
+# open crop raster layers
+barley_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_barley.tif')
+cocoa_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cocoa.tif')
+coffee_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_coffee-all.tif')
+cotton_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cotton.tif')
+maize_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_maize.tif')
+rice_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_rice.tif')
+soy_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_soybean.tif')
+sugarcane_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif')
+wheat_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
 
-    # this is used in the the filename for downloading plots and tables, but is also used in slider values
-    min_date = '1991-01-01'
-    min_slider_date = min_date
-    max_slider_date = pd.to_datetime(h3.time.values[-5]).strftime('%Y-%m-%d')
-    forecast_date = None if updating else pd.to_datetime(sorted(f3.time.values)[0]).strftime('%Y-%m-%d')
-    dates = [pd.to_datetime(date).strftime('%Y-%m-%d') for date in sorted(h3.time.values[:-4])]
-    
-    min_index = 0
-    max_year = pd.to_datetime(h3.time.values[-1]).year
-    skip_index = dates.index(f'{max_year - 4}-01-01')
-    max_index = len(dates) - 1
+# this is used in the the filename for downloading plots and tables, but is also used in slider values
+min_date = None if updating else '1991-01-01'
+min_slider_date = min_date
+max_slider_date = None if updating else pd.to_datetime(h3.time.values[-5]).strftime('%Y-%m-%d')
+forecast_date = None if updating else pd.to_datetime(sorted(f3.time.values)[0]).strftime('%Y-%m-%d')
+dates = None if updating else [pd.to_datetime(date).strftime('%Y-%m-%d') for date in sorted(h3.time.values[:-4])]
+
+min_index = None if updating else 0
+max_year = None if updating else pd.to_datetime(h3.time.values[-1]).year
+skip_index = None if updating else  dates.index(f'{max_year - 4}-01-01')
+max_index = None if updating else len(dates) - 1
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -109,6 +96,7 @@ app_ui = ui.page_fluid(
 
     ui.div({'id': 'layout'},
 
+        # navbar section
         ui.div({'id': 'navbar'},
             ui.div({'id': 'logo-container'}, 
                 ui.div({'id': 'logo-inner-container'},
@@ -157,7 +145,6 @@ app_ui = ui.page_fluid(
                         ui.div({'id': 'process-data-container'},
                             ui.input_task_button("process_data_button", label="Run"),
                         ),
-
                     )
                 ),
             ),
@@ -188,25 +175,7 @@ app_ui = ui.page_fluid(
                                 ),
                             ),
 
-                            ui.panel_conditional('input.historical_checkbox == true',
-                                ui.div({'id': 'time-slider-container'}, 
-                                    ui.input_action_link('skip_months_button', 'Last 5 months', class_='skip-button'),
-                                    ui.input_action_link('skip_years_button', 'Last 5 years', class_='skip-button'),
-                                    ui.input_action_link('reset_skip_button', 'All data', class_='skip-button'),
-
-                                    ui.div({'id': 'time-slider-labels-container'},
-                                        ui.div({'class': 'time-slider-label'}, min_slider_date),
-                                        ui.output_text('time_slider_output'),
-                                        ui.div({'class': 'time-slider-label'}, max_slider_date),
-                                    ),
-                                    ui.input_slider('time_slider', '',
-                                        min=0,
-                                        max=len(dates) - 1,
-                                        value=skip_index,
-                                    ),
-                                ),
-                            {'id': 'show-slider-container'},
-                            ),
+                            ui.output_ui('show_time_slider'),
                             
                             ui.div({'id': 'download-csv-container', 'class': 'download-container'},
                                 ui.download_link("download_csv_link", 'Download CSV')
@@ -224,10 +193,8 @@ app_ui = ui.page_fluid(
                                 ui.output_ui('forecast_map'),
                             ),
                         ),
-
                         id='tab_menu'
                     ),
-                
                 ),
             ),
 
@@ -271,11 +238,7 @@ app_ui = ui.page_fluid(
                 {'id': 'about-container'},
             ), 
             
-            # ui.div({'id': 'update-message-container'},
-            #     ui.div({'id': 'update-message'}, 
-            #         'The website is currently being updated. Please check back later.'
-            #     ),
-            # ),
+            ui.output_ui('show_update_message'),
         ),
     ),
 )
@@ -306,9 +269,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     # these values change the data between the 3-month and 12-month integration windows
     integration_window = reactive.value(None)
 
-    # h = reactive.value(None)
-    # f = reactive.value(None)
-
     # these values represent the data clipped to a specific area, used for the timeseries figures
     historical_wb = reactive.value(None)
     forecast_wb = reactive.value(None)
@@ -326,28 +286,23 @@ def server(input: Inputs, output: Outputs, session: Session):
     display_bounds_error = reactive.value(False)
 
 
+    @render.ui
+    def show_update_message():
+        if updating:
+            return ui.TagList(
+                ui.div({'id': 'update-message-container'},
+                    ui.div({'id': 'update-message'}, 
+                        'The website is currently being updated. Please check back later.'
+                    ),
+                ),
+            )
+
+
     @reactive.effect
     @reactive.event(input.window_select)
     def update_integration_window():
         window_size = input.window_select()
         integration_window.set(window_size)
-
-
-    # @reactive.effect
-    # @reactive.event(integration_window)
-    # def update_rasters():
-    #     window_size = integration_window()
-    #     print("INTEGRATION WINDOW")
-    #     print(window_size)
-
-    #     if(window_size == '3'):
-    #         h.set(h3)
-    #         f.set(f3)
-    #     elif(window_size == '12'):
-    #         h.set(h12)
-    #         f.set(f12)
-    #     else:
-    #         raise ValueError("The integration window should be either 3 or 12 months.")
 
 
     @reactive.effect
@@ -512,6 +467,32 @@ def server(input: Inputs, output: Outputs, session: Session):
     def crop_name_text():
         return crop_name()
 
+
+    @render.ui
+    def show_time_slider():
+        if not updating:
+            return ui.TagList(
+            ui.panel_conditional('input.historical_checkbox == true',
+                ui.div({'id': 'time-slider-container'}, 
+                    ui.input_action_link('skip_months_button', 'Last 5 months', class_='skip-button'),
+                    ui.input_action_link('skip_years_button', 'Last 5 years', class_='skip-button'),
+                    ui.input_action_link('reset_skip_button', 'All data', class_='skip-button'),
+
+                    ui.div({'id': 'time-slider-labels-container'},
+                        ui.div({'class': 'time-slider-label'}, min_slider_date),
+                        ui.output_text('time_slider_output'),
+                        ui.div({'class': 'time-slider-label'}, max_slider_date),
+                    ),
+                    ui.input_slider('time_slider', '',
+                        min=0,
+                        max=len(dates) - 1,
+                        value=skip_index,
+                    ),
+                ),
+            {'id': 'show-slider-container'},
+            ),
+        )
+
     
     @reactive.effect
     @reactive.event(input.reset_skip_button)
@@ -534,7 +515,10 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.time_slider)
     def update_slider_date():
-        slider_date.set(dates[input.time_slider()])
+        if dates is None:
+            return
+        else:
+            slider_date.set(dates[input.time_slider()])
 
 
     @render.text
