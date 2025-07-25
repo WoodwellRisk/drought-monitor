@@ -82,7 +82,8 @@ if not updating:
     wheat_production = open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
 
     # this is used in the the filename for downloading plots and tables, but is also used in slider values
-    min_slider_date = '1991-01-01'
+    min_date = '1991-01-01'
+    min_slider_date = min_date
     max_slider_date = pd.to_datetime(h3.time.values[-5]).strftime('%Y-%m-%d')
     forecast_date = None if updating else pd.to_datetime(sorted(f3.time.values)[0]).strftime('%Y-%m-%d')
     dates = [pd.to_datetime(date).strftime('%Y-%m-%d') for date in sorted(h3.time.values[:-4])]
@@ -303,10 +304,10 @@ def server(input: Inputs, output: Outputs, session: Session):
     slider_date = reactive.value(min_slider_date)
 
     # these values change the data between the 3-month and 12-month integration windows
-    integration_window = reactive.value(input.window_select)
+    integration_window = reactive.value(None)
 
-    h = reactive.value(None)
-    f = reactive.value(None)
+    # h = reactive.value(None)
+    # f = reactive.value(None)
 
     # these values represent the data clipped to a specific area, used for the timeseries figures
     historical_wb = reactive.value(None)
@@ -332,19 +333,21 @@ def server(input: Inputs, output: Outputs, session: Session):
         integration_window.set(window_size)
 
 
-    @reactive.effect
-    @reactive.event(integration_window)
-    def update_rasters():
-        window_size = integration_window()
+    # @reactive.effect
+    # @reactive.event(integration_window)
+    # def update_rasters():
+    #     window_size = integration_window()
+    #     print("INTEGRATION WINDOW")
+    #     print(window_size)
 
-        if(window_size == '3'):
-            h.set(h3)
-            f.set(f3)
-        elif(window_size == '12'):
-            h.set(h12)
-            f.set(f12)
-        else:
-            raise ValueError("The integration window should be either 3 or 12 months.")
+    #     if(window_size == '3'):
+    #         h.set(h3)
+    #         f.set(f3)
+    #     elif(window_size == '12'):
+    #         h.set(h12)
+    #         f.set(f12)
+    #     else:
+    #         raise ValueError("The integration window should be either 3 or 12 months.")
 
 
     @reactive.effect
@@ -550,12 +553,17 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         window_size = integration_window()
 
-        historical = h()
-        forecast = f()
+        if(window_size == '3'):
+            historical = h3
+            forecast = f3
+        elif(window_size == '12'):
+            historical = h12
+            forecast = f12
+        else:
+            raise ValueError("The integration window should be either 3 or 12 months.")
 
         # on app start or page reload, these variables will be empty
         if(cname == '' or sname == '' or crop == '' or historical is None or forecast is None):
-        # if(name == '' or crop == ''):
             return
 
         xmin, ymin, xmax, ymax = bounds.get()
@@ -606,10 +614,10 @@ def server(input: Inputs, output: Outputs, session: Session):
                 production = crop_production()
                 production = production.rio.write_crs(4236)
                 if(sname == 'All'):
-                    country_level_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
+                    clipped_production = production.rio.clip(country.geometry, all_touched=True, drop=True)
                 else:
-                    country_level_production = production.rio.clip(state.geometry, all_touched=True, drop=True)
-                standardized_production = country_level_production / country_level_production.sum(skipna=True)
+                    clipped_production = production.rio.clip(state.geometry, all_touched=True, drop=True)
+                standardized_production = clipped_production / clipped_production.sum(skipna=True)
                 standardized_production = standardized_production[['x', 'y', 'production']]
 
                 # multiply water balance data by standardized production values
@@ -625,9 +633,8 @@ def server(input: Inputs, output: Outputs, session: Session):
 
                 # next, multiply the water balance data by the number of rows in the dataset
                 # in this case, it is the number of rows in the first (and every individual) month
-                nrows_historical = historical.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@historical.time.values[0]) ").shape[0]
-                nrows_forecast = forecast.drop_vars('spatial_ref').to_dataframe().dropna().query(" time == @pd.to_datetime(@forecast.time.values[0]) ").shape[0]
-                # print(f"NUMBER OF ROWS: {nrows_historical} {nrows_forecast}\n")
+                nrows_historical = historical.drop_vars('spatial_ref').sel(time=min_date).to_dataframe().dropna().shape[0]
+                nrows_forecast = forecast.drop_vars('spatial_ref').sel(time=forecast_date).to_dataframe().dropna().shape[0]
                 
                 historical *= nrows_historical
                 
@@ -638,10 +645,8 @@ def server(input: Inputs, output: Outputs, session: Session):
                 forecast['95%'] = forecast['95%'] * nrows_forecast
                 
                 # lastly, drop the production row from the dataframes
-                historical = historical.drop_vars('production')
                 historical = historical[['time', 'x', 'y', 'perc']]
 
-                forecast = forecast.drop_vars('production')
                 # forecast = forecast[['time', 'x', 'y', 'agree', '5%', '20%', 'perc', '80%', '95%']]
                 forecast = forecast[['time', 'x', 'y', '5%', '20%', 'perc', '80%', '95%']]
 
@@ -1041,7 +1046,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             # color_continuous_scale = px.colors.sequential.Plasma,
             range_color = [0, 1],
             hover_data = {'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
-            map_style = 'carto-positron-nolabels',
+            map_style = 'carto-positron-nolabels', # could also try 'carto-darkmatter-nolabels', which works better with colormap
             zoom=zoom,
             height=445,
             animation_frame = 'time'
@@ -1104,12 +1109,6 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # to save individual images later: https://github.com/plotly/plotly.py/issues/664
         return ui.HTML(fig.to_html(config=config, auto_play=False))
-
-
-    # # @reactive.effect
-    # # def _():
-    # #     # map.widget.center = city_centers[input.center()]
-    # #     print(forecast_map)
          
 
     @render.data_frame
