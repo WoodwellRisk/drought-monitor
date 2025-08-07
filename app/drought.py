@@ -1057,7 +1057,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 'bordercolor': '#1b1e23',
                 'activebgcolor': '#1b1e23',
                 'tickcolor': '#1b1e23',
-                'font': {'color': '#1b1e23'},
+                'font': {'color': '#1b1e23', 'family': 'Ginto normal'},
             }],
             margin=dict(l=0, r=0, t=0, b=0),
             paper_bgcolor='#f7f7f7',
@@ -1065,11 +1065,16 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         fig.update_coloraxes(
             colorbar_title_side='right',
+            colorbar_title_font=dict(color='#1b1e23', family='Ginto normal'),
             colorbar_len=0.8,
             colorbar_thickness=20,
+            colorbar_tickfont=dict(color='#1b1e23', family='Ginto normal'),
         )
 
-        fig.update_layout(coloraxis_colorbar_x=0.01)
+        fig.update_layout(
+            coloraxis_colorbar_x=0.01,
+            hoverlabel=dict(font_family='Ginto normal')
+        )
 
         fig.add_traces(
             px.scatter_geo(geojson=bounding_box).data

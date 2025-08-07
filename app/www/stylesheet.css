@@ -29,6 +29,10 @@
         top: 5px;
         bottom: 0px;
     }
+
+    .plotly div {
+        font-family: 'Ginto normal'
+    }
 }
 
 /* woodwell font */
@@ -445,6 +449,10 @@ select option:active, select option:checked, select option:focus, select option:
     margin: 30px 10px 5px 10px;
 }
 
+.js-plotly-plot .plotly .modebar-group {
+    padding-left: 0px;
+}
+
 /* https://community.plotly.com/t/plotly-6-map-attribution-box-positioning/91228 */
 /* The following styles ensure the attribution tag floats above the map and should be removed if the issue is fixed in a future plotly release. */
 .maplibregl-ctrl-bottom-right {
@@ -464,7 +472,7 @@ select option:active, select option:checked, select option:focus, select option:
     font-family: 'Ginto normal'
 }
   
-.maplibregl-ctrl-attrib-inner {
+.maplibregl-ctrl-attrib {
     background-color: #d4dadc;
     border-radius: 10px;
     padding: 2px 5px;
