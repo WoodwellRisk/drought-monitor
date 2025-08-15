@@ -39,33 +39,29 @@ const useStore = create((set, get) => ({
     setOpacity: (opacity) => set({ opacity }),
 
     minDate: '1991-01-01',
-    maxDate: '2025-06-01',
+    maxDate: '2025-07-01',
 
-    minYear: () => {
-        const {minDate} = get()
-        return `${ new Date(minDate + 'T00:00:00').getFullYear() }`
-    },
-    maxYear: () => {
-        const {maxDate} = get()
-        return `${ new Date(maxDate + 'T00:00:00').getFullYear() }`
-    },
-
-    // year: () => {
-    //     const {maxYear} = get()
-    //     return maxYear()
-    // },
     year: 2025,
     setYear: (year) => set({ year }),
 
     monthValues: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
-    month: '06',
+    month: '07',
     setMonth: (month) => set({ month }),
     
-    monthIdx: 5,
+    monthIdx: 6,
     setMonthIdx: (monthIdx) => set({ monthIdx }),
 
     time: (year, month) => set(`${year}-${month}-01`),
     setTime: (time) => set({ time }),
+
+    minYear: () => {
+        const { minDate } = get()
+        return `${ new Date(minDate + 'T00:00:00').getFullYear() }`
+    },
+    maxYear: () => {
+        const { maxDate } = get()
+        return `${ new Date(maxDate + 'T00:00:00').getFullYear() }`
+    },
 
     colormapName: 'redteal',
     setColormapName: (colormapName) => set({ colormapName }),
