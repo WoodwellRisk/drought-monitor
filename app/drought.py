@@ -27,7 +27,7 @@ from utils import *
 
 # shiny run --reload drought.py
 
-updating = True
+updating = False
 
 # open historical and forecast data for both integration windows
 h3 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
