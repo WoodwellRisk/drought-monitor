@@ -1,6 +1,5 @@
-import asyncio
+from datetime import datetime
 import io
-import glob
 import json
 
 import numpy as np 
@@ -29,11 +28,45 @@ from utils import *
 
 updating = False
 
+# calculate the initial conditions from today's year and month
+# in general, the month (and potentially year) roll back one month
+# for example: if we are producing the forecast in january, 
+# then the initial conditions are from december of the previous year
+today = datetime.today()
+year = today.year
+month = today.month
+
+if month == 1:
+    month = 12
+    year = year - 1
+else: 
+    month -= 1
+
+month_ic = str(month) if month >= 10 else '0' + str(month) 
+year_ic = str(year)
+
+# generate the list of date we expect to find for historical data
+historical_dates = [date.strftime('%Y-%m-%d') for date in pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')]
+forecast_dates = [date.strftime('%Y-%m-%d') for date in pd.date_range(start=f'{year_ic}-{month_ic}-01', freq='MS', periods=7)][1:]
+print(forecast_dates)
+
+# this is used in the the filename for downloading plots and tables, but is also used in slider values
+min_date = None if updating else historical_dates[0]
+min_slider_date = min_date
+max_slider_date = None if updating else historical_dates[-5]
+forecast_date = None if updating else forecast_dates[0]
+slider_dates = historical_dates[:-4]
+
+min_index = None if updating else 0
+max_year = None if updating else year # we calculated this above
+skip_index = None if updating else slider_dates.index(f'{max_year - 4}-01-01')
+max_index = None if updating else len(slider_dates) - 1
+
 # open historical and forecast data for both integration windows
-h3 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-h12 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/h12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f3 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f3.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f12 = None if updating else xr.open_dataset(Path(__file__).parent /'mnt/data/zarr/f12.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+h3 = None if updating else xr.open_dataset(Path(__file__).parent /f'mnt/data/zarr/analysis/h3-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+h12 = None if updating else xr.open_dataset(Path(__file__).parent /f'mnt/data/zarr/analysis/h12-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f3 = None if updating else xr.open_dataset(Path(__file__).parent /f'mnt/data/zarr/analysis/f3-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f12 = None if updating else xr.open_dataset(Path(__file__).parent /f'mnt/data/zarr/analysis/f12-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
 
 # the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
 # f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
@@ -67,18 +100,6 @@ rice_production = None if updating else open_production_data(Path(__file__).pare
 soy_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_soybean.tif')
 sugarcane_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif')
 wheat_production = None if updating else open_production_data(Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif')
-
-# this is used in the the filename for downloading plots and tables, but is also used in slider values
-min_date = None if updating else '1991-01-01'
-min_slider_date = min_date
-max_slider_date = None if updating else pd.to_datetime(h3.time.values[-5]).strftime('%Y-%m-%d')
-forecast_date = None if updating else pd.to_datetime(sorted(f3.time.values)[0]).strftime('%Y-%m-%d')
-dates = None if updating else [pd.to_datetime(date).strftime('%Y-%m-%d') for date in sorted(h3.time.values[:-4])]
-
-min_index = None if updating else 0
-max_year = None if updating else pd.to_datetime(h3.time.values[-1]).year
-skip_index = None if updating else  dates.index(f'{max_year - 4}-01-01')
-max_index = None if updating else len(dates) - 1
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / "www"
@@ -485,7 +506,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                     ),
                     ui.input_slider('time_slider', '',
                         min=0,
-                        max=len(dates) - 1,
+                        max=len(slider_dates) - 1,
                         value=skip_index,
                     ),
                 ),
@@ -515,10 +536,10 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.effect
     @reactive.event(input.time_slider)
     def update_slider_date():
-        if dates is None:
+        if slider_dates is None:
             return
         else:
-            slider_date.set(dates[input.time_slider()])
+            slider_date.set(slider_dates[input.time_slider()])
 
 
     @render.text
@@ -1018,8 +1039,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         df = country_forecast['perc'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
         df.columns = ['time', 'y', 'x', 'Percentile']
 
-        forecast_dates = df.time.unique().tolist()
-        formatted_dates = [date.strftime("%b-%Y") for date in forecast_dates]
+        formatted_dates = [pd.to_datetime(date).strftime("%b-%Y") for date in forecast_dates]
 
         fig = px.scatter_map(
             data_frame = df, 
