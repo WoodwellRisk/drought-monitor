@@ -32,23 +32,28 @@ updating = False
 # in general, the month (and potentially year) roll back one month
 # for example: if we are producing the forecast in january, 
 # then the initial conditions are from december of the previous year
-today = datetime.today()
-year = today.year
-month = today.month
 
-if month == 1:
-    month = 12
-    year = year - 1
-else: 
-    month -= 1
+# this is what we would like to do, 
+# except that it would roll over in the new month before we have the new data
+# today = datetime.today()
+# year = today.year
+# month = today.month
 
+# if month == 1:
+#     month = 12
+#     year = year - 1
+# else: 
+#     month -= 1
+
+year = 2025
+month = 9
 month_ic = str(month) if month >= 10 else '0' + str(month) 
 year_ic = str(year)
 
 # generate the list of date we expect to find for historical data
 historical_dates = [date.strftime('%Y-%m-%d') for date in pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')]
 forecast_dates = [date.strftime('%Y-%m-%d') for date in pd.date_range(start=f'{year_ic}-{month_ic}-01', freq='MS', periods=7)][1:]
-print(forecast_dates)
+# print(forecast_dates)
 
 # this is used in the the filename for downloading plots and tables, but is also used in slider values
 min_date = None if updating else historical_dates[0]
