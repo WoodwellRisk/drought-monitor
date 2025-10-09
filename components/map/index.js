@@ -155,7 +155,7 @@ const Map = ({ mobile }) => {
             display={display}
             opacity={opacity}
             mode={'texture'}
-            source={`https://storage.googleapis.com/drought-monitor/zarr/h${window}-viz.zarr`}
+            source={`https://storage.googleapis.com/drought-monitor/zarr/viz/h${window}-${maxDate}.zarr`}
             variable={variable}
             selector={{ time }}
             regionOptions={{ setData: handleRegionData, selector: {} }}
