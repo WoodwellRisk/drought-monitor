@@ -68,10 +68,10 @@ skip_index = None if updating else slider_dates.index(f'{max_year - 4}-01-01')
 max_index = None if updating else len(slider_dates) - 1
 
 # open historical and forecast data for both integration windows
-h3 = None if updating else xr.open_dataset(Path(__file__).parent /f'mnt/data/zarr/analysis/h3-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-h12 = None if updating else xr.open_dataset(Path(__file__).parent /f'mnt/data/zarr/analysis/h12-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f3 = None if updating else xr.open_dataset(Path(__file__).parent /f'mnt/data/zarr/analysis/f3-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
-f12 = None if updating else xr.open_dataset(Path(__file__).parent /f'mnt/data/zarr/analysis/f12-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+h3 = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/analysis/h3-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+h12 = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/analysis/h12-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f3 = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/analysis/f3-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
+f12 = None if updating else xr.open_dataset(Path(__file__).parent / f'mnt/data/zarr/analysis/f12-{year_ic}-{month_ic}-01.zarr', engine='zarr', consolidated=True, decode_coords="all", chunks=None,).compute()
 
 # the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
 # f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
@@ -163,10 +163,13 @@ app_ui = ui.page_fluid(
                         ),
                         ui.input_select('state_select', '', [], size=5),
 
-                        ui.div({'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select a crop:')
+                        ui.panel_conditional('input.window_select == 3',
+                            ui.div({'class': 'select-label-container'},
+                                ui.p({'class': 'select-label'}, 'Select a crop:')
+                            ),
+                            ui.input_select('crop_select', '', [], size=5),
+                            {'id': 'crop-select-conditional-panel'},
                         ),
-                        ui.input_select('crop_select', '', [], size=5),
 
                         ui.div({'id': 'process-data-container'},
                             ui.input_task_button("process_data_button", label="Run"),
@@ -329,6 +332,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     def update_integration_window():
         window_size = input.window_select()
         integration_window.set(window_size)
+        
+        if(window_size == '12'):
+            # if the integration window is not set to 3 months, then we don't want to look at agriculture applications
+            # setting the name to 'none' takes care of the rest of the logic around 
+            # not weighting the forecast by crop production, which is handled in another method
+            crop_name.set('none')
+            new_options = crop_options()
+            ui.update_select('crop_select', label=None, choices=new_options, selected='None')
 
 
     @reactive.effect
@@ -1055,9 +1066,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             # color_continuous_scale = px.colors.sequential.Plasma,
             range_color = [0, 1],
             hover_data = {'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
-            map_style = 'carto-positron-nolabels', # could also try 'carto-darkmatter-nolabels', which works better with colormap
-            zoom=zoom,
-            height=445,
+            map_style = 'carto-positron-nolabels',
+            # map_style = 'carto-darkmatter-nolabels',
+            zoom = zoom,
+            height = 445,
             animation_frame = 'time'
         )
 
@@ -1091,9 +1103,11 @@ def server(input: Inputs, output: Outputs, session: Session):
         fig.update_coloraxes(
             colorbar_title_side='right',
             colorbar_title_font=dict(color='#1b1e23', family='Ginto normal'),
+            # colorbar_title_font=dict(color='#f7f7f7', family='Ginto normal'),
             colorbar_len=0.8,
             colorbar_thickness=20,
             colorbar_tickfont=dict(color='#1b1e23', family='Ginto normal'),
+            # colorbar_tickfont=dict(color='#f7f7f7', family='Ginto normal'),
         )
 
         fig.update_layout(
