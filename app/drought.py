@@ -910,21 +910,25 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # if both are true, we need to stitch together the historical and forecast timeseries
         if(show_historical == True and show_forecast == True):
-            df_historical = df.iloc[6:, :]
-            # print(df_historical[['country', 'state', 'crop', 'time', 'window', 'percentile']])
-            # print()
+            print(df)
 
+            df_historical = df.iloc[6:, :]
             # this is the 6-month forecast plus the last data entry for historical data
             df_forecast = df.iloc[0:7, :]
-            # print(df_forecast[['country', 'state', 'crop', 'time', 'window', 'percentile']])
-            # print()
+            
+            # this dataframe is purely aesthetic; it covers up the gap in the historical and forecast data in the plot
+            df_bridge = df.iloc[5:7]
+            
+            print()
+            print(df_bridge['time'])
             
             # forecast data needs to be plotted first because of the uncertainty bounds
             ax.fill_between(df_forecast['time'], df_forecast['5%'], df_forecast['95%'], color=high_certainty_color)
             ax.fill_between(df_forecast['time'], df_forecast['20%'], df_forecast['80%'], color=medium_certainty_color)
             ax.plot(df_forecast['time'], df_forecast['percentile'], color=timeseries_color, linestyle='--')
             ax.plot(df_historical['time'], df_historical['percentile'], color=timeseries_color)
-            
+            ax.plot(df_bridge['time'], df_bridge['percentile'], color=timeseries_color)
+
             legend_elements = [historical_label, forecast_label, medium_certainty_label, high_certainty_label]
 
         if(show_historical == True and show_forecast == False):
