@@ -910,17 +910,14 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         # if both are true, we need to stitch together the historical and forecast timeseries
         if(show_historical == True and show_forecast == True):
-            print(df)
-
+            # this is the historical data plus the first entry for forecast data
             df_historical = df.iloc[6:, :]
+            
             # this is the 6-month forecast plus the last data entry for historical data
             df_forecast = df.iloc[0:7, :]
             
             # this dataframe is purely aesthetic; it covers up the gap in the historical and forecast data in the plot
             df_bridge = df.iloc[5:7]
-            
-            print()
-            print(df_bridge['time'])
             
             # forecast data needs to be plotted first because of the uncertainty bounds
             ax.fill_between(df_forecast['time'], df_forecast['5%'], df_forecast['95%'], color=high_certainty_color)
@@ -991,6 +988,7 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         cname = country_name()
         sname = state_name()
+        crop = crop_name()
 
         forecast = forecast_wb()
         historical = historical_wb()
@@ -1015,7 +1013,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         elif(show_historical == True and show_forecast == True):
             historical_and_forecast_label = 'Historical and forecasted'
 
-        title = f"{historical_and_forecast_label} water balance for {sname + ', ' if sname != '' and sname != 'All' else ''}{cname}"
+        title = f"{historical_and_forecast_label} water balance for {sname + ', ' if sname != '' and sname != 'All' else ''}{cname}{f' {crop}' if crop != '' and crop != 'none' else ''}"
         ax.set_title(title, fontproperties=ginto_medium)
 
         fig.subplots_adjust(top=0.9)
