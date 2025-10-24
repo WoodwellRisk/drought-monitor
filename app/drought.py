@@ -900,8 +900,8 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         historical_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Historical', linewidth=1.25, **legend_options, )
         forecast_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Mean forecast', linestyle='--', linewidth=1.25, **legend_options)
-        medium_certainty_label = Line2D(color=medium_certainty_color, markerfacecolor=medium_certainty_color, label='20-80%', linewidth=3, **legend_options)
-        high_certainty_label = Line2D(color=high_certainty_color, markerfacecolor=high_certainty_color, label='5-95%', linewidth=3, **legend_options)
+        medium_certainty_label = Line2D(color=medium_certainty_color, markerfacecolor=medium_certainty_color, label='60%', linewidth=3, **legend_options)
+        high_certainty_label = Line2D(color=high_certainty_color, markerfacecolor=high_certainty_color, label='90%', linewidth=3, **legend_options)
         legend_elements = []
 
         fig, ax = plt.subplots()
