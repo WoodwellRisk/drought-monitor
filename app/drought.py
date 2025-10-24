@@ -111,6 +111,7 @@ static_dir = Path(__file__).parent / "www"
 # get the font based on the path
 ginto = font_manager.FontProperties(fname='./www/GintoNormal-Regular.ttf')
 ginto_medium = font_manager.FontProperties(fname='./www/GintoNormal-Medium.ttf')
+print(ginto_medium)
 
 app_ui = ui.page_fluid(
     # css
@@ -887,9 +888,6 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         df = table_to_save()
         df = df.query(" @pd.to_datetime(@df['time'], format='%Y-%m-%d') >= @pd.Timestamp(@filter_date) ")
-        # print(df.head(20)[['country', 'state', 'crop', 'time', 'window', 'percentile']])
-        # print()
-
 
         timeseries_color = '#1b1e23'
         high_certainty_color = '#f4c1c1'
@@ -900,8 +898,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             'ydata': [0],
         }
 
-        historical_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Historical', linewidth=1, **legend_options, )
-        forecast_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Forecast', linestyle='--', linewidth=1, **legend_options)
+        historical_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Historical', linewidth=1.25, **legend_options, )
+        forecast_label = Line2D(color=timeseries_color, markerfacecolor=timeseries_color, label='Mean forecast', linestyle='--', linewidth=1.25, **legend_options)
         medium_certainty_label = Line2D(color=medium_certainty_color, markerfacecolor=medium_certainty_color, label='20-80%', linewidth=3, **legend_options)
         high_certainty_label = Line2D(color=high_certainty_color, markerfacecolor=high_certainty_color, label='5-95%', linewidth=3, **legend_options)
         legend_elements = []
@@ -947,7 +945,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             legend_elements = [forecast_label, medium_certainty_label, high_certainty_label]
 
         ax.set_xlabel('Time', fontproperties=ginto_medium)
-        ax.set_ylabel('Mean water balance', fontproperties=ginto_medium)
+        # ax.set_ylabel('Mean water balance', fontproperties=ginto_medium)
+        ax.set_ylabel('Water balance percentile', fontproperties=ginto_medium)
 
         # when there are 60 or more entries in the dataframe, 
         # the date labels along the x-axis get crowded and difficult to read
@@ -989,6 +988,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         cname = country_name()
         sname = state_name()
         crop = crop_name()
+        window_size = input.window_select()
 
         forecast = forecast_wb()
         historical = historical_wb()
@@ -1006,14 +1006,32 @@ def server(input: Inputs, output: Outputs, session: Session):
         fig.patch.set_facecolor('white')
         ax.set_facecolor('white')
 
-        if(show_historical == True and show_forecast == False):
-            historical_and_forecast_label = 'Historical'
-        elif(show_historical == False and show_forecast == True):
-            historical_and_forecast_label = 'Forecasted'
-        elif(show_historical == True and show_forecast == True):
-            historical_and_forecast_label = 'Historical and forecasted'
+        # if(show_historical == True and show_forecast == False):
+        #     historical_and_forecast_label = 'Historical'
+        # elif(show_historical == False and show_forecast == True):
+        #     historical_and_forecast_label = 'Forecasted'
+        # elif(show_historical == True and show_forecast == True):
+        #     historical_and_forecast_label = 'Historical and forecasted'
 
-        title = f"{historical_and_forecast_label} water balance for {sname + ', ' if sname != '' and sname != 'All' else ''}{cname}{f' {crop}' if crop != '' and crop != 'none' else ''}"
+        cname_label = cname
+
+        if(sname == 'CONUS'):
+            sname_label = 'CONUS'
+            cname_label = ''
+        elif(sname != '' and sname != 'All'):
+            sname_label = sname + ', '
+        else:
+            sname_label = ''
+
+        if(crop != '' and crop != 'none'):
+            crop_label = f' {crop}-growing regions'
+        else:
+            crop_label = ''
+
+        window_label = f', {window_size}-month integration window'
+
+        # title = f"{historical_and_forecast_label} water balance percentile for {sname_label}{cname_label}{crop_label}"
+        title = f"{sname_label}{cname_label}{crop_label}{window_label}"
         ax.set_title(title, fontproperties=ginto_medium)
 
         fig.subplots_adjust(top=0.9)
