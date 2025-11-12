@@ -22,6 +22,10 @@ from shinywidgets import render_plotly, render_widget, output_widget
 
 from pathlib import Path
 
+# from starlette.routing import Mount, Route
+# from starlette.responses import RedirectResponse
+# from starlette.applications import Starlette
+
 from utils import *
 
 # shiny run --reload drought.py
@@ -46,7 +50,7 @@ updating = False
 #     month -= 1
 
 year = 2025
-month = 9
+month = 10
 month_ic = str(month) if month >= 10 else '0' + str(month) 
 year_ic = str(year)
 
@@ -223,7 +227,7 @@ app_ui = ui.page_fluid(
                                 ui.output_ui('forecast_map'),
                             ),
                         ),
-                        id='tab_menu'
+                    id='tab_menu'
                     ),
                 ),
             ),
@@ -1177,3 +1181,17 @@ def server(input: Inputs, output: Outputs, session: Session):
 
 
 app = App(app_ui, server, static_assets=static_dir)
+
+# define routes for each tab
+# routes = [
+#     Route("/", lambda req: RedirectResponse(url='/Timeseries')),
+#     Mount('/Historical%20data', shiny_app),
+#     Mount('/Timeseries', shiny_app),
+#     Mount('/Forecast%20map', shiny_app),
+# ]
+
+# create the starlette application
+# app = Starlette(routes=routes)
+
+# if __name__ == "__main__":
+#     uvicorn.run(starlette_app, host="0.0.0.0", port=8000)
