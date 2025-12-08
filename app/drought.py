@@ -1065,11 +1065,13 @@ def server(input: Inputs, output: Outputs, session: Session):
             'scrollZoom': True,
             # 'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'toImage']
             'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage']
-
         }
 
         centroid = country.centroid.values[0]
-        bbox = json.loads(country.bbox.values[0])
+        if(sname != 'All' and not state.empty):
+            bbox = json.loads(state.bbox.values[0])
+        else:
+            bbox = json.loads(country.bbox.values[0])
         bounding_box = create_bbox_from_coords(*bbox).to_geo_dict()
 
         max_bounds = max(abs(bbox[0] - bbox[2]), abs(bbox[1] - bbox[3])) * 111
