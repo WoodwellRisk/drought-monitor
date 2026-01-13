@@ -1,4 +1,4 @@
-name: shiny
+name: dash
 channels:
   - conda-forge
   - defaults
