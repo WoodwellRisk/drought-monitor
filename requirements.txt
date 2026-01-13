@@ -1,4 +1,5 @@
-anywidget
+dash
+dash-ag-grid
 fiona
 folium
 gdal
@@ -9,12 +10,9 @@ netcdf4
 numpy
 pandas
 plotly
-proj
 pyarrow
-pyproj
 rasterio
 rioxarray
+setuptools<81
 shapely
-shiny
-shinywidgets
 xarray

@@ -4,7 +4,8 @@ channels:
   - defaults
 dependencies:
   - python=3.12
-  - anywidget
+  - dash
+  - dash-ag-grid
   - fiona
   - folium
   - geocube
@@ -16,13 +17,10 @@ dependencies:
   - pandas
   - pip
   - plotly
-  - proj
   - pyarrow
-  - pyproj
   - rasterio
   - rioxarray
+  - setuptools<81
   - shapely
-  - shiny
-  - shinywidgets
   - xarray
   - zarr

@@ -27,7 +27,8 @@ ENV PATH=$PATH:/root/google-cloud-sdk/bin
 
 # RUN conda install -y \
 RUN pip install --no-cache-dir \
-    anywidget \
+    dash \
+    dash-ag-grid \
     fiona  \
     folium \
     geopandas \
@@ -37,21 +38,18 @@ RUN pip install --no-cache-dir \
     numpy \
     pandas \
     plotly \
-    proj \
     pyarrow \
-    pyproj \
     rasterio \
     rioxarray \
+    setuptools<81 \
     shapely \
-    shiny \
-    shinywidgets \
     xarray \
     zarr
 
 # copy application files
-COPY . /app
-WORKDIR /app
+# COPY . /app
+# WORKDIR /app
 
 # run the application
 # https://docs.docker.com/reference/dockerfile/#understand-how-cmd-and-entrypoint-interact
-CMD ["shiny", "run", "drought.py", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python3", "app.py"]
