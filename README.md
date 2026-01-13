@@ -11,13 +11,13 @@ conda env create -f environment.yml
 ```
 And to activate the environment:
 ```
-conda activate shiny
+conda activate dash
 ```
 
 ## Run the app locally
-To start a local server and see the app, please run the following command from within the `app/` directory:
+To start a local server and see the app, please run the following command:
 ```python
-shiny run --reload drought.py
+python3 app.py
 ```
 
 ## Data sources and processing steps
