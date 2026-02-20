@@ -49,8 +49,8 @@ updating = False
 # else: 
 #     month -= 1
 
-year = 2025
-month = 12
+year = 2026
+month = 1
 month_ic = str(month) if month >= 10 else '0' + str(month) 
 year_ic = str(year)
 
