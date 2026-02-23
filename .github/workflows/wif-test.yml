@@ -1,0 +1,38 @@
+name: Google Workload Identity Federation Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-wif:
+    runs-on: ubuntu-latest
+    permissions:
+      # the auth action needs the OIDC token from GitHub
+      id-token: write
+      contents: read
+
+    steps:
+      # echo the secret values (masked by GitHub)
+      - name: Show secret values (masked)
+        run: |
+          echo "Project ID: ${{ secrets.GCP_PROJECT_ID }}"
+          echo "Provider resource name: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          echo "Target service account: ${{ secrets.GCP_SERVICE_ACCOUNT }}"
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Who am I?
+        run: |
+          gcloud auth list --filter=status:ACTIVE --format='value(account)'
+
+      # perform a read‑only gcp api call to make sure wif worked
+      - name: List buckets (read-only test)
+        run: |
+          echo "Listing buckets in the project..."
+          gcloud storage ls
