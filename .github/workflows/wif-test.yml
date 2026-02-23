@@ -12,6 +12,9 @@ jobs:
       contents: read
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
       # echo the secret values (masked by GitHub)
       - name: Show secret values (masked)
         run: |
