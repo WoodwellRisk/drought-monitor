@@ -1,7 +1,6 @@
 anywidget
 fiona
 folium
-gdal
 geopandas
 h5netcdf
 matplotlib
@@ -18,3 +17,4 @@ shapely
 shiny
 shinywidgets
 xarray
+zarr
