@@ -1,0 +1,8 @@
+google-cloud-storage
+h5netcdf
+ndpyramid
+netcdf4
+numpy
+pandas
+xarray
+zarr

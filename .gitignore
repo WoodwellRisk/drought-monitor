@@ -6,3 +6,5 @@ mnt/
 .next
 node_modules
 data_processing/*.sh
+data_processing/raster/
+data_processing/zarr/
