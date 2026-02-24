@@ -35,7 +35,7 @@ jobs:
           gcloud auth list --filter=status:ACTIVE --format='value(account)'
 
       # perform a read‑only gcp api call to make sure wif worked
-      - name: List buckets (read-only test)
+      - name: List bucket contents (read-only test)
         run: |
           echo "Listing buckets in the project..."
-          gcloud storage ls
+          gcloud storage ls gs://drought-monitor
