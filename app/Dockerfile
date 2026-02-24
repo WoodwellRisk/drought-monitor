@@ -1,6 +1,6 @@
 # 1. Containerize app to create Dockerfile (done)
 # 2. Build Docker image: docker build -t shiny-app:latest --platform linux/amd64 .
-# 3. docker run --platform linux/amd64 -p 8080:8080 shiny-app:latest
+# 3. Run Docker container: docker run --platform linux/amd64 -p 8080:8080 shiny-app:latest
 
 # https://hub.docker.com/_/python/
 FROM python:3.12
@@ -25,28 +25,8 @@ RUN curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tm
 RUN curl -sSL https://sdk.cloud.google.com | bash
 ENV PATH=$PATH:/root/google-cloud-sdk/bin
 
-# RUN conda install -y \
-RUN pip install --no-cache-dir \
-    anywidget \
-    fiona  \
-    folium \
-    geopandas \
-    h5netcdf \
-    matplotlib \
-    netcdf4 \
-    numpy \
-    pandas \
-    plotly \
-    proj \
-    pyarrow \
-    pyproj \
-    rasterio \
-    rioxarray \
-    shapely \
-    shiny \
-    shinywidgets \
-    xarray \
-    zarr
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # copy application files
 COPY . /app
