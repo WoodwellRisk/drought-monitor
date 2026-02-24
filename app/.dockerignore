@@ -26,7 +26,6 @@ ENV/
 .gitignore
 .github/
 node_modules/
-Dockerfile
 docker-compose.yml
 .dockerignore
 .DS_Store

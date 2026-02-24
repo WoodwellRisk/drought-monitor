@@ -45,10 +45,15 @@ gcloud iam workload-identity-pools providers describe "${PROVIDER_ID}" \
 declare -a ROLES=(
   "roles/run.admin"
   "roles/run.invoker"
+  "roles/run.viewer"
   "roles/cloudfunctions.admin"
   "roles/cloudfunctions.invoker"
+  "roles/cloudbuild.builds.builder"
   "roles/cloudbuild.builds.editor"
   "roles/storage.objectAdmin"
+  "roles/serviceusage.serviceUsageAdmin"
+  "roles/serviceusage.serviceUsageConsumer"
+  "roles/iam.serviceAccountUser"
 )
 
 echo "=== Granting operational roles to ${SA_EMAIL} ..."
@@ -58,6 +63,15 @@ for ROLE in "${ROLES[@]}"; do
       --role="${ROLE}"
 done
 
+# allow the wif service account to impersonate the cloud build service account
+gcloud iam service-accounts add-iam-policy-binding "${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/iam.serviceAccountUser"
+
+# give new wif service account full control over the bucket
+gsutil iam ch "serviceAccount:${SA_EMAIL}:objectAdmin" "gs://${BUCKET_NAME}"
+
+# add more bucket-level permissions
 gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/storage.admin"
