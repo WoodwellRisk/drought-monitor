@@ -1,0 +1,102 @@
+name: Deploy Shiny Python app to Cloud Run
+
+on:
+  push:
+    branches: [main]
+    paths:
+    - 'app/**'
+
+# permissions needed for the google‑github‑actions steps
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      # constants
+      REGION: us-central1
+      SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME }}
+      CONTAINER_NAME: drought-monitor-container
+      VOLUME_NAME: drought-monitor-volume
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      LOGS_BUCKET_NAME: ${{ secrets.LOGS_BUCKET_NAME }}
+      ARTIFACT_REPO: ${{ secrets.ARTIFACT_REPO }}
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+    steps:
+      # checkout the repo (needed for docker build)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # authenticate to gcp via wif
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      # Install the cloud sdk (gcloud)
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      # make sure gcloud has the right project id
+      - name: Set gcloud project
+        run: gcloud config set project "${PROJECT_ID}"
+
+      # build the docker image with cloud build
+      - name: build docker image (cloud build)
+        id: build
+        run: |
+          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          
+          echo "Building image → $IMAGE_TAG"
+          
+          # https://docs.cloud.google.com/sdk/gcloud/reference/builds/submit#--gcs-log-dir
+          gcloud builds submit app/ \
+            --project="${{ env.PROJECT_ID }}" \
+            --tag="${IMAGE_TAG}" \
+            --gcs-log-dir="gs://${LOGS_BUCKET_NAME}" \
+            --quiet
+          
+          # Export the tag for the next step
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+      # deploy (or update) the cloud run service
+      - name: Deploy to Cloud Run
+        run: |
+          echo "Deploying ${{ env.SERVICE_NAME }} (region ${{ env.REGION }})"
+          
+          gcloud run deploy "${{ env.SERVICE_NAME }}" \
+            --image "$IMAGE_TAG" \
+            --region "${{ env.REGION }}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account "${{ env.SERVICE_ACCOUNT }}" \
+            --port 8080 \
+            --memory 32Gi \
+            --cpu 8 \
+            --concurrency 80 \
+            --timeout 600s \
+            --min-instances 0 \
+            --max-instances 100 \
+            --cpu-boost \
+            --add-volume name="${{ env.VOLUME_NAME }}",type=cloud-storage,bucket="${{ env.BUCKET_NAME }}",readonly=true \
+            --add-volume-mount volume="${{ env.VOLUME_NAME }}",mount-path="/app/mnt/data" \
+            --startup-probe tcpSocket.port=8080,initialDelaySeconds=0,failureThreshold=1,timeoutSeconds=240,periodSeconds=240 \
+            --quiet
+
+      # print the URL of the newly‑deployed service
+      - name: Show service URL
+        run: |
+          URL=$(gcloud run services describe "${{ env.SERVICE_NAME }}" \
+            --region "${{ env.REGION }}" \
+            --format='value(status.url)')
+          echo "✅ Service is live at: $URL"
