@@ -84,14 +84,20 @@ gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/storage.legacyBucketReader"
 
-# 8. Check wif attribute mappings
+# 8. give new service account writer permissions for docker artifact repo
+gcloud artifacts repositories add-iam-policy-binding "$ARTIFACT_REPO" \
+    --location="$REGION" \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/artifactregistry.writer"
+
+# 9. Check wif attribute mappings
 gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
     --project="$PROJECT_ID" \
     --location="global" \
     --workload-identity-pool="$POOL_ID" \
     --format='json' | jq '.attributeMapping'
 
-# 9. Verify new permissions
+# 10. Verify new permissions
 gcloud projects get-iam-policy "$PROJECT_ID" \
     --flatten="bindings[].members" \
     --format='table(bindings.role, bindings.members)' \
