@@ -1,4 +1,3 @@
-google-cloud-storage
 h5netcdf
 ndpyramid
 netcdf4

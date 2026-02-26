@@ -27,5 +27,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # copy the script into the image
 COPY drought_to_zarr.py .
 
-# google looks for a callable named `function`
+# run the python script
 CMD ["python3", "drought_to_zarr.py"]

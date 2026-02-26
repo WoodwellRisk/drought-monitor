@@ -37,5 +37,5 @@ jobs:
       # perform a read‑only gcp api call to make sure wif worked
       - name: List bucket contents (read-only test)
         run: |
-          echo "Listing buckets in the project..."
+          echo "Listing directories in the bucket..."
           gcloud storage ls gs://drought-monitor

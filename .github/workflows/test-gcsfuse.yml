@@ -1,0 +1,161 @@
+name: Test gcsfuse bucket mount
+
+on:
+  workflow_dispatch:
+
+# permissions needed for the google‑github‑actions steps
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test-gcsfuse-bucket-mount:
+    runs-on: ubuntu-latest
+    env:
+      REGION: us-central1
+      SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      MOUNT_POINT: /mnt/drought-monitor
+      WORKING_DIR: data_processing
+  
+    steps:
+       # checkout the repo (needed for docker build)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # authenticate to gcp via wif
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      # Store the token for later steps
+      - name: Export token for later steps
+        run: |
+          echo "GCLOUD_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
+          
+          # mask token so it never appears in the ui logs
+          echo "::add-mask::${{ steps.auth.outputs.access_token }}"
+
+      # install the cloud sdk (gcloud)
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      # install gcsfuse
+      - name: Install gcsfuse
+        run: |
+          export GCSFUSE_REPO=gcsfuse-$(lsb_release -c -s)
+          
+          echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" | sudo tee /etc/apt/sources.list.d/gcsfuse.list
+          
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+          
+          sudo apt-get update
+          
+          sudo apt-get install -y gcsfuse
+
+      # debug step: see what directories and files github workspace sees at this step
+      - name: Debug - show repository tree with `tree`
+        run: |
+          sudo apt-get update && sudo apt-get install -y tree
+
+          echo "=== Contents of Docker context folder (${WORKING_DIR}) ==="
+          ls -lR "${WORKING_DIR}"
+
+      # mount bucket
+      - name: Mount Google Cloud bucket (host side)
+        env:
+          BUCKET: ${{ env.BUCKET_NAME }}
+          MOUNT: ${{ env.MOUNT_POINT }}
+          CLOUDSDK_AUTH_ACCESS_TOKEN: ${{ env.GCLOUD_ACCESS_TOKEN }}
+        run: |
+          # Remove any stale mount point (ignore errors)
+          sudo fusermount -u "${MOUNT}" || true
+          sudo umount -l "${MOUNT}" || true
+
+          sudo rm -rf "${MOUNT}"
+          sudo mkdir -p "$MOUNT"
+          sudo chown "$(id -u):$(id -g)" "$MOUNT"
+
+          if [ -d "$MOUNT" ]; then
+            echo "✅ Directory $MOUNT exists."
+          else
+            echo "❌ Directory $MOUNT does NOT exist!"
+            exit 1
+          fi
+
+          # verify mount path is empty (no files, no sub-dirs)
+          ENTRY_COUNT=$(find "$MOUNT" -mindepth 1 -maxdepth 1 | wc -l)
+          if [ "$ENTRY_COUNT" -eq 0 ]; then
+            echo "✅ $MOUNT is empty (contains $ENTRY_COUNT entries)."
+          else
+            echo "⚠️ $MOUNT is NOT empty - it contains $ENTRY_COUNT entries:"
+            ls -la "$MOUNT"
+            # abort if not empty
+            # exit 1
+          fi
+
+          # size summary should be ~0B, needs to be empty
+          du -sh "$MOUNT"
+
+          # debug: verify that the token is visible
+          echo "CLOUDSDK_AUTH_ACCESS_TOKEN is set? ${CLOUDSDK_AUTH_ACCESS_TOKEN:+yes}"
+          echo "GOOGLE_APPLICATION_CREDENTIALS is set? ${GOOGLE_APPLICATION_CREDENTIALS:+yes}"
+          echo "Token length: ${#CLOUDSDK_AUTH_ACCESS_TOKEN}"
+
+          timeout 60s gcsfuse --implicit-dirs "$BUCKET" "$MOUNT"
+
+          df -h "$MOUNT"
+
+          echo "Mounted gs://$BUCKET at $MOUNT"
+
+      # verify we can see the netcdf files and can access them as if they were local
+      - name: Verify mount - list number of NetCDF files (bash)
+        env:
+          BASE_PATH: ${{ env.MOUNT_POINT }}
+        run: |
+          echo "=== Listing number of NetCDF files ==="
+            
+          HISTORICAL_COUNT=$(find "${BASE_PATH}/historical" -type f -name '*.nc' 2>/dev/null | wc -l)
+          echo "Number of historical NetCDF files: $HISTORICAL_COUNT"
+
+          FORECAST_COUNT=$(find "${BASE_PATH}/forecast"   -type f -name '*.nc' 2>/dev/null | wc -l)
+          echo "Number of forecast NetCDF files: $FORECAST_COUNT"
+
+          # let's just add a quick check that we can calculate the size of the mounted zarr/ directory
+          du -hs "${BASE_PATH}/zarr"
+
+      - name: Verify mount - list number of NetCDF files (Python)
+        env:
+          BASE_PATH: ${{ env.MOUNT_POINT }}
+        run: |
+          echo "=== Listing number of NetCDF files ==="
+
+          python3 -c "
+          import os
+          from pathlib import Path
+
+          # Python should have access to the mount directory path as an environment variable
+          root = Path(os.getenv('BASE_PATH'))
+          historical_raster_path = root / 'historical'
+          forecast_raster_path = root / 'forecast'
+
+          print()
+          print('--- Historical NetCDFs ---')
+          print(len(sorted(historical_raster_path.glob('*.nc'))))
+
+          print()
+          print('--- Forecast NetCDFs ---')
+          print(len(sorted(forecast_raster_path.glob('*.nc'))))
+          "
+    
+      - name: Unmount bucket
+        if: always()
+        run: |
+          sudo fusermount -u "${MOUNT_POINT}" || sudo umount "${MOUNT_POINT}"

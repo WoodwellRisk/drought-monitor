@@ -1,0 +1,111 @@
+name: Generate monthly Zarr data for drought monitor website
+
+on:
+  workflow_dispatch:
+
+# permissions needed for the google‑github‑actions steps
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  gcsfuse-generate-zarr:
+    runs-on: ubuntu-latest
+    env:
+      REGION: us-central1
+      SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      MOUNT_POINT: /mnt/drought-monitor
+      WORKING_DIR: data_processing
+  
+    steps:
+       # checkout the repo (needed for docker build)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # authenticate to gcp via wif
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+
+      # Store the token for later steps
+      - name: Export token for later steps
+        run: |
+          echo "GCLOUD_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
+          
+          # mask token so it never appears in the ui logs
+          echo "::add-mask::${{ steps.auth.outputs.access_token }}"
+
+      # install the cloud sdk (gcloud)
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      # install gcsfuse
+      - name: Install gcsfuse
+        run: |
+          export GCSFUSE_REPO=gcsfuse-$(lsb_release -c -s)
+          
+          echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" | sudo tee /etc/apt/sources.list.d/gcsfuse.list
+          
+          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+          
+          sudo apt-get update
+          
+          sudo apt-get install -y gcsfuse
+
+      # build the docker image
+      - name: Build Docker image
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          IMAGE_TAG="drought-to-zarr:${GITHUB_SHA}"
+
+          docker build -t "$IMAGE_TAG" .
+
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      # mount bucket
+      - name: Mount Google Cloud bucket (host side)
+        env:
+          BUCKET: ${{ env.BUCKET_NAME }}
+          MOUNT: ${{ env.MOUNT_POINT }}
+          CLOUDSDK_AUTH_ACCESS_TOKEN: ${{ env.GCLOUD_ACCESS_TOKEN }}
+        run: |
+          # Remove any stale mount point (ignore errors)
+          sudo fusermount -u "${MOUNT}" || true
+          sudo umount -l "${MOUNT}" || true
+
+          sudo rm -rf "${MOUNT}"
+          sudo mkdir -p "$MOUNT"
+          sudo chown "$(id -u):$(id -g)" "$MOUNT"
+
+          timeout 60s gcsfuse --implicit-dirs "$BUCKET" "$MOUNT"
+
+          echo "✅ mounted gs://$BUCKET at $MOUNT"
+
+      # run docker image, create new zarr stores for website
+      - name: Run container (list number of NetCDF files)
+        env:
+          BASE_PATH: ${{ env.MOUNT_POINT }}
+          MOUNT_POINT: ${{ env.MOUNT_POINT }}
+        run: |
+          IMAGE="${IMAGE_TAG}"
+
+          # --rm: run the docker container and then remove it later
+          # -e: # make it so that python script can read the BASE_PATH environment variable
+          # -v: make bucket visible inside the container
+          docker run --rm \
+            -e BASE_PATH="${BASE_PATH}" \
+            -v "${MOUNT_POINT}:${MOUNT_POINT}" \
+            "$IMAGE"
+    
+      - name: Unmount bucket
+        if: always()
+        run: |
+          sudo fusermount -u "${MOUNT_POINT}" || sudo umount "${MOUNT_POINT}"
