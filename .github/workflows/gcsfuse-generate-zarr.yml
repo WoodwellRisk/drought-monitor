@@ -16,10 +16,14 @@ jobs:
       SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-      MOUNT_POINT: /mnt/drought-monitor
       WORKING_DIR: data_processing
   
     steps:
+      # create a job‑wide MOUNT_POINT from RUNNER_TEMP
+      - name: Set mount point variable
+        run: |
+          echo "MOUNT_POINT=${RUNNER_TEMP}/${BUCKET_NAME}" >> $GITHUB_ENV
+      
        # checkout the repo (needed for docker build)
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,6 +45,21 @@ jobs:
           # mask token so it never appears in the ui logs
           echo "::add-mask::${{ steps.auth.outputs.access_token }}"
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            libgeos-dev \
+            libproj-dev \
+            proj-data \
+            libgdal-dev \
+            gdal-bin \
+            ca-certificates
+
+          sudo apt-get clean
+      
       # install the cloud sdk (gcloud)
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -59,16 +78,6 @@ jobs:
           sudo apt-get update
           
           sudo apt-get install -y gcsfuse
-
-      # build the docker image
-      - name: Build Docker image
-        working-directory: ${{ env.WORKING_DIR }}
-        run: |
-          IMAGE_TAG="drought-to-zarr:${GITHUB_SHA}"
-
-          docker build -t "$IMAGE_TAG" .
-
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       # mount bucket
       - name: Mount Google Cloud bucket (host side)
@@ -89,23 +98,46 @@ jobs:
 
           echo "✅ mounted gs://$BUCKET at $MOUNT"
 
-      # run docker image, create new zarr stores for website
-      - name: Run container (list number of NetCDF files)
+      # pin python version
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          check-latest: true
+
+      - name: Install Python dependencies
+        working-directory: ${{ env.WORKING_DIR }}
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install --no-cache-dir -r requirements.txt
+
+      # verify we can see the netcdf files and can access them as if they were local
+      - name: Verify mount - list number of NetCDF files (bash)
         env:
           BASE_PATH: ${{ env.MOUNT_POINT }}
-          MOUNT_POINT: ${{ env.MOUNT_POINT }}
         run: |
-          IMAGE="${IMAGE_TAG}"
+          echo "=== Listing number of NetCDF files ==="
+            
+          HISTORICAL_COUNT=$(find "${BASE_PATH}/historical" -type f -name '*.nc' 2>/dev/null | wc -l)
+          echo "Number of historical NetCDF files: $HISTORICAL_COUNT"
 
-          # --rm: run the docker container and then remove it later
-          # -e: # make it so that python script can read the BASE_PATH environment variable
-          # -v: make bucket visible inside the container
-          docker run --rm \
-            -e BASE_PATH="${BASE_PATH}" \
-            -v "${MOUNT_POINT}:${MOUNT_POINT}" \
-            "$IMAGE"
-    
+          FORECAST_COUNT=$(find "${BASE_PATH}/forecast"   -type f -name '*.nc' 2>/dev/null | wc -l)
+          echo "Number of forecast NetCDF files: $FORECAST_COUNT"
+
+          # let's just add a quick check that we can calculate the size of the mounted zarr/ directory
+          du -hs "${BASE_PATH}/zarr"
+
+      - name: Verify mount - list number of NetCDF files (Python script)
+        working-directory: ${{ env.WORKING_DIR }}
+        env:
+          BASE_PATH: ${{ env.MOUNT_POINT }}
+        run: |
+          python3 drought_to_zarr_gcsfuse.py
+
       - name: Unmount bucket
+        env:
+          MOUNT: ${{ env.MOUNT_POINT }}
         if: always()
         run: |
-          sudo fusermount -u "${MOUNT_POINT}" || sudo umount "${MOUNT_POINT}"
+          sudo fusermount -u "${MOUNT}" || sudo umount "${MOUNT}"

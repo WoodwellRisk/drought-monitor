@@ -25,7 +25,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # copy the script into the image
-COPY drought_to_zarr.py .
+COPY drought_to_zarr_gcsfuse.py .
 
 # run the python script
-CMD ["python3", "drought_to_zarr.py"]
+CMD ["python3", "drought_to_zarr_gcsfuse.py"]

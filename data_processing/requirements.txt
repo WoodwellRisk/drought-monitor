@@ -3,5 +3,6 @@ ndpyramid
 netcdf4
 numpy
 pandas
+pathlib
 xarray
 zarr

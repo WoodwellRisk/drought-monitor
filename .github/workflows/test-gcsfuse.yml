@@ -16,13 +16,24 @@ jobs:
       SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-      MOUNT_POINT: /mnt/drought-monitor
       WORKING_DIR: data_processing
   
     steps:
+      # create a job‑wide MOUNT_POINT from RUNNER_TEMP
+      - name: Set mount point variable
+        run: |
+          echo "MOUNT_POINT=${RUNNER_TEMP}/${BUCKET_NAME}" >> $GITHUB_ENV
+        
        # checkout the repo (needed for docker build)
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          check-latest: true
 
       # authenticate to gcp via wif
       - name: Authenticate to Google Cloud
@@ -156,6 +167,8 @@ jobs:
           "
     
       - name: Unmount bucket
+        env:
+          MOUNT: ${{ env.MOUNT_POINT }}
         if: always()
         run: |
-          sudo fusermount -u "${MOUNT_POINT}" || sudo umount "${MOUNT_POINT}"
+          sudo fusermount -u "${MOUNT}" || sudo umount "${MOUNT}"
