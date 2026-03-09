@@ -1,14 +1,63 @@
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
+import os
 from pathlib import Path
-import subprocess
-import sys
 import timeit
 
 from ndpyramid import *
 import numpy as np
 import pandas as pd
+import rioxarray
 import xarray as xr
 import zarr
+
+
+def open_historical_dataset(path: str) -> xr.core.dataset.Dataset:
+        """
+        Opens a single file from GCS, extracts time dimension from filename, and returns a chunked dataset.
+
+        Parameters:
+            path(str): a filename pointing to a Xarray Dataset on a GCS bucket
+
+        Returns:
+            ds(xr.core.dataset.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
+        """
+        ds = xr.open_dataset(path, engine='h5netcdf', chunks={'x': 128, 'y': 128})
+        ds = ds.assign_coords({'time': pd.to_datetime(path[-13:-3])})
+
+        return ds
+
+
+def open_forecast_dataset(path: str) -> xr.core.dataset.Dataset:
+        """
+        Opens a single file from GCS and returns a chunked dataset.
+
+        Parameters:
+            path(str): a filename pointing to a Xarray Dataset on a GCS bucket
+
+        Returns:
+            ds(xr.core.dataset.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
+        """
+        ds = xr.open_dataset(path, engine='h5netcdf', chunks={'x': 128, 'y': 128})
+
+        return ds
+
+
+def open_files_in_parallel(files: list) -> list:
+    """
+    Open a list of files pointing to NetCDF datasets in parallel.
+
+    Parameters:
+        files(list): a list of filenames
+
+    Returns:
+        ds_list(list): a list of opened Xarray Datasets
+    """
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        # map the function to all files
+        ds_list = list(executor.map(open_historical_dataset, files))
+
+    return ds_list
 
 
 def process_dataset(ds: xr.core.dataset.Dataset) -> xr.core.dataset.Dataset:
@@ -43,8 +92,9 @@ def pyramid_to_zarr(ds: xr.core.dataset.Dataset, levels: int, path: str) -> None
     Returns:
         None
     """
-    dt = pyramid_reproject(ds, levels=levels, other_chunks={'time': len(ds.time)})
-    dt.to_zarr(path, consolidated=True)
+    # https://github.com/zarr-developers/zarr-python/issues/2964
+    dt = pyramid_reproject(ds.drop_encoding(), levels=levels, other_chunks={'time': len(ds.time)})
+    dt.to_zarr(path, consolidated=True, zarr_format=2, mode='w')
 
 
 def drought_pipeline():
@@ -74,90 +124,45 @@ def drought_pipeline():
     month_ic = str(month) if month >= 10 else '0' + str(month) 
     year_ic = str(year)
 
-    # outline file structure
-    historical_raster_path = Path(__file__).parent / 'raster/historical'
-    forecast_raster_path = Path(__file__).parent / 'raster/forecast'
-    analysis_zarr_path = Path(__file__).parent / 'zarr/analysis'
-    viz_zarr_path = Path(__file__).parent / 'zarr/viz'
-
-    # create temporary directory structure if it does not exist
-    historical_raster_path.mkdir(parents=True, exist_ok=True)
-    forecast_raster_path.mkdir(parents=True, exist_ok=True)
-    analysis_zarr_path.mkdir(parents=True, exist_ok=True)
-    viz_zarr_path.mkdir(parents=True, exist_ok=True)
+    # environment variables
+    BUCKET = os.getenv('BUCKET_NAME')
 
     print('Generating input file list.')
     print()
-    
-    # generate the list of files we expect to find for both historical and forecast data
+    # create file list
     dates = pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')
-    h3_files = sorted([f'era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc' for date in dates])
+    h3_files = sorted([f'gs://{BUCKET}/historical/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc' for date in dates])
     h12_files = sorted([file.replace('w3', 'w12') for file in h3_files])
 
-    forecast_files = [f'nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc' for window in [3, 12]]
+    forecast_files = [f'gs://{BUCKET}/forecast/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc' for window in [3, 12]]
     f3_file = [file for file in forecast_files if 'w3' in file][0]
     f12_file = [file for file in forecast_files if 'w12' in file][0]
 
-    print()
-    print('Downloading historical and forecast data (if not already present).')
-    # if past historical files that we need don't exist locally, we need to download them once
-    for window in [3, 12]:
-        if window == 3:
-            files = h3_files
-        else:
-            files = h12_files
-
-        for file in files:
-            if not Path(historical_raster_path / file).is_file():
-                result = subprocess.run([
-                    'gcloud',
-                    'storage',
-                    '--no-user-output-enabled', 
-                    'cp',
-                    f'gs://drought-monitor/historical/{file}',
-                    historical_raster_path,
-                ])
-
-                if(result.returncode != 0):
-                    print('Error downloading updated historical data, exiting.')
-                    print(return_code)
-                    sys.exit()
-
-    # forecast files are only downloaded once a month as new data is generated
-    for window in [3, 12]:
-        file = [file for file in forecast_files if str(window) in file][0]
-
-        if not Path(forecast_raster_path / file).is_file():
-            result = subprocess.run([
-                'gcloud',
-                'storage',
-                '--no-user-output-enabled', 
-                'cp',
-                f'gs://drought-monitor/forecast/{file}',
-                forecast_raster_path,
-            ])
-
-            if(result.returncode != 0):
-                print('Error downloading updated forecast data, exiting.')
-                sys.exit()
-
-    print()
     print('Opening data.')
-    print()
     # open historical data for both integration windows
-    h3 = xr.concat([xr.open_dataset(historical_raster_path / file).assign_coords({'time': pd.to_datetime(file[-13:-3])}) for file in h3_files], dim='time')
+    # parallelize data reads
+    # note: if we tried to use xr.open_mfdataset(...parallel=True), 
+    # we would not be able to extract the time from the filename for each NetCDF
+    print('    Opening H3 data...')
+    ds_list = open_files_in_parallel(h3_files)
+    h3 = xr.concat(ds_list, dim='time')
     h3 = process_dataset(h3)
 
-    h12 = xr.concat([xr.open_dataset(historical_raster_path / file).assign_coords({'time': pd.to_datetime(file[-13:-3])}) for file in h12_files], dim='time')
+    print('    Opening H12 data...')
+    ds_list = open_files_in_parallel(h12_files)
+    h12 = xr.concat(ds_list, dim='time')
     h12 = process_dataset(h12)
 
     # open forecast data for both integration windows
-    f3 = xr.open_dataset(forecast_raster_path / f3_file, engine='netcdf4')
+    print('    Opening F3 data...')
+    f3 = open_forecast_dataset(f3_file)
     f3 = process_dataset(f3)
     f3 = f3.rename({ 'L': 'time', '50%': 'perc' })
     f3 = f3[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
-
-    f12 = xr.open_dataset(forecast_raster_path / f12_file, engine='netcdf4')
+    
+    print('    Opening H12 data...')
+    print()
+    f12 = open_forecast_dataset(f12_file)
     f12 = process_dataset(f12)
     f12 = f12.rename({ 'L': 'time', '50%': 'perc' })
     f12 = f12[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
@@ -172,25 +177,10 @@ def drought_pipeline():
     print('Saving Zarr stores used for analysis.')
     # save the data as zarr stores that we will use for analysis
     for dataset in ['h3', 'h12', 'f3', 'f12']:
-        dataset_dict[dataset].to_zarr(f'{analysis_zarr_path}/{dataset}-{year_ic}-{month_ic}-01.zarr', consolidated=True, zarr_format=2, mode='w')
-
-    for dataset in ['h3', 'h12', 'f3', 'f12']:
-        print(f'   Uploading {dataset} to analysis bucket.')
-        result = subprocess.run([
-            'gcloud',
-            'storage',
-            '--no-user-output-enabled', 
-            'cp',
-            '-r',
-            f'./zarr/analysis/{dataset}-{year_ic}-{month_ic}-01.zarr',
-            'gs://drought-monitor/zarr/analysis/',
-        ])
-
-        if(result.returncode != 0):
-            print('   Error uploading data to analysis bucket, exiting.')
-            sys.exit()
-
+        print(f'    Saving {dataset.upper()} data...')
+        dataset_dict[dataset].to_zarr(f'gs://{BUCKET}/zarr/analysis/{dataset}-{year_ic}-{month_ic}-01.zarr', consolidated=True, zarr_format=2, mode='w')
     print()
+
     print('Saving Zarr stores used for visualization.')
     # next, save the data as zarr stores that we will use for visualization
     # first, we need to save their time coordinates as strings
@@ -198,6 +188,14 @@ def drought_pipeline():
     h12['time'] = [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h12.time.values]
     f3['time'] = [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f3.time.values]
     f12['time'] = [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f12.time.values]
+
+    # redeclare dict since data has changed
+    dataset_dict = {
+        'h3': h3,
+        'h12': h12,
+        'f3': h3,
+        'f12': f12,
+    }
 
     # next, calculate the number of zoom levels to use for the output Zarr
     pixels_per_tile = 128
@@ -207,25 +205,10 @@ def drought_pipeline():
 
     # create pyramids for each dataset, then save the pyramid to zarr
     for dataset in ['h3', 'h12', 'f3', 'f12']:
-        pyramid_to_zarr(dataset_dict[dataset], levels, viz_zarr_path / f'{dataset}-{year_ic}-{month_ic}-01.zarr')
-
-    for dataset in ['h3', 'h12', 'f3', 'f12']:
-        print(f'   Uploading {dataset} to visualization bucket.')
-        result = subprocess.run([
-            'gcloud',
-            'storage',
-            '--no-user-output-enabled', 
-            'cp',
-            '-r',
-            f'./zarr/viz/{dataset}-{year_ic}-{month_ic}-01.zarr',
-            'gs://drought-monitor/zarr/viz/',
-        ])
-
-        if(result.returncode != 0):
-            print('   Error uploading data to visualization bucket, exiting.')
-            sys.exit()
-
+        print(f'    Saving {dataset.upper()} data...')
+        pyramid_to_zarr(dataset_dict[dataset], levels, f'gs://{BUCKET}/zarr/viz/{dataset}-{year_ic}-{month_ic}-01.zarr')
     print()
+
     print('Done!')
     print()
 

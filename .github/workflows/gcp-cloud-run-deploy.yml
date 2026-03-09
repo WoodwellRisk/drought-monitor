@@ -28,6 +28,12 @@ jobs:
       SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
     steps:
+      # mask gcp service account
+      - name: Mask GCP project ID and service account
+        run: |
+          echo "::add-mask::${{ secrets.GCP_PROJECT_ID }}"
+          echo "::add-mask::${{ secrets.GCP_SERVICE_ACCOUNT }}"
+
       # checkout the repo (needed for docker build)
       - name: Checkout repository
         uses: actions/checkout@v4

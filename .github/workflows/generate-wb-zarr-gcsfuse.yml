@@ -1,4 +1,4 @@
-name: Generate monthly Zarr data for drought monitor website
+name: Generate monthly Zarr data for drought monitor website - gcsfuse
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ permissions:
   id-token: write
 
 jobs:
-  gcsfuse-generate-zarr:
+  generate-wb-zarr-gcsfuse:
     runs-on: ubuntu-latest
     env:
       REGION: us-central1
@@ -19,6 +19,12 @@ jobs:
       WORKING_DIR: data_processing
   
     steps:
+      # mask gcp service account
+      - name: Mask GCP project ID and service account
+        run: |
+          echo "::add-mask::${{ secrets.GCP_PROJECT_ID }}"
+          echo "::add-mask::${{ secrets.GCP_SERVICE_ACCOUNT }}"
+
       # create a job‑wide MOUNT_POINT from RUNNER_TEMP
       - name: Set mount point variable
         run: |
@@ -112,26 +118,11 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           pip install --no-cache-dir -r requirements.txt
 
-      # verify we can see the netcdf files and can access them as if they were local
-      - name: Verify mount - list number of NetCDF files (bash)
-        env:
-          BASE_PATH: ${{ env.MOUNT_POINT }}
-        run: |
-          echo "=== Listing number of NetCDF files ==="
-            
-          HISTORICAL_COUNT=$(find "${BASE_PATH}/historical" -type f -name '*.nc' 2>/dev/null | wc -l)
-          echo "Number of historical NetCDF files: $HISTORICAL_COUNT"
-
-          FORECAST_COUNT=$(find "${BASE_PATH}/forecast"   -type f -name '*.nc' 2>/dev/null | wc -l)
-          echo "Number of forecast NetCDF files: $FORECAST_COUNT"
-
-          # let's just add a quick check that we can calculate the size of the mounted zarr/ directory
-          du -hs "${BASE_PATH}/zarr"
-
-      - name: Verify mount - list number of NetCDF files (Python script)
+      - name: Generate Zarr stores from NetCDF data
         working-directory: ${{ env.WORKING_DIR }}
         env:
           BASE_PATH: ${{ env.MOUNT_POINT }}
+          GCLOUD_ACCESS_TOKEN: ${{ env.GCLOUD_ACCESS_TOKEN }}
         run: |
           python3 drought_to_zarr_gcsfuse.py
 

@@ -1,8 +1,10 @@
 h5netcdf
+h5py
+gcsfs
 ndpyramid
-netcdf4
 numpy
 pandas
 pathlib
+rioxarray
 xarray
 zarr

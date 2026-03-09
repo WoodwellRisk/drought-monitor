@@ -1,4 +1,4 @@
-name: Google Workload Identity Federation Test
+name: Test Google Workload Identity Federation
 
 on:
   workflow_dispatch:
@@ -12,6 +12,13 @@ jobs:
       contents: read
 
     steps:
+      # mask gcp service account
+      - name: Mask GCP project ID and service account
+        run: |
+          echo "::add-mask::${{ secrets.GCP_PROJECT_ID }}"
+          echo "::add-mask::${{ secrets.GCP_SERVICE_ACCOUNT }}"
+
+
       - name: Checkout repository
         uses: actions/checkout@v4
       
