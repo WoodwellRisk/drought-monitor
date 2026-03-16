@@ -2,6 +2,8 @@ import { useCallback, useRef, useEffect } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
+
+import Loading from '../view/loading'
 import Ruler from './ruler'
 import ZoomReset from './zoom-reset'
 import TimeWarning from './time-warning'
@@ -62,7 +64,7 @@ const Map = ({ mobile }) => {
   )
 
   return (
-    <Box ref={container} sx={{ flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
+    <Box ref={container} sx={{ display: 'flex', flexBasis: '100%',  justifyContent: 'center', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
       <MapContainer zoom={zoom} maxZoom={maxZoom} center={center} maxBounds={bounds} >
         <Fill
           color={theme.rawColors.background}
@@ -172,6 +174,8 @@ const Map = ({ mobile }) => {
         {!mobile && (<ZoomReset />)}
 
         <Router />
+
+        <Loading />
 
       </MapContainer>
 

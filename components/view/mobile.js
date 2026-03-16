@@ -3,9 +3,6 @@ import { Box, Flex, Grid } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
 import Map from '../map'
 import Layers from '../sidebar/layers'
-import Loading from './loading'
-
-import useStore from '../store/index'
 
 import { keyframes } from '@emotion/react'
 const fade = keyframes({
@@ -25,7 +22,6 @@ function Mobile({ expanded }) {
       display: 'flex',
       width: '100vw',
       height: '100vh',
-      ml: -3,
     },
     'about': {
       width: '100%',
@@ -70,7 +66,6 @@ function Mobile({ expanded }) {
       borderTopWidth: '1px',
       borderColor: 'muted',
       fontSize: [3],
-      ml: [-3],
       fontFamily: 'heading',
       letterSpacing: 'allcaps',
       textTransform: 'uppercase',
@@ -92,8 +87,6 @@ function Mobile({ expanded }) {
     <Box sx={{ position: 'relative' }}>
       <Box sx={sx['map']}>
         <Map mobile={true} />
-
-        <Loading isWide />
       </Box>
 
       {showSettings && (
