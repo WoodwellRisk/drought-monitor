@@ -2,6 +2,8 @@ import { useCallback, useRef, useEffect } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
+
+import Loading from '../view/loading'
 import Ruler from './ruler'
 import ZoomReset from './zoom-reset'
 import TimeWarning from './time-warning'
@@ -172,6 +174,8 @@ const Map = ({ mobile }) => {
         {!mobile && (<ZoomReset />)}
 
         <Router />
+
+        <Loading />
 
       </MapContainer>
 
