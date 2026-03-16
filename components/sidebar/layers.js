@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
-import { Colorbar, Tag, Slider } from '@carbonplan/components'
-import { SidebarDivider } from '@carbonplan/layouts'
+import { Colorbar, Filter, Tag, Slider } from '@carbonplan/components'
+import SidebarDivider from './sidebar-divider'
 import Info from './info'
 
 import useStore from '../store/index'
@@ -11,7 +11,9 @@ function Layers() {
   const colormapName = useStore((state) => state.colormapName)
   const colormap = useThemedColormap(colormapName)
 
-  const minDate = useStore((state) => state.minDate)
+  const windowOptions = useStore((state) => state.windowOptions)
+  const setWindowOptions = useStore((state) => state.setWindowOptions)
+  const setWindow = useStore((state) => state.setWindow)
   const maxDate = useStore((state) => state.maxDate)
   const minYear = useStore((state) => state.minYear)()
   const maxYear = useStore((state) => state.maxYear)()
@@ -24,6 +26,13 @@ function Layers() {
   const setMonthIdx = useStore((state) => state.setMonthIdx)
   const time = useStore((state) => state.time)
   const setTime = useStore((state) => state.setTime)
+
+  // const waterBalance = useStore((state) => state.waterBalance)
+  // const cropValues = useStore((state) => state.cropValues)
+  // const setCropValues = useStore((state) => state.setCropValues)
+  // const cropLayer = useStore((state) => state.cropLayer)
+  // const setCropLayer = useStore((state) => state.setCropLayer)
+  // const setShowCropLayer = useStore((state) => state.setShowCropLayer)
 
   const crops = useStore((state) => state.crops)
   const cropValues = useStore((state) => state.cropValues)
@@ -43,9 +52,14 @@ function Layers() {
 
   const sx = {
     group: {
-      my: [3],
+      mt: [2, 2, 3],
+      mb: [3],
       pl: [0, 4, 5, 6],
       pr: [0, 5, 5, 6],
+      fontSize: [4, 4, 4, 5],
+      fontFamily: 'heading',
+      fontWeight: 'heading',
+      lineHeight: 'h3',
       width: '100%',
     },
     label: {
@@ -94,6 +108,11 @@ function Layers() {
     }
   }
 
+  const handleWindowClick = (event) => {
+    let windowLabel = event.target.innerText;
+    setWindow(windowLabel.substring(0, windowLabel.indexOf('-')))
+  }
+
   const handleYearChange = (event) => {
     setYear(event.target.value)
   }
@@ -128,10 +147,11 @@ function Layers() {
   }, [year, month])
 
   return (
-    <>
+    <Box>
       <Box sx={sx.group}>
-        <Box sx={{ mt: -3 }} className='var-container'>
-          <Box as='h2' variant='styles.h4' className='var-title'>
+        <Box sx={{ pt: 2 }} className='var-container'>
+          {/* <Box as='h2' variant='styles.h4' className='var-title'> */}
+          <Box className='var-title'>
             Crops <Info>
               Select any of the crops below to see an overlay of where it is grown.
             </Info>
@@ -156,11 +176,11 @@ function Layers() {
           </Box>
         </Box>
       </Box>
-      <SidebarDivider sx={{ width: '100%', my: 4 }} />
+      <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
       <Box sx={sx.group}>
-        <Box as='h2' variant='styles.h4' className='var-subtitle'>
-          {'Drought Monitor'} <Info>
+        <Box sx={{mb: [2]}} className='var-subtitle'>
+          {'Water balance'} <Info>
             <Box className='layer-description' sx={sx.data_description}>
               <Box>
                 Near real-time monitor of moisture anomalies. Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. Values close to 50 represent normal conditions.
@@ -183,15 +203,52 @@ function Layers() {
           color={'red'}
           value={updatingData == true ? false : showDrought}
           onClick={handleDroughtChange}
-          sx={{ mr: [2], mb: [4], borderColor: 'red', width: 'max-content' }}
+          sx={{ mr: [2], mb: [3], borderColor: 'red', width: 'max-content' }}
           disabled={updatingData}
         >
           Water balance
         </Tag>
 
-        <Box sx={{ ...sx.label, }}>
+        {/* <Box className='var-layers'>
+            {['Historical', 'Forecast'].map((waterBalance) => {
+              return (
+                <Tag
+                  key={waterBalance}
+                  id={`tag-${waterBalance}`}
+                  color={'primary'}
+                  value={waterBalance}
+                  // onClick={handleCropClick}
+                  sx={{ mr: [2], mb: [2], borderColor: 'primary', width: 'max-content', }}
+                >
+                  {waterBalance}
+                </Tag>
+              )
+            }
+            )}
+          </Box> */}
+
+        <Box sx={{mt: [2], mb: [2]}} className='var-subtitle'>
+          {'Integration window'} <Info>
+            <Box className='layer-description' sx={sx.data_description}>
+              <Box>
+                The number of months taken into account when calculating water balance anomalies.
+              </Box>
+            </Box>
+          </Info>
+        </Box>
+
+        <Filter
+          values={windowOptions}
+          setValues={setWindowOptions}
+          labels={{ 3: '3-month', 12: '12-month' }}
+          multiSelect={false}
+          onClick={handleWindowClick}
+          sx={{ mr: [2], mb: [4], borderColor: 'primary', width: 'max-content', }}
+        />
+
+        <Box sx={sx.label}>
           <Colorbar
-            sx={{ width: '250px', display: 'inline-block', flexShrink: 1, }}
+            sx={{ width: '100%', display: 'inline-block', flexShrink: 1, }}
             sxClim={{ fontSize: [1, 1, 1, 2], pt: [1] }}
             width='100%'
             colormap={colormap}
@@ -322,7 +379,7 @@ function Layers() {
         </Box>
 
       </Box>
-    </>
+    </Box>
   )
 }
 

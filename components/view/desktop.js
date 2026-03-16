@@ -21,7 +21,7 @@ function Desktop() {
     >
       <Sidebar />
 
-      <About mobile={false}/>
+      <About mobile={false} />
 
       <Map mobile={false} />
       

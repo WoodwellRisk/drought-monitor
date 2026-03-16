@@ -26,25 +26,22 @@ const useStore = create((set, get) => ({
     updatingData: false,
 
     // general / raster state variables
-    variable: 'drought',
+    variable: 'perc',
     setVariable: (variable) => set({ variable }),
+
+    windowOptions: { '3': true, '12': false, },
+    setWindowOptions: (windowOptions) => set({ windowOptions }),
+
+    window: '3',
+    setWindow: (window) => set({ window }),
 
     opacity: 1,
     setOpacity: (opacity) => set({ opacity }),
 
-    minDate: '2001-01-01',
-    maxDate: '2025-02-01',
+    minDate: '1991-01-01',
+    maxDate: '2026-01-01',
 
-    minYear: () => {
-        const {minDate} = get()
-        return `${ new Date(minDate + 'T00:00:00').getFullYear() }`
-    },
-    maxYear: () => {
-        const {maxDate} = get()
-        return `${ new Date(maxDate + 'T00:00:00').getFullYear() }`
-    },
-
-    year: '2001',
+    year: 2026,
     setYear: (year) => set({ year }),
 
     monthValues: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
@@ -56,6 +53,15 @@ const useStore = create((set, get) => ({
 
     time: (year, month) => set(`${year}-${month}-01`),
     setTime: (time) => set({ time }),
+
+    minYear: () => {
+        const { minDate } = get()
+        return `${ new Date(minDate + 'T00:00:00').getFullYear() }`
+    },
+    maxYear: () => {
+        const { maxDate } = get()
+        return `${ new Date(maxDate + 'T00:00:00').getFullYear() }`
+    },
 
     colormapName: 'redteal',
     setColormapName: (colormapName) => set({ colormapName }),
@@ -114,6 +120,9 @@ const useStore = create((set, get) => ({
 
     showAbout: false,
     setShowAbout: (showAbout) => set({ showAbout }),
+
+    showAboutMobile: false,
+    setShowAboutMobile: (showAboutMobile) => set({ showAboutMobile }),
 
     showMenu: false,
     setShowMenu: (showMenu) => set({ showMenu }),

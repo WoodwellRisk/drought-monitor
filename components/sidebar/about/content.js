@@ -73,13 +73,6 @@ const Content = () => {
           <GlobeDemo showGraticule={showGraticule} />
         </Box>
 
-        {/* <Box as='h2' variant='styles.h4'>
-          <Text sx={{ textDecoration: 'underline' }}>Methods</Text>
-        </Box>
-        <Box sx={{ mt: -2, }}>
-          <Text>...</Text>
-        </Box> */}
-
       </Box>
     </>
   )

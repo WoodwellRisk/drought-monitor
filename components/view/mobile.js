@@ -1,119 +1,143 @@
 import { useState } from 'react'
 import { Box, Flex, Grid } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
-import { Left } from '@carbonplan/icons'
-import { Button, Tray, FadeIn } from '@carbonplan/components'
 import Map from '../map'
 import Layers from '../sidebar/layers'
 import Content from '../sidebar/about/content'
-import Loading from './loading'
+import MobileHeader from './mobile-header'
+
+import useStore from '../store/index'
+
+import { keyframes } from '@emotion/react'
+const fade = keyframes({
+  from: {
+    opacity: 0,
+  },
+  to: {
+    opacity: 1,
+  },
+})
 
 function Mobile({ expanded }) {
-  const [section, setSection] = useState('map')
+  const [showSettings, setShowSettings] = useState(false)
+  const showAboutMobile = useStore((state) => state.showAboutMobile)
+
+  const sx = {
+    'map': {
+      display: 'flex',
+      width: '100vw',
+      height: showAboutMobile ? '0vh' : '100vh',
+    },
+    'about': {
+      width: '100%',
+      height: '100vh',
+      animationDuration: '1.0s',
+      animationDelay: '0.0s',
+      animationName: fade.toString(),
+      animationFillMode: 'forwards',
+      display: 'flex',
+      px: 3,
+      pt: 6,
+      mb: 9,
+    },
+    'settings': {
+      position: 'fixed',
+      width: '100vw',
+      height: '250px',
+      bottom: '0px',
+      left: '0px',
+      right: '100vw',
+      opacity: 1,
+      bg: 'background',
+      borderStyle: 'solid',
+      borderWidth: '0px',
+      borderTopWidth: '1px',
+      mx: 'auto',
+      borderColor: 'muted',
+      display: 'block',
+      px: 4,
+      pt: 4,
+      mb: '64px',
+      overflowY: 'scroll',
+    },
+    'footer': {
+      position: 'fixed',
+      opacity: showAboutMobile ? 0 : 1,
+      bottom: 0,
+      width: '100vw',
+      bg: 'background',
+      height: '64px',
+      borderStyle: 'solid',
+      borderWidth: '0px',
+      borderTopWidth: '1px',
+      borderColor: 'muted',
+      fontSize: [3],
+      fontFamily: 'heading',
+      letterSpacing: 'allcaps',
+      textTransform: 'uppercase',
+    },
+    'block': {
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '64px',
+      borderStyle: 'solid',
+      borderColor: 'muted',
+      borderWidth: '0px',
+      borderLeftWidth: '0px',
+      borderRightWidth: '1px',
+      cursor: 'pointer',
+    },
+  }
 
   return (
-    <>
-      {section === 'map' && (
-        <Box
-          sx={{
-            width: 'calc(100vw)',
-            height: 'calc(100vh)',
-            display: 'flex',
-            ml: [-3],
-          }}
-        >
-          <Map mobile={true} />
+    <Box sx={{ position: 'relative' }}>
+      <MobileHeader />
 
-          <Loading isWide mobile />
+      <Box sx={sx['map']}>
+        <Map mobile={true} />
+      </Box>
+
+      {showSettings && (
+        <Box sx={sx['settings']}>
+          <Layers mobile={true} />
+        </Box >
+      )}
+
+      {showAboutMobile && (
+        <Box sx={sx['about']}>
+          <Content />
         </Box>
       )}
 
-      <Tray
-        expanded={expanded}
-        sx={{
-          pb: expanded ? [4] : [0],
-          pt: expanded ? [5] : [0],
-          transform: expanded ? 'translateY(0)' : 'translateY(-550px)',
-        }}
-      >
-        <Layers />
-      </Tray>
-
-      {section === 'about' && (
-        <>
-          <FadeIn>
-            <Box sx={{ mt: [3], }} className='spacer' />
-            <Button
-              size='xs'
-              inverted
-              prefix={<Left />}
-              onClick={() => setSection('map')}
-              sx={{ mt: [1], cursor: 'pointer' }}
-            >
-              Back
-            </Button>
-
-            <Box sx={{height:'100%'}}>
-              <Content />
-            </Box>
-          </FadeIn>
-        </>
-      )}
-
       {/* This section defines the boxes at the bottom of the mobile view. */}
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 0,
-          width: '100%',
-          bg: 'background',
-          height: '64px',
-          borderStyle: 'solid',
-          borderWidth: '0px',
-          borderTopWidth: '1px',
-          borderColor: 'muted',
-          fontSize: [3],
-          ml: [-3],
-          fontFamily: 'heading',
-          letterSpacing: 'allcaps',
-          textTransform: 'uppercase',
-        }}
-      >
+      <Box sx={sx.footer}>
         <Grid columns={[2]} gap={[0]}>
           <Flex
-            onClick={() => setSection('map')}
+            onClick={() => {
+              setShowSettings(false)
+            }}
             sx={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '64px',
-              borderStyle: 'solid',
-              borderColor: 'muted',
-              borderWidth: '0px',
-              borderLeftWidth: '0px',
-              borderRightWidth: '1px',
-              cursor: 'pointer',
-              bg: section === 'map' ? alpha('muted', 0.5) : 'background',
+              ...sx.block,
+              bg: !showSettings ? alpha('muted', 0.5) : 'background',
             }}
           >
             Map
           </Flex>
 
           <Flex
-            onClick={() => setSection('about')}
+            onClick={() => {
+              setShowSettings(true)
+            }}
             sx={{
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '64px',
-              // height: '100%',
-              cursor: 'pointer',
-              bg: section === 'about' ? alpha('muted', 0.5) : 'background',
+              ...sx.block,
+              bg: showSettings ? alpha('muted', 0.5) : 'background',
             }}
           >
-            About
+            Settings
           </Flex>
         </Grid>
       </Box>
-    </>
+    </Box>
   )
 }
 

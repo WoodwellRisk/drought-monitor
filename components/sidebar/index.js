@@ -28,9 +28,8 @@ const Sidebar = () => {
     'sidebar-container': {
       maxWidth: [
         0,
+        '300px',
         '350px',
-        '350px',
-        '400px',
       ],
       height: '100%',
       flexBasis: '100%',
@@ -42,6 +41,7 @@ const Sidebar = () => {
       zIndex: 900,
       backgroundColor: 'background',
       display: ['none', 'flex', 'flex'],
+      zIndex: 100,
     },
     'click-section': {
       mx: [3, 4, 5, 5],

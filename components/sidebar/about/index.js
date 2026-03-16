@@ -9,41 +9,30 @@ function About({ mobile }) {
   const toggleAbout = () => setShowAbout(!showAbout)
 
   return (
-    <Box
+    <Box className='desktop-about-container'
       sx={{
         position: 'absolute',
+        display: ['none', 'flex', 'flex'],
+        flexBasis: '100%',
+        height: '100%',
+        maxWidth: '450px',
         zIndex: 200,
         borderStyle: 'solid',
         borderWidth: 0,
         borderRightWidth: showAbout ? 1 : 0,
         borderColor: 'muted',
-        height: '100%',
-        left: [
-          0,
-          '320px',
-          '350px',
-          '400px',
-        ],
+        left: 0,
         backgroundColor: 'background',
-        width: [
-          0,
-          'calc(4 * 100vw / 8 - 8px)',
-          'calc(5 * 100vw / 12 - 12px)',
-          'calc(5 * 100vw / 12 - 20px)',
-        ],
-        transition: 'transform 0.2s',
         transform: showAbout ? 'translateX(0px)' : 'translateX(-100%)',
         overflowY: 'scroll',
-        display: ['none', 'initial', 'initial'],
+        display: showAbout ? 'initial' : 'hidden',
       }}
     >
       <Box
         sx={{
-          pl: [5, 5, 5, 6],
-          pr: [0, 1, 5, 6],          
-          opacity: 1,
-          pt: ['12px'],
-          mb: [4],
+          pt: [4],
+          mx: [3, 4, 5, 6],
+          mb: 2,
         }}
       >
       {!mobile && (
