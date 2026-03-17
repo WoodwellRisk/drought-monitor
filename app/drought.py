@@ -50,7 +50,7 @@ updating = False
 #     month -= 1
 
 year = 2026
-month = 1
+month = 2
 month_ic = str(month) if month >= 10 else '0' + str(month) 
 year_ic = str(year)
 
