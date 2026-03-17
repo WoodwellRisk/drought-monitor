@@ -184,7 +184,7 @@ def drought_pipeline():
     dataset_dict = {
         'h3': h3,
         'h12': h12,
-        'f3': h3,
+        'f3': f3,
         'f12': f12,
     }
     subprocess.run(['echo', 'Saving Zarr stores used for analysis.'])
