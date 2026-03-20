@@ -498,7 +498,7 @@ select option:active, select option:checked, select option:focus, select option:
     height: 100%;
 }
 
-#iframe-container {
+#drought-map-container {
     border: 1px solid var(--border-color);
     height: 550px;
     margin: 30px 10px 10px 10px;

@@ -3,8 +3,10 @@
 __pycache__
 data/
 mnt/
+app/www/drought_map
 .next
 node_modules
 data_processing/*.sh
 data_processing/raster/
 data_processing/zarr/
+*.egg-info

@@ -1,6 +1,7 @@
 from datetime import datetime
 import io
 import json
+from pathlib import Path
 
 import numpy as np 
 import pandas as pd
@@ -20,12 +21,7 @@ import plotly.graph_objects as go
 from shiny import App, Inputs, Outputs, Session, ui, render, reactive
 from shinywidgets import render_plotly, render_widget, output_widget
 
-from pathlib import Path
-
-# from starlette.routing import Mount, Route
-# from starlette.responses import RedirectResponse
-# from starlette.applications import Starlette
-
+from drought_map import DroughtMap
 from utils import *
 
 # shiny run --reload drought.py
@@ -189,9 +185,10 @@ app_ui = ui.page_fluid(
                     ui.navset_tab(
                         # historical data tab
                         ui.nav_panel('Historical data', 
-                            ui.div({'id': 'iframe-container'},
-                                ui.tags.iframe(src='https://woodwellrisk.github.io/drought-monitor', height='100%', width='100%')
-                            ),
+                            # ui.div({'id': 'drought-map-container'},
+                            #     DroughtMap(),
+                            # ),
+                            DroughtMap(),
                         ),
 
                         # timeseries and table tab
