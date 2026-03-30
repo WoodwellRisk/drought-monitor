@@ -1,5 +1,45 @@
 import { create } from 'zustand'
 
+const MIN_DATE = '1991-01-01'
+const MAX_DATE = '2026-02-01'
+const MONTH_VALUES = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+
+const getYear = (date) => {
+    return `${ new Date(date + 'T00:00:00').getFullYear() }`
+}
+
+const getMonth = (date) => {
+    const [year, month, day] = date.split('-')
+    return month
+}
+
+const getMonthIdx = (month, months) => {
+    return months.indexOf(month)
+}
+
+const getTime = (year, month) => {
+    return `${year}-${month}-01`
+}
+
+const createDates = () => {
+    const startYear = getYear(MIN_DATE)
+    const endYear = getYear(MAX_DATE)
+    const month = getMonth(MAX_DATE)
+    const months = MONTH_VALUES
+
+    return {
+        minDate: MIN_DATE,
+        maxDate: MAX_DATE,
+        minYear: startYear,
+        year: endYear,
+        maxYear: endYear,
+        month: month,
+        monthValues: months,
+        monthIdx: getMonthIdx(month, months),
+        time: getTime(endYear, month),
+    }
+};
+
 const useStore = create((set, get) => ({
     // map container state
     zoom: 1.3,
@@ -38,30 +78,12 @@ const useStore = create((set, get) => ({
     opacity: 1,
     setOpacity: (opacity) => set({ opacity }),
 
-    minDate: '1991-01-01',
-    maxDate: '2026-02-01',
-
-    year: 2026,
+    // handle dates
+    ...createDates(),
     setYear: (year) => set({ year }),
-
-    monthValues: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'],
-    month: '02',
     setMonth: (month) => set({ month }),
-    
-    monthIdx: 1,
     setMonthIdx: (monthIdx) => set({ monthIdx }),
-
-    time: (year, month) => set(`${year}-${month}-01`),
     setTime: (time) => set({ time }),
-
-    minYear: () => {
-        const { minDate } = get()
-        return `${ new Date(minDate + 'T00:00:00').getFullYear() }`
-    },
-    maxYear: () => {
-        const { maxDate } = get()
-        return `${ new Date(maxDate + 'T00:00:00').getFullYear() }`
-    },
 
     colormapName: 'redteal',
     setColormapName: (colormapName) => set({ colormapName }),
