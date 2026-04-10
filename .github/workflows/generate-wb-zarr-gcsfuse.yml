@@ -3,6 +3,11 @@ name: Generate monthly Zarr data for drought monitor website - gcsfuse
 on:
   workflow_dispatch:
 
+  push:
+    branches: [main]
+    paths:
+    - 'data_processing/drought_to_zarr_gcsfuse.py'
+
 # permissions needed for the google‑github‑actions steps
 permissions:
   contents: read
@@ -17,7 +22,7 @@ jobs:
       WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
       WORKING_DIR: data_processing
-  
+
     steps:
       # mask gcp service account
       - name: Mask GCP project ID and service account
@@ -29,7 +34,7 @@ jobs:
       - name: Set mount point variable
         run: |
           echo "MOUNT_POINT=${RUNNER_TEMP}/${BUCKET_NAME}" >> $GITHUB_ENV
-      
+
        # checkout the repo (needed for docker build)
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,7 +52,7 @@ jobs:
       - name: Export token for later steps
         run: |
           echo "GCLOUD_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
-          
+
           # mask token so it never appears in the ui logs
           echo "::add-mask::${{ steps.auth.outputs.access_token }}"
 
@@ -65,7 +70,7 @@ jobs:
             ca-certificates
 
           sudo apt-get clean
-      
+
       # install the cloud sdk (gcloud)
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -76,13 +81,13 @@ jobs:
       - name: Install gcsfuse
         run: |
           export GCSFUSE_REPO=gcsfuse-$(lsb_release -c -s)
-          
+
           echo "deb http://packages.cloud.google.com/apt $GCSFUSE_REPO main" | sudo tee /etc/apt/sources.list.d/gcsfuse.list
-          
+
           curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-          
+
           sudo apt-get update
-          
+
           sudo apt-get install -y gcsfuse
 
       # mount bucket

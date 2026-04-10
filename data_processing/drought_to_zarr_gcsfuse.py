@@ -1,50 +1,59 @@
-from concurrent.futures import ProcessPoolExecutor
-from datetime import datetime
 import os
-from pathlib import Path
 import subprocess
 import timeit
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
 
 import gcsfs
-from ndpyramid import *
 import numpy as np
 import pandas as pd
 import rioxarray
 import xarray as xr
 import zarr
+from ndpyramid import pyramid_reproject
 
 
-def open_historical_dataset(path: str) -> xr.core.dataset.Dataset:
-        """
-        Open a single Xarray Dataset based on a file path and assign a time dimension.
+def open_historical_dataset(path: str) -> xr.Dataset:
+    """
+    Open a single Xarray Dataset based on a file path and assign a time dimension.
 
-        Parameters:
-            path(str): a filename pointing to a Xarray Dataset
+    Parameters:
+        path(str): a filename pointing to a Xarray Dataset
 
-        Returns:
-            ds(xr.core.dataset.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
-        """
-        ACCESS_TOKEN = os.getenv('GCLOUD_ACCESS_TOKEN')
-        ds = xr.open_dataset(path, engine='h5netcdf', chunks={'x': 128, 'y': 128}, storage_options={'token': ACCESS_TOKEN})
-        ds = ds.assign_coords({'time': pd.to_datetime(path[-13:-3])})
+    Returns:
+        ds(xr.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
+    """
+    ACCESS_TOKEN = os.getenv('GCLOUD_ACCESS_TOKEN')
+    ds = xr.open_dataset(
+        path,
+        engine='h5netcdf',
+        chunks={'x': 128, 'y': 128},
+        storage_options={'token': ACCESS_TOKEN},
+    )
+    ds = ds.assign_coords({'time': pd.to_datetime(path[-13:-3])})
 
-        return ds
+    return ds
 
 
-def open_forecast_dataset(path: str) -> xr.core.dataset.Dataset:
-        """
-        Open a single Xarray Dataset based on a file path.
+def open_forecast_dataset(path: str) -> xr.Dataset:
+    """
+    Open a single Xarray Dataset based on a file path.
 
-        Parameters:
-            path(str): a filename pointing to a Xarray Dataset
+    Parameters:
+        path(str): a filename pointing to a Xarray Dataset
 
-        Returns:
-            ds(xr.core.dataset.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
-        """
-        ACCESS_TOKEN = os.getenv('GCLOUD_ACCESS_TOKEN')
-        ds = xr.open_dataset(path, engine='h5netcdf', chunks={'x': 128, 'y': 128}, storage_options={'token': ACCESS_TOKEN})
+    Returns:
+        ds(xr.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
+    """
+    ACCESS_TOKEN = os.getenv('GCLOUD_ACCESS_TOKEN')
+    ds = xr.open_dataset(
+        path,
+        engine='h5netcdf',
+        chunks={'x': 128, 'y': 128},
+        storage_options={'token': ACCESS_TOKEN},
+    )
 
-        return ds
+    return ds
 
 
 def open_files_in_parallel(files: list) -> list:
@@ -63,7 +72,8 @@ def open_files_in_parallel(files: list) -> list:
 
     return ds_list
 
-def process_dataset(ds: xr.core.dataset.Dataset) -> xr.core.dataset.Dataset:
+
+def process_dataset(ds: xr.Dataset) -> xr.Dataset:
     """
     Take in a Xarray Dataset, rename the latitude and longitude columns, and shift the latitudes by 180 degrees.
 
@@ -73,7 +83,7 @@ def process_dataset(ds: xr.core.dataset.Dataset) -> xr.core.dataset.Dataset:
     Returns:
         ds(xarray.core.dataset.Dataset): a modified version of the input Dataset
     """
-    ds = ds.rename({ 'longitude':'x','latitude':'y'})
+    ds = ds.rename({'longitude': 'x', 'latitude': 'y'})
     ds.rio.write_crs(4326, inplace=True)
     ds.coords['x'] = (ds.coords['x'] + 180) % 360 - 180
     ds = ds.sortby(ds.x)
@@ -81,7 +91,7 @@ def process_dataset(ds: xr.core.dataset.Dataset) -> xr.core.dataset.Dataset:
     return ds
 
 
-def pyramid_to_zarr(ds: xr.core.dataset.Dataset, levels: int, path: str) -> None:
+def pyramid_to_zarr(ds: xr.Dataset, levels: int, path: str) -> None:
     """
     Convert a Xarray Dataset into a Zarr for visualization using CarbonPlan's `maps` package.
 
@@ -106,25 +116,25 @@ def drought_pipeline():
     for both visualization and analysis.
     """
     start = timeit.default_timer()
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
 
     # calculate the initial conditions from today's year and month
     # in general, the month (and potentially year) roll back one month
-    # for example: if we are producing the forecast in january, 
+    # for example: if we are producing the forecast in january,
     # then the initial conditions are from december of the previous year
-    today = datetime.today()
+    # today = datetime.today()
     # year = today.year
     # month = today.month
-    year = 2025
-    month = 12
+    year = 2026
+    month = 4
 
     if month == 1:
         month = 12
         year = year - 1
-    else: 
+    else:
         month -= 1
 
-    month_ic = str(month) if month >= 10 else '0' + str(month) 
+    month_ic = str(month) if month >= 10 else '0' + str(month)
     year_ic = str(year)
 
     # environment variables come from .github/workflows/generate-wb-zarr-gcsfuse.yml
@@ -146,39 +156,47 @@ def drought_pipeline():
     subprocess.run(['echo', 'Generating input file list.'])
     # create file list
     dates = pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')
-    h3_files = sorted([f'{historical_raster_path}/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc' for date in dates])
+    h3_files = sorted(
+        [
+            f'{historical_raster_path}/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc'
+            for date in dates
+        ]
+    )
     h12_files = sorted([file.replace('w3', 'w12') for file in h3_files])
 
-    forecast_files = [f'{forecast_raster_path}/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc' for window in [3, 12]]
+    forecast_files = [
+        f'{forecast_raster_path}/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc'
+        for window in [3, 12]
+    ]
     f3_file = [file for file in forecast_files if 'w3' in file][0]
     f12_file = [file for file in forecast_files if 'w12' in file][0]
 
     subprocess.run(['echo', 'Opening NetCDF files.'])
     # open historical data for both integration windows
     # parallelize data reads
-    # note: if we tried to use xr.open_mfdataset(...parallel=True), 
+    # note: if we tried to use xr.open_mfdataset(...parallel=True),
     # we would not be able to extract the time from the filename for each NetCDF
-    subprocess.run(['echo', f'    Opening H3 data...'])
+    subprocess.run(['echo', '    Opening H3 data...'])
     ds_list = open_files_in_parallel(h3_files)
     h3 = xr.concat(ds_list, dim='time')
     h3 = process_dataset(h3)
 
-    subprocess.run(['echo', f'    Opening H12 data...'])
+    subprocess.run(['echo', '    Opening H12 data...'])
     ds_list = open_files_in_parallel(h12_files)
     h12 = xr.concat(ds_list, dim='time')
     h12 = process_dataset(h12)
 
     # open forecast data for both integration windows
-    subprocess.run(['echo', f'    Opening F3 data...'])
+    subprocess.run(['echo', '    Opening F3 data...'])
     f3 = open_forecast_dataset(f3_file)
     f3 = process_dataset(f3)
-    f3 = f3.rename({ 'L': 'time', '50%': 'perc' })
+    f3 = f3.rename({'L': 'time', '50%': 'perc'})
     f3 = f3[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
-    subprocess.run(['echo', f'    Opening F12 data...'])
+    subprocess.run(['echo', '    Opening F12 data...'])
     f12 = open_forecast_dataset(f12_file)
     f12 = process_dataset(f12)
-    f12 = f12.rename({ 'L': 'time', '50%': 'perc' })
+    f12 = f12.rename({'L': 'time', '50%': 'perc'})
     f12 = f12[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
     dataset_dict = {
@@ -191,7 +209,12 @@ def drought_pipeline():
     # save the data as zarr stores that we will use for analysis
     for dataset in ['h3', 'h12', 'f3', 'f12']:
         subprocess.run(['echo', f'    Saving {dataset.upper()} data...'])
-        dataset_dict[dataset].to_zarr(f'{analysis_zarr_path}/{dataset}-{year_ic}-{month_ic}-01.zarr', consolidated=True, zarr_format=2, mode='w')
+        dataset_dict[dataset].to_zarr(
+            f'{analysis_zarr_path}/{dataset}-{year_ic}-{month_ic}-01.zarr',
+            consolidated=True,
+            zarr_format=2,
+            mode='w',
+        )
     subprocess.run(['echo', ''])
 
     subprocess.run(['echo', 'Saving Zarr stores used for visualization.'])
@@ -217,10 +240,12 @@ def drought_pipeline():
     # create pyramids for each dataset, then save the pyramid to zarr
     for dataset in ['h3', 'h12', 'f3', 'f12']:
         subprocess.run(['echo', f'    Saving {dataset.upper()} data...'])
-        pyramid_to_zarr(dataset_dict[dataset], levels, f'{viz_zarr_path}/{dataset}-{year_ic}-{month_ic}-01.zarr')
+        pyramid_to_zarr(
+            dataset_dict[dataset], levels, f'{viz_zarr_path}/{dataset}-{year_ic}-{month_ic}-01.zarr'
+        )
 
     subprocess.run(['echo', 'Done!'])
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
     end = timeit.default_timer()
     subprocess.run(['echo', f'Time to complete: {(end - start) / 3600 :.5f} hours.'])
 

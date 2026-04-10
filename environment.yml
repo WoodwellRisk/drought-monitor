@@ -16,6 +16,7 @@ dependencies:
   - pandas
   - pip
   - plotly
+  - pre-commit
   - proj
   - pyarrow
   - pyproj

@@ -62,16 +62,16 @@ jobs:
         id: build
         run: |
           IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
-          
+
           echo "Building image → $IMAGE_TAG"
-          
+
           # https://docs.cloud.google.com/sdk/gcloud/reference/builds/submit#--gcs-log-dir
           gcloud builds submit app/ \
             --project="${{ env.PROJECT_ID }}" \
             --tag="${IMAGE_TAG}" \
             --gcs-log-dir="gs://${LOGS_BUCKET_NAME}" \
             --quiet
-          
+
           # Export the tag for the next step
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
@@ -79,7 +79,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           echo "Deploying ${{ env.SERVICE_NAME }} (region ${{ env.REGION }})"
-          
+
           gcloud run deploy "${{ env.SERVICE_NAME }}" \
             --image "$IMAGE_TAG" \
             --region "${{ env.REGION }}" \

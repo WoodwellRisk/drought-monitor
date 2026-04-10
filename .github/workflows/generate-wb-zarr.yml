@@ -1,10 +1,12 @@
 name: Generate monthly Zarr data for drought monitor website - gcsfs
 
 on:
-  push:
-    branches: [main]
-    paths:
-    - 'data_processing/drought_to_zarr.py'
+  workflow_dispatch:
+
+  # push:
+  #   branches: [main]
+  #   paths:
+  #   - 'data_processing/drought_to_zarr.py'
 
 # permissions needed for the google‑github‑actions steps
 permissions:
@@ -20,14 +22,14 @@ jobs:
       WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
       WORKING_DIR: data_processing
-  
+
     steps:
       # mask gcp service account
       - name: Mask GCP project ID and service account
         run: |
           echo "::add-mask::${{ secrets.GCP_PROJECT_ID }}"
           echo "::add-mask::${{ secrets.GCP_SERVICE_ACCOUNT }}"
-      
+
        # checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,7 +47,7 @@ jobs:
       - name: Export token for later steps
         run: |
           echo "GCLOUD_ACCESS_TOKEN=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
-          
+
           # mask token so it never appears in the ui logs
           echo "::add-mask::${{ steps.auth.outputs.access_token }}"
 

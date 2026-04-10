@@ -8,7 +8,7 @@ windowSizeMatch.addEventListener('change', function(m) {
     if (m.matches) {
         let sidebarContainer = document.querySelector('#sidebar-container');
         let historicalDataTab = document.querySelector('.nav-item:first-child > .nav-link');
-        
+
         if(historicalDataTab.classList.contains('active')) {
             sidebarContainer.style.display = 'none';
         } else {
