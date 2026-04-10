@@ -1,36 +1,32 @@
-import { useState } from 'react'
-import { Box, Text } from 'theme-ui'
-import { SidebarDivider } from '@carbonplan/layouts'
+import { useState } from 'react';
+import { Box, Text } from 'theme-ui';
+import { SidebarDivider } from '@carbonplan/layouts';
 
-import SidebarHeader from './sidebar-header'
-import Menu from './menu'
-import Layers from './layers'
-import ExpandingSection from './expanding-section'
-import Overlays from './overlays'
-import Charts from './charts/index'
-import Footer from './footer'
+import SidebarHeader from './sidebar-header';
+import Menu from './menu';
+import Layers from './layers';
+import ExpandingSection from './expanding-section';
+import Overlays from './overlays';
+import Charts from './charts/index';
+import Footer from './footer';
 
-import useStore from '../store/index'
+import useStore from '../store/index';
 
 const Sidebar = () => {
-  const maxDate = useStore((state) => state.maxDate)
-  const time = useStore((state) => state.time)
-  const showRegionPicker = useStore((state) => state.showRegionPicker)
-  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker)
-  const showAbout = useStore((state) => state.showAbout)
-  const setShowAbout = useStore((state) => state.setShowAbout)
-  const showMenu = useStore((state) => state.showMenu)
-  const setShowMenu = useStore((state) => state.setShowMenu)
-  const showOverlays = useStore((state) => state.showOverlays)
-  const setShowOverlays = useStore((state) => state.setShowOverlays)
+  const maxDate = useStore((state) => state.maxDate);
+  const time = useStore((state) => state.time);
+  const showRegionPicker = useStore((state) => state.showRegionPicker);
+  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker);
+  const showAbout = useStore((state) => state.showAbout);
+  const setShowAbout = useStore((state) => state.setShowAbout);
+  const showMenu = useStore((state) => state.showMenu);
+  const setShowMenu = useStore((state) => state.setShowMenu);
+  const showOverlays = useStore((state) => state.showOverlays);
+  const setShowOverlays = useStore((state) => state.setShowOverlays);
 
   const sx = {
     'sidebar-container': {
-      maxWidth: [
-        0,
-        '300px',
-        '350px',
-      ],
+      maxWidth: [0, '300px', '350px'],
       height: '100%',
       flexBasis: '100%',
       flexDirection: 'column',
@@ -58,7 +54,7 @@ const Sidebar = () => {
         color: 'secondary',
       },
     },
-    'arrow': {
+    arrow: {
       display: 'inline-block',
       fontSize: [4],
       ml: [2],
@@ -67,28 +63,28 @@ const Sidebar = () => {
       transition: 'transform 0.2s',
       transform: showAbout ? 'scaleX(-1)' : 'scaleX(1)',
     },
-    'expander': {
+    expander: {
       '&:hover > #charts-expander, &:hover > #overlays-expander': {
         fill: 'secondary',
-        stroke: 'secondary'
-      }
+        stroke: 'secondary',
+      },
     },
-    'stats': {
+    stats: {
       mb: [5],
       mx: 'auto',
       width: '100%',
       height: '225px',
     },
-  }
+  };
 
   return (
     <Box sx={sx['sidebar-container']}>
       <SidebarHeader showMenu={showMenu} toggleMenu={() => setShowMenu(!showMenu)} />
 
-      <Box id='sidebar' sx={{ position: 'relative', flex: 1, overflowY: 'scroll', }} >
+      <Box id="sidebar" sx={{ position: 'relative', flex: 1, overflowY: 'scroll' }}>
         <Menu visible={showMenu} />
 
-        <Box onClick={() => setShowAbout(!showAbout)} sx={sx['click-section']} >
+        <Box onClick={() => setShowAbout(!showAbout)} sx={sx['click-section']}>
           How to use this site <Text sx={sx.arrow}>→</Text>
         </Box>
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
@@ -96,9 +92,9 @@ const Sidebar = () => {
         <Layers />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        <ExpandingSection 
-          label='Charts' 
-          expanded={showRegionPicker} 
+        <ExpandingSection
+          label="Charts"
+          expanded={showRegionPicker}
           setExpanded={setShowRegionPicker}
           disabled={new Date(time) > new Date(maxDate)}
         >
@@ -108,18 +104,17 @@ const Sidebar = () => {
             </Box>
           )}
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', my: 4 }} /> 
+        <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        <ExpandingSection label='Overlays' expanded={showOverlays} setExpanded={setShowOverlays}>
+        <ExpandingSection label="Overlays" expanded={showOverlays} setExpanded={setShowOverlays}>
           <Overlays />
         </ExpandingSection>
         <SidebarDivider sx={{ width: '100%', mt: 4 }} />
 
         <Footer />
       </Box>
-
     </Box>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

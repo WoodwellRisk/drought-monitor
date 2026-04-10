@@ -1,15 +1,16 @@
-import { Box, Text } from 'theme-ui'
-import Content from './content.js'
+import { Box, Text } from 'theme-ui';
+import Content from './content.js';
 
-import useStore from '../../store/index'
+import useStore from '../../store/index';
 
 function About({ mobile }) {
-  const showAbout = useStore((state) => state.showAbout)
-  const setShowAbout = useStore((state) => state.setShowAbout)
-  const toggleAbout = () => setShowAbout(!showAbout)
+  const showAbout = useStore((state) => state.showAbout);
+  const setShowAbout = useStore((state) => state.setShowAbout);
+  const toggleAbout = () => setShowAbout(!showAbout);
 
   return (
-    <Box className='desktop-about-container'
+    <Box
+      className="desktop-about-container"
       sx={{
         position: 'absolute',
         display: ['none', 'flex', 'flex'],
@@ -35,45 +36,45 @@ function About({ mobile }) {
           mb: 2,
         }}
       >
-      {!mobile && (
-        <Box
-          onClick={toggleAbout}
-          sx={{
-            cursor: 'pointer',
-            '&:hover > #arrow': {
-              color: 'primary',
-            },
-            '&:hover > #label': {
-              color: 'primary',
-            },
-          }}
-        >
-          <Text
-            id='arrow'
-            sx={{
-              display: 'inline-block',
-              fontSize: ['20px'],
-              color: 'secondary',
-              top: '1px',
-              mr: [2],
-              position: 'relative',
-              transition: 'color 0.15s',
-            }}
-          >
-            ←
-          </Text>
+        {!mobile && (
           <Box
-            as='span'
-            id='label'
+            onClick={toggleAbout}
             sx={{
-              transition: 'color 0.15s',
-              fontSize: [2, 2, 2, 3],
-              color: 'secondary',
+              cursor: 'pointer',
+              '&:hover > #arrow': {
+                color: 'primary',
+              },
+              '&:hover > #label': {
+                color: 'primary',
+              },
             }}
           >
-            Back
+            <Text
+              id="arrow"
+              sx={{
+                display: 'inline-block',
+                fontSize: ['20px'],
+                color: 'secondary',
+                top: '1px',
+                mr: [2],
+                position: 'relative',
+                transition: 'color 0.15s',
+              }}
+            >
+              ←
+            </Text>
+            <Box
+              as="span"
+              id="label"
+              sx={{
+                transition: 'color 0.15s',
+                fontSize: [2, 2, 2, 3],
+                color: 'secondary',
+              }}
+            >
+              Back
+            </Box>
           </Box>
-        </Box>
         )}
 
         <Box
@@ -86,7 +87,7 @@ function About({ mobile }) {
         </Box>
       </Box>
     </Box>
-  )
+  );
 }
 
-export default About
+export default About;
