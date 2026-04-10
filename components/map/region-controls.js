@@ -1,13 +1,13 @@
-import { Box, IconButton } from 'theme-ui'
-import { useRecenterRegion } from '@carbonplan/maps'
-import { XCircle } from '@carbonplan/icons'
+import { Box, IconButton } from 'theme-ui';
+import { useRecenterRegion } from '@carbonplan/maps';
+import { XCircle } from '@carbonplan/icons';
 
-import useStore from '../store/index'
+import useStore from '../store/index';
 
 const RegionControls = () => {
-  const { recenterRegion } = useRecenterRegion()
-  const showRegionPicker = useStore((state) => state.showRegionPicker)
-  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker)
+  const { recenterRegion } = useRecenterRegion();
+  const showRegionPicker = useStore((state) => state.showRegionPicker);
+  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker);
 
   return (
     <Box
@@ -20,52 +20,49 @@ const RegionControls = () => {
         bottom: [15],
       }}
     >
-      
       <IconButton
-        aria-label='Circle filter'
+        aria-label="Circle filter"
         onClick={() => setShowRegionPicker(!showRegionPicker)}
         sx={{ stroke: 'primary', cursor: 'pointer', width: 34, height: 34 }}
       >
         {!showRegionPicker && (
           <svg
-            xmlns='http://www.w3.org/2000/svg'
-            viewBox='0 0 24 24'
-            width='34'
-            height='34'
-            strokeWidth='1.75'
-            fill='none'
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="34"
+            height="34"
+            strokeWidth="1.75"
+            fill="none"
           >
-            <circle cx='12' cy='12' r='10' />
-            <circle cx='10' cy='10' r='3' />
-            <line x1='12' x2='17' y1='12' y2='17' />
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="10" cy="10" r="3" />
+            <line x1="12" x2="17" y1="12" y2="17" />
           </svg>
         )}
-        {showRegionPicker && (
-          <XCircle sx={{ strokeWidth: 1.75, width: 24, height: 24 }} />
-        )}
+        {showRegionPicker && <XCircle sx={{ strokeWidth: 1.75, width: 24, height: 24 }} />}
       </IconButton>
-      
+
       {showRegionPicker && (
         <IconButton
-          aria-label='Recenter map'
+          aria-label="Recenter map"
           onClick={recenterRegion}
           sx={{ stroke: 'primary', cursor: 'pointer', width: 34, height: 34 }}
         >
           <svg
-            xmlns='http://www.w3.org/2000/svg'
-            viewBox='0 0 24 24'
-            width='34'
-            height='34'
-            strokeWidth='1.75'
-            fill='none'
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="34"
+            height="34"
+            strokeWidth="1.75"
+            fill="none"
           >
-            <circle cx='12' cy='12' r='10' />
-            <circle cx='12' cy='12' r='2' />
+            <circle cx="12" cy="12" r="10" />
+            <circle cx="12" cy="12" r="2" />
           </svg>
         </IconButton>
       )}
     </Box>
-  )
-}
+  );
+};
 
-export default RegionControls
+export default RegionControls;

@@ -1,28 +1,24 @@
-import { Box } from 'theme-ui'
-import SidebarDivider from './sidebar-divider'
+import { Box } from 'theme-ui';
+import SidebarDivider from './sidebar-divider';
 
-import Layers from './layers'
-import ExpandingSection from './expanding-section'
-import Overlays from './overlays'
-import Charts from './charts/index'
+import Layers from './layers';
+import ExpandingSection from './expanding-section';
+import Overlays from './overlays';
+import Charts from './charts/index';
 
-import useStore from '../store/index'
+import useStore from '../store/index';
 
 const Sidebar = () => {
-  const maxDate = useStore((state) => state.maxDate)
-  const time = useStore((state) => state.time)
-  const showRegionPicker = useStore((state) => state.showRegionPicker)
-  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker)
-  const showOverlays = useStore((state) => state.showOverlays)
-  const setShowOverlays = useStore((state) => state.setShowOverlays)
+  const maxDate = useStore((state) => state.maxDate);
+  const time = useStore((state) => state.time);
+  const showRegionPicker = useStore((state) => state.showRegionPicker);
+  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker);
+  const showOverlays = useStore((state) => state.showOverlays);
+  const setShowOverlays = useStore((state) => state.setShowOverlays);
 
   const sx = {
     'sidebar-container': {
-      maxWidth: [
-        0,
-        '300px',
-        '350px',
-      ],
+      maxWidth: [0, '300px', '350px'],
       height: '100%',
       flexBasis: '100%',
       flexDirection: 'column',
@@ -49,29 +45,29 @@ const Sidebar = () => {
         color: 'secondary',
       },
     },
-    'expander': {
+    expander: {
       '&:hover > #charts-expander, &:hover > #overlays-expander': {
         fill: 'secondary',
-        stroke: 'secondary'
-      }
+        stroke: 'secondary',
+      },
     },
-    'stats': {
+    stats: {
       mb: [5],
       mx: 'auto',
       width: '100%',
       height: '225px',
     },
-  }
+  };
 
   return (
     <Box sx={sx['sidebar-container']}>
-      <Box id='sidebar' sx={{ position: 'relative', flex: 1, overflowY: 'scroll', }} >
+      <Box id="sidebar" sx={{ position: 'relative', flex: 1, overflowY: 'scroll' }}>
         <Layers />
         <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
-        <ExpandingSection 
-          label='Charts' 
-          expanded={showRegionPicker} 
+        <ExpandingSection
+          label="Charts"
+          expanded={showRegionPicker}
           setExpanded={setShowRegionPicker}
           disabled={new Date(time) > new Date(maxDate)}
         >
@@ -81,17 +77,15 @@ const Sidebar = () => {
             </Box>
           )}
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} /> 
+        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
-        <ExpandingSection label='Overlays' expanded={showOverlays} setExpanded={setShowOverlays}>
+        <ExpandingSection label="Overlays" expanded={showOverlays} setExpanded={setShowOverlays}>
           <Overlays />
         </ExpandingSection>
         <SidebarDivider sx={{ width: '100%', ml: 0, mt: 4 }} />
-
       </Box>
-
     </Box>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

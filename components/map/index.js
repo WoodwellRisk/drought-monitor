@@ -1,44 +1,44 @@
-import { useCallback, useRef, useEffect } from 'react'
-import { Box, useThemeUI } from 'theme-ui'
-import { useThemedColormap } from '@carbonplan/colormaps'
-import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
+import { useCallback, useRef, useEffect } from 'react';
+import { Box, useThemeUI } from 'theme-ui';
+import { useThemedColormap } from '@carbonplan/colormaps';
+import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps';
 
-import Loading from '../view/loading'
-import Ruler from './ruler'
-import ZoomReset from './zoom-reset'
-import TimeWarning from './time-warning'
-import Router from './router'
+import Loading from '../view/loading';
+import Ruler from './ruler';
+import ZoomReset from './zoom-reset';
+import TimeWarning from './time-warning';
+import Router from './router';
 
-import useStore from '../store/index'
+import useStore from '../store/index';
 
 const Map = ({ mobile }) => {
-  const { theme } = useThemeUI()
-  const container = useRef(null)
+  const { theme } = useThemeUI();
+  const container = useRef(null);
   // const [map, setMap] = useState(null)
-  const zoom = useStore((state) => state.zoom)
-  const maxZoom = useStore((state) => state.maxZoom)
-  const center = useStore((state) => state.center)
-  const bounds = useStore((state) => state.bounds)
+  const zoom = useStore((state) => state.zoom);
+  const maxZoom = useStore((state) => state.maxZoom);
+  const center = useStore((state) => state.center);
+  const bounds = useStore((state) => state.bounds);
 
-  const variable = useStore((state) => state.variable)
-  const window = useStore((state) => state.window)
-  const maxDate = useStore((state) => state.maxDate)
-  const time = useStore((state) => state.time)
-  const opacity = useStore((state) => state.opacity)
-  const clim = useStore((state) => state.clim)
-  const colormapName = useStore((state) => state.colormapName)
-  const colormap = useThemedColormap(colormapName).slice(0,)
-  
-  const showRegionPicker = useStore((state) => state.showRegionPicker)
-  const setRegionData = useStore((state) => state.setRegionData)
-  const setRegionDataLoading = useStore((state) => state.setRegionDataLoading)
-  const display = useStore((state) => state.display)
-  const updatingData = useStore((state) => state.updatingData)
-  const cropLayer = useStore((state) => state.cropLayer)
-  const showCropLayer = useStore((state) => state.showCropLayer)
-  const showCountriesOutline = useStore((state) => state.showCountriesOutline)
-  const showStatesOutline = useStore((state) => state.showStatesOutline)
-  const showWarning = useStore((state) => state.showWarning)
+  const variable = useStore((state) => state.variable);
+  const window = useStore((state) => state.window);
+  const maxDate = useStore((state) => state.maxDate);
+  const time = useStore((state) => state.time);
+  const opacity = useStore((state) => state.opacity);
+  const clim = useStore((state) => state.clim);
+  const colormapName = useStore((state) => state.colormapName);
+  const colormap = useThemedColormap(colormapName).slice(0);
+
+  const showRegionPicker = useStore((state) => state.showRegionPicker);
+  const setRegionData = useStore((state) => state.setRegionData);
+  const setRegionDataLoading = useStore((state) => state.setRegionDataLoading);
+  const display = useStore((state) => state.display);
+  const updatingData = useStore((state) => state.updatingData);
+  const cropLayer = useStore((state) => state.cropLayer);
+  const showCropLayer = useStore((state) => state.showCropLayer);
+  const showCountriesOutline = useStore((state) => state.showCountriesOutline);
+  const showStatesOutline = useStore((state) => state.showStatesOutline);
+  const showWarning = useStore((state) => state.showWarning);
 
   const sx = {
     label: {
@@ -48,24 +48,32 @@ const Map = ({ mobile }) => {
       fontSize: [1, 1, 1, 2],
       mt: [3],
     },
-  }
+  };
 
   // this callback was modified from its source: https://github.com/carbonplan/oae-web/blob/3eff3fb99a24a024f6f9a8278add9233a31e853b/components/map.js#L93
   const handleRegionData = useCallback(
     (data) => {
       if (data.value == null) {
-        setRegionDataLoading(true)
+        setRegionDataLoading(true);
       } else if (data.value[variable]) {
-        setRegionData(data.value)
-        setRegionDataLoading(false)
+        setRegionData(data.value);
+        setRegionDataLoading(false);
       }
     },
     [setRegionData, setRegionDataLoading]
-  )
+  );
 
   return (
-    <Box ref={container} sx={{ display: 'flex', flexBasis: '100%',  justifyContent: 'center', 'canvas.mapboxgl-canvas:focus': { outline: 'none', }, }} >
-      <MapContainer zoom={zoom} maxZoom={maxZoom} center={center} maxBounds={bounds} >
+    <Box
+      ref={container}
+      sx={{
+        display: 'flex',
+        flexBasis: '100%',
+        justifyContent: 'center',
+        'canvas.mapboxgl-canvas:focus': { outline: 'none' },
+      }}
+    >
+      <MapContainer zoom={zoom} maxZoom={maxZoom} center={center} maxBounds={bounds}>
         <Fill
           color={theme.rawColors.background}
           source={'https://storage.googleapis.com/drought-monitor/vector/ocean'}
@@ -118,7 +126,7 @@ const Map = ({ mobile }) => {
           to re-render. so the showCropLayer prop controls whether any crop layer is shown and the change in the 
           cropLayer prop's state controls the actual re-render between crop layers.
         */}
-        {showCropLayer != {} && cropLayer != "" && (
+        {showCropLayer != {} && cropLayer != '' && (
           <>
             <Fill
               key={`${cropLayer}_mask`}
@@ -138,16 +146,18 @@ const Map = ({ mobile }) => {
           </>
         )}
 
-        {showRegionPicker && new Date(time + 'T00:00:00') <= new Date(maxDate + 'T00:00:00') && !updatingData && (
-          <RegionPicker
-            color={theme.colors.primary}
-            backgroundColor={theme.rawColors.background}
-            fontFamily={theme.fonts.mono}
-            fontSize={'14px'}
-            minRadius={1}
-            maxRadius={1500}
-          />
-        )}
+        {showRegionPicker &&
+          new Date(time + 'T00:00:00') <= new Date(maxDate + 'T00:00:00') &&
+          !updatingData && (
+            <RegionPicker
+              color={theme.colors.primary}
+              backgroundColor={theme.rawColors.background}
+              fontFamily={theme.fonts.mono}
+              fontSize={'14px'}
+              minRadius={1}
+              maxRadius={1500}
+            />
+          )}
 
         {new Date(time + 'T00:00:00') <= new Date(maxDate + 'T00:00:00') && !updatingData && (
           <Raster
@@ -164,23 +174,18 @@ const Map = ({ mobile }) => {
           />
         )}
 
-        {showWarning && !updatingData && (
-          <TimeWarning mobile={mobile} />
-        )}
+        {showWarning && !updatingData && <TimeWarning mobile={mobile} />}
 
+        {!mobile && <Ruler />}
 
-        {!mobile && (<Ruler />)}
-
-        {!mobile && (<ZoomReset />)}
+        {!mobile && <ZoomReset />}
 
         <Router />
 
         <Loading />
-
       </MapContainer>
-
     </Box>
-  )
-}
+  );
+};
 
-export default Map
+export default Map;

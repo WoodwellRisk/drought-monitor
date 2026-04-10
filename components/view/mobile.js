@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { Box, Flex, Grid } from 'theme-ui'
-import { alpha } from '@theme-ui/color'
-import Map from '../map'
-import Layers from '../sidebar/layers'
+import { useState } from 'react';
+import { Box, Flex, Grid } from 'theme-ui';
+import { alpha } from '@theme-ui/color';
+import Map from '../map';
+import Layers from '../sidebar/layers';
 
-import { keyframes } from '@emotion/react'
+import { keyframes } from '@emotion/react';
 const fade = keyframes({
   from: {
     opacity: 0,
@@ -12,18 +12,18 @@ const fade = keyframes({
   to: {
     opacity: 1,
   },
-})
+});
 
 function Mobile({ expanded }) {
-  const [showSettings, setShowSettings] = useState(false)
+  const [showSettings, setShowSettings] = useState(false);
 
   const sx = {
-    'map': {
+    map: {
       display: 'flex',
       width: '100vw',
       height: '100vh',
     },
-    'about': {
+    about: {
       width: '100%',
       height: '100vh',
       animationDuration: '1.0s',
@@ -35,7 +35,7 @@ function Mobile({ expanded }) {
       pt: 6,
       mb: 9,
     },
-    'settings': {
+    settings: {
       position: 'fixed',
       width: '100vw',
       height: '250px',
@@ -55,7 +55,7 @@ function Mobile({ expanded }) {
       mb: '64px',
       overflowY: 'scroll',
     },
-    'footer': {
+    footer: {
       position: 'fixed',
       bottom: 0,
       width: '100vw',
@@ -70,7 +70,7 @@ function Mobile({ expanded }) {
       letterSpacing: 'allcaps',
       textTransform: 'uppercase',
     },
-    'block': {
+    block: {
       justifyContent: 'center',
       alignItems: 'center',
       height: '64px',
@@ -81,7 +81,7 @@ function Mobile({ expanded }) {
       borderRightWidth: '1px',
       cursor: 'pointer',
     },
-  }
+  };
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -92,7 +92,7 @@ function Mobile({ expanded }) {
       {showSettings && (
         <Box sx={sx['settings']}>
           <Layers mobile={true} />
-        </Box >
+        </Box>
       )}
 
       {/* This section defines the boxes at the bottom of the mobile view. */}
@@ -100,7 +100,7 @@ function Mobile({ expanded }) {
         <Grid columns={[2]} gap={[0]}>
           <Flex
             onClick={() => {
-              setShowSettings(false)
+              setShowSettings(false);
             }}
             sx={{
               ...sx.block,
@@ -112,7 +112,7 @@ function Mobile({ expanded }) {
 
           <Flex
             onClick={() => {
-              setShowSettings(true)
+              setShowSettings(true);
             }}
             sx={{
               ...sx.block,
@@ -124,7 +124,7 @@ function Mobile({ expanded }) {
         </Grid>
       </Box>
     </Box>
-  )
+  );
 }
 
-export default Mobile
+export default Mobile;
