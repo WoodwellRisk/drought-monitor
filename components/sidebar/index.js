@@ -1,4 +1,5 @@
 import { Box } from 'theme-ui';
+import { useBreakpointIndex } from '@theme-ui/match-media';
 import SidebarDivider from './sidebar-divider';
 
 import Layers from './layers';
@@ -6,11 +7,11 @@ import ExpandingSection from './expanding-section';
 import Overlays from './overlays';
 import Charts from './charts/index';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const Sidebar = () => {
-  const maxDate = useStore((state) => state.maxDate);
-  const time = useStore((state) => state.time);
+  const isWide = useBreakpointIndex() > 0;
+
   const showRegionPicker = useStore((state) => state.showRegionPicker);
   const setShowRegionPicker = useStore((state) => state.setShowRegionPicker);
   const showOverlays = useStore((state) => state.showOverlays);
@@ -18,32 +19,17 @@ const Sidebar = () => {
 
   const sx = {
     'sidebar-container': {
-      maxWidth: [0, '300px', '350px'],
-      height: '100%',
+      display: ['none', 'flex', 'flex'],
       flexBasis: '100%',
       flexDirection: 'column',
+      maxWidth: [0, '300px', '350px'],
+      height: '100%',
       borderStyle: 'solid',
       borderWidth: '0px',
       borderRightWidth: '1px',
       borderColor: 'muted',
       zIndex: 900,
       backgroundColor: 'background',
-      display: ['none', 'flex', 'flex'],
-    },
-    'click-section': {
-      mx: [3, 4, 5, 5],
-      pt: [1],
-      mt: ['12px'],
-      fontSize: [2, 2, 2, 3],
-      width: 'fit-content',
-      fontFamily: 'heading',
-      letterSpacing: 'smallcaps',
-      textTransform: 'uppercase',
-      cursor: 'pointer',
-      transition: '0.25s all',
-      '&:hover': {
-        color: 'secondary',
-      },
     },
     expander: {
       '&:hover > #charts-expander, &:hover > #overlays-expander': {
@@ -61,7 +47,10 @@ const Sidebar = () => {
 
   return (
     <Box sx={sx['sidebar-container']}>
-      <Box id="sidebar" sx={{ position: 'relative', flex: 1, overflowY: 'scroll' }}>
+      <Box
+        id="sidebar"
+        sx={{ position: 'relative', flex: 1, overflowY: 'scroll', overflowX: 'hidden' }}
+      >
         <Layers />
         <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
@@ -69,9 +58,8 @@ const Sidebar = () => {
           label="Charts"
           expanded={showRegionPicker}
           setExpanded={setShowRegionPicker}
-          disabled={new Date(time) > new Date(maxDate)}
         >
-          {showRegionPicker && new Date(time) <= new Date(maxDate) && (
+          {showRegionPicker && isWide && (
             <Box sx={{ ...sx.stats }}>
               <Charts />
             </Box>

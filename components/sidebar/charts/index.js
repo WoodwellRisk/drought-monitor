@@ -5,7 +5,7 @@ import BarChart from './bar-chart';
 import DensityPlot from './density-plot';
 import TimeSeries from './timeseries';
 
-import useStore from '../../store/index';
+import { useStore } from '../../store/index';
 import * as d3 from 'd3';
 
 const StatsDisplay = (props) => {

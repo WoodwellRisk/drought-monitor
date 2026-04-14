@@ -11,12 +11,11 @@ import {
   Ticks,
   TickLabels,
 } from '@carbonplan/charts';
-import { SidebarDivider } from '@carbonplan/layouts';
 import { useThemedColormap } from '@carbonplan/colormaps';
 import { Colorbar } from '@carbonplan/components';
 import Bar from './bar';
 
-import useStore from '../../store/index';
+import { useStore } from '../../store/index';
 import * as d3 from 'd3';
 
 const TimeBar = ({ data, time, colormap }) => {

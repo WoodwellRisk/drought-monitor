@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { usePathname } from 'next/navigation';
 import { useMapbox } from '@carbonplan/maps';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const Router = () => {
   const { map } = useMapbox();

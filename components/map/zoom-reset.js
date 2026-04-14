@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 import { useMapbox } from '@carbonplan/maps';
 import { Reset } from '@carbonplan/icons';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const ZoomReset = () => {
   const { map } = useMapbox();

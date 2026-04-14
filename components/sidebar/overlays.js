@@ -1,7 +1,7 @@
 import { Box, Flex } from 'theme-ui';
 import { Toggle } from '@carbonplan/components';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const sx = {
   'overlays-container': {
