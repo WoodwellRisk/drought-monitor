@@ -6,7 +6,7 @@ import Layers from '../sidebar/layers';
 import Content from '../sidebar/about/content';
 import MobileHeader from './mobile-header';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 import { keyframes } from '@emotion/react';
 const fade = keyframes({

@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Box, Text } from 'theme-ui';
+import { useBreakpointIndex } from '@theme-ui/match-media';
 import { SidebarDivider } from '@carbonplan/layouts';
 
 import SidebarHeader from './sidebar-header';
@@ -8,13 +8,12 @@ import Layers from './layers';
 import ExpandingSection from './expanding-section';
 import Overlays from './overlays';
 import Charts from './charts/index';
-import Footer from './footer';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const Sidebar = () => {
-  const maxDate = useStore((state) => state.maxDate);
-  const time = useStore((state) => state.time);
+  const isWide = useBreakpointIndex() > 0;
+
   const showRegionPicker = useStore((state) => state.showRegionPicker);
   const setShowRegionPicker = useStore((state) => state.setShowRegionPicker);
   const showAbout = useStore((state) => state.showAbout);
@@ -26,20 +25,19 @@ const Sidebar = () => {
 
   const sx = {
     'sidebar-container': {
-      maxWidth: [0, '300px', '350px'],
-      height: '100%',
+      display: ['none', 'flex', 'flex'],
       flexBasis: '100%',
       flexDirection: 'column',
+      maxWidth: [0, '300px', '350px'],
+      height: '100%',
       borderStyle: 'solid',
       borderWidth: '0px',
       borderRightWidth: '1px',
       borderColor: 'muted',
-      zIndex: 900,
-      backgroundColor: 'background',
-      display: ['none', 'flex', 'flex'],
       zIndex: 100,
+      backgroundColor: 'background',
     },
-    'click-section': {
+    'about-section': {
       mx: [3, 4, 5, 5],
       pt: [1],
       mt: ['12px'],
@@ -81,13 +79,16 @@ const Sidebar = () => {
     <Box sx={sx['sidebar-container']}>
       <SidebarHeader showMenu={showMenu} toggleMenu={() => setShowMenu(!showMenu)} />
 
-      <Box id="sidebar" sx={{ position: 'relative', flex: 1, overflowY: 'scroll' }}>
+      <Box
+        id="sidebar"
+        sx={{ position: 'relative', flex: 1, overflowY: 'scroll', overflowX: 'hidden' }}
+      >
         <Menu visible={showMenu} />
 
-        <Box onClick={() => setShowAbout(!showAbout)} sx={sx['click-section']}>
+        <Box onClick={() => setShowAbout(!showAbout)} sx={sx['about-section']}>
           How to use this site <Text sx={sx.arrow}>→</Text>
         </Box>
-        <SidebarDivider sx={{ width: '100%', my: 4 }} />
+        <SidebarDivider sx={{ width: '100%', my: 3 }} />
 
         <Layers />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
@@ -96,9 +97,8 @@ const Sidebar = () => {
           label="Charts"
           expanded={showRegionPicker}
           setExpanded={setShowRegionPicker}
-          disabled={new Date(time) > new Date(maxDate)}
         >
-          {showRegionPicker && new Date(time) <= new Date(maxDate) && (
+          {showRegionPicker && isWide && (
             <Box sx={{ ...sx.stats }}>
               <Charts />
             </Box>
@@ -110,8 +110,6 @@ const Sidebar = () => {
           <Overlays />
         </ExpandingSection>
         <SidebarDivider sx={{ width: '100%', mt: 4 }} />
-
-        <Footer />
       </Box>
     </Box>
   );

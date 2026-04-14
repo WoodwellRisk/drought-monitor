@@ -2,7 +2,7 @@ import { Box, IconButton } from 'theme-ui';
 import { useRecenterRegion } from '@carbonplan/maps';
 import { XCircle } from '@carbonplan/icons';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const RegionControls = () => {
   const { recenterRegion } = useRecenterRegion();

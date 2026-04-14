@@ -3,7 +3,7 @@ import { Box, Container, Flex, IconButton, Link, Text } from 'theme-ui';
 import { Column, Dimmer, Menu, Row } from '@carbonplan/components';
 import { QuestionCircle, X } from '@carbonplan/icons';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const sx = {
   link: (current, label, first = false) => {

@@ -3,7 +3,7 @@ import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/cha
 import { Area, Line } from '@carbonplan/charts';
 import Bar from './bar';
 
-import useStore from '../../store/index';
+import { useStore } from '../../store/index';
 import * as d3 from 'd3';
 
 const DensityPlot = ({ data, variable, time, colormap }) => {

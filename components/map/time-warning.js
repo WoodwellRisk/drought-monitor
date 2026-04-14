@@ -1,7 +1,7 @@
 import { Box, IconButton, useThemeUI } from 'theme-ui';
 import { X } from '@carbonplan/icons';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const TimeWarning = ({ mobile }) => {
   const { colorMode } = useThemeUI();

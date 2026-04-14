@@ -16,3 +16,7 @@
   /* src: url('https://storage.googleapis.com/drought-monitor/media/fonts/GintoNormal-Regular.ttf'); */
   src: url('../assets/GintoNormal-Bold.ttf');
 }
+
+select + svg {
+  display: none;
+}

@@ -1,7 +1,7 @@
 import { Box, Text } from 'theme-ui';
 import Content from './content.js';
 
-import useStore from '../../store/index';
+import { useStore } from '../../store/index';
 
 function About({ mobile }) {
   const showAbout = useStore((state) => state.showAbout);

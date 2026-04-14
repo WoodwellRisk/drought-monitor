@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef } from 'react';
 import { Box, useThemeUI } from 'theme-ui';
 import { useThemedColormap } from '@carbonplan/colormaps';
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps';
@@ -6,15 +6,14 @@ import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonpl
 import Loading from '../view/loading';
 import Ruler from './ruler';
 import ZoomReset from './zoom-reset';
-import TimeWarning from './time-warning';
 import Router from './router';
 
-import useStore from '../store/index';
+import { useStore } from '../store/index';
 
 const Map = ({ mobile }) => {
   const { theme } = useThemeUI();
   const container = useRef(null);
-  // const [map, setMap] = useState(null)
+
   const zoom = useStore((state) => state.zoom);
   const maxZoom = useStore((state) => state.maxZoom);
   const center = useStore((state) => state.center);
@@ -22,7 +21,7 @@ const Map = ({ mobile }) => {
 
   const variable = useStore((state) => state.variable);
   const window = useStore((state) => state.window);
-  const maxDate = useStore((state) => state.maxDate);
+  const maxHistoricalDate = useStore((state) => state.maxHistoricalDate);
   const time = useStore((state) => state.time);
   const opacity = useStore((state) => state.opacity);
   const clim = useStore((state) => state.clim);
@@ -33,12 +32,10 @@ const Map = ({ mobile }) => {
   const setRegionData = useStore((state) => state.setRegionData);
   const setRegionDataLoading = useStore((state) => state.setRegionDataLoading);
   const display = useStore((state) => state.display);
-  const updatingData = useStore((state) => state.updatingData);
   const cropLayer = useStore((state) => state.cropLayer);
   const showCropLayer = useStore((state) => state.showCropLayer);
   const showCountriesOutline = useStore((state) => state.showCountriesOutline);
   const showStatesOutline = useStore((state) => state.showStatesOutline);
-  const showWarning = useStore((state) => state.showWarning);
 
   const sx = {
     label: {
@@ -141,35 +138,29 @@ const Map = ({ mobile }) => {
           </>
         )}
 
-        {showRegionPicker &&
-          new Date(time + 'T00:00:00') <= new Date(maxDate + 'T00:00:00') &&
-          !updatingData && (
-            <RegionPicker
-              color={theme.colors.primary}
-              backgroundColor={theme.rawColors.background}
-              fontFamily={theme.fonts.mono}
-              fontSize={'14px'}
-              minRadius={1}
-              maxRadius={1500}
-            />
-          )}
-
-        {new Date(time + 'T00:00:00') <= new Date(maxDate + 'T00:00:00') && !updatingData && (
-          <Raster
-            key={`${variable}-${window}`}
-            colormap={colormap}
-            clim={clim}
-            display={display}
-            opacity={opacity}
-            mode={'texture'}
-            source={`https://storage.googleapis.com/drought-monitor/zarr/viz/h${window}-${maxDate}.zarr`}
-            variable={variable}
-            selector={{ time }}
-            regionOptions={{ setData: handleRegionData, selector: {} }}
+        {showRegionPicker && (
+          <RegionPicker
+            color={theme.colors.primary}
+            backgroundColor={theme.rawColors.background}
+            fontFamily={theme.fonts.mono}
+            fontSize={'14px'}
+            minRadius={1}
+            maxRadius={1500}
           />
         )}
 
-        {showWarning && !updatingData && <TimeWarning mobile={mobile} />}
+        <Raster
+          key={`${variable}-${window}`}
+          colormap={colormap}
+          clim={clim}
+          display={display}
+          opacity={opacity}
+          mode={'texture'}
+          source={`https://storage.googleapis.com/drought-monitor/zarr/viz/h${window}-${maxHistoricalDate}.zarr`}
+          variable={variable}
+          selector={{ time }}
+          regionOptions={{ setData: handleRegionData, selector: {} }}
+        />
 
         {!mobile && <Ruler />}
 
