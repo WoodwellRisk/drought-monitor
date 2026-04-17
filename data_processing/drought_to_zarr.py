@@ -1,6 +1,7 @@
 import os
+import subprocess
 import timeit
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 import gcsfs
 import numpy as np
@@ -65,7 +66,7 @@ def open_files_in_parallel(files: list) -> list:
     Returns:
         ds_list(list): a list of opened Xarray Datasets
     """
-    with ProcessPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         # map the function to all files
         ds_list = list(executor.map(open_historical_dataset, files))
 
@@ -139,8 +140,7 @@ def drought_pipeline():
     # environment variables comes from .github/workflows/generate-wb-zarr.yml
     BUCKET = os.getenv('BUCKET_NAME')
 
-    print('Generating input file list.')
-    print()
+    subprocess.run(['echo', 'Generating input file list.'])
     # create file list
     dates = pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')
     h3_files = sorted(
@@ -158,30 +158,29 @@ def drought_pipeline():
     f3_file = [file for file in forecast_files if 'w3' in file][0]
     f12_file = [file for file in forecast_files if 'w12' in file][0]
 
-    print('Opening data.')
+    subprocess.run(['echo', 'Opening NetCDF files.'])
     # open historical data for both integration windows
     # parallelize data reads
     # note: if we tried to use xr.open_mfdataset(...parallel=True),
     # we would not be able to extract the time from the filename for each NetCDF
-    print('    Opening H3 data...')
+    subprocess.run(['echo', '    Opening H3 data...'])
     ds_list = open_files_in_parallel(h3_files)
     h3 = xr.concat(ds_list, dim='time')
     h3 = process_dataset(h3)
 
-    print('    Opening H12 data...')
+    subprocess.run(['echo', '    Opening H12 data...'])
     ds_list = open_files_in_parallel(h12_files)
     h12 = xr.concat(ds_list, dim='time')
     h12 = process_dataset(h12)
 
     # open forecast data for both integration windows
-    print('    Opening F3 data...')
+    subprocess.run(['echo', '    Opening F3 data...'])
     f3 = open_forecast_dataset(f3_file)
     f3 = process_dataset(f3)
     f3 = f3.rename({'L': 'time', '50%': 'perc'})
     f3 = f3[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
-    print('    Opening F12 data...')
-    print()
+    subprocess.run(['echo', '    Opening F12 data...'])
     f12 = open_forecast_dataset(f12_file)
     f12 = process_dataset(f12)
     f12 = f12.rename({'L': 'time', '50%': 'perc'})
@@ -194,19 +193,19 @@ def drought_pipeline():
         'f12': f12,
     }
 
-    print('Saving Zarr stores used for analysis.')
+    subprocess.run(['echo', 'Saving Zarr stores used for analysis.'])
     # save the data as zarr stores that we will use for analysis
     for dataset in ['h3', 'h12', 'f3', 'f12']:
-        print(f'    Saving {dataset.upper()} data...')
+        subprocess.run(['echo', f'    Saving {dataset.upper()} data...'])
         dataset_dict[dataset].to_zarr(
             f'gs://{BUCKET}/zarr/analysis/{dataset}-{year_ic}-{month_ic}-01.zarr',
             consolidated=True,
             zarr_format=2,
             mode='w',
         )
-    print()
+    subprocess.run(['echo', ''])
 
-    print('Saving Zarr stores used for visualization.')
+    subprocess.run(['echo', 'Saving Zarr stores used for visualization.'])
     # next, save the data as zarr stores that we will use for visualization
     # first, we need to save their time coordinates as strings
     h3['time'] = [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h3.time.values]
@@ -228,20 +227,20 @@ def drought_pipeline():
 
     # create pyramids for each dataset, then save the pyramid to zarr
     for dataset in ['h3', 'h12', 'f3', 'f12']:
-        print(f'    Saving {dataset.upper()} data...')
+        subprocess.run(['echo', f'    Saving {dataset.upper()} data...'])
         pyramid_to_zarr(
             dataset_dict[dataset],
             levels,
             f'gs://{BUCKET}/zarr/viz/{dataset}-{year_ic}-{month_ic}-01.zarr',
         )
-    print()
+    subprocess.run(['echo', ''])
 
-    print('Done!')
-    print()
+    subprocess.run(['echo', 'Done!'])
+    subprocess.run(['echo', ''])
 
     # ---------------------------------------------------------------------------
     end = timeit.default_timer()
-    print(f"Time to complete: {(end - start) / 3600 :.5f} hours")
+    subprocess.run(['echo', f'Time to complete: {(end - start) / 3600 :.5f} hours.'])
 
 
 if __name__ == '__main__':

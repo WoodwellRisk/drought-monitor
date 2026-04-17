@@ -1,6 +1,6 @@
 import os
 import timeit
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pandas as pd
@@ -51,7 +51,7 @@ def open_files_in_parallel(files: list) -> list:
     Returns:
         ds_list(list): a list of opened Xarray Datasets
     """
-    with ProcessPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         # map the function to all files
         ds_list = list(executor.map(open_historical_dataset, files))
 

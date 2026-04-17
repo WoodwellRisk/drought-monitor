@@ -3,10 +3,10 @@ name: Generate monthly Zarr data for drought monitor website - gcsfuse
 on:
   workflow_dispatch:
 
-  push:
-    branches: [main]
-    paths:
-    - 'data_processing/drought_to_zarr_gcsfuse.py'
+  # push:
+  #   branches: [main]
+  #   paths:
+  #   - 'data_processing/drought_to_zarr_gcsfuse.py'
 
 # permissions needed for the google‑github‑actions steps
 permissions:

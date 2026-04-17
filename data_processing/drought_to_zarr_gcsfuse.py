@@ -1,7 +1,7 @@
 import os
 import subprocess
 import timeit
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import gcsfs
@@ -66,7 +66,7 @@ def open_files_in_parallel(files: list) -> list:
     Returns:
         ds_list(list): a list of opened Xarray Datasets
     """
-    with ProcessPoolExecutor() as executor:
+    with ThreadPoolExecutor() as executor:
         # map the function to all files
         ds_list = list(executor.map(open_historical_dataset, files))
 
