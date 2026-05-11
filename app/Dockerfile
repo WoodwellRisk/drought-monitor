@@ -14,7 +14,7 @@ ENV HOST=0.0.0.0
 EXPOSE 8080
 
 # install curl so that we can install google cloud sdk
-RUN apt-get -y update; apt-get -y install curl
+RUN apt-get -y update; apt-get -y install curl git
 
 # downloads the gCloud package
 # https://stackoverflow.com/questions/70902923/unable-to-start-a-cloud-run-container-on-m1-macbook/71072262#71072262

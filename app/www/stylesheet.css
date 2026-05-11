@@ -125,7 +125,7 @@ body {
     padding: 0.5rem 0.25rem;
 }
 
-#process-data-container {
+#clear-selected-states-container, #process-data-container {
     display: flex;
     width: 100%;
     justify-content: center;
@@ -179,10 +179,17 @@ body {
     background-color: var(--black)
 }
 
-#process_data_button {
+#clear_states_button, #process_data_button {
     width: 100%;
     outline: 1px solid var(--black);
     padding: 0.5rem 0rem;
+}
+
+#clear_states_button {
+    margin-bottom: 30px;
+}
+
+#process_data_button {
     margin-bottom: 40px;
 }
 
@@ -302,6 +309,41 @@ button:focus {
     margin-bottom: 20px;
     box-shadow: none !important;
     outline: 0;
+}
+
+.selectize-control.single,
+.selectize-input,
+.selectize-dropdown,
+.selectize-control.single.input-active .selectize-input {
+    box-shadow: none !important;
+}
+
+/* div.multi.selectize-dropdown.shiny-input-select.shiny-bound-input.plugin-remove_button {
+    display: none !important;
+    height: 135px !important;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border-color: #8d959e;
+} */
+
+#state_checkbox {
+    height: 140px;
+    overflow-y: auto;
+    background-color: #ffffff;
+    border: 1px solid #8d959e;
+    margin-bottom: 20px;
+}
+
+div.shiny-options-group {
+    margin: 6px 12px !important;
+}
+
+div.shiny-options-group > div.checkbox {
+    line-height: 1.5;
+}
+
+#display_selected_states {
+    margin-bottom: 20px;
 }
 
 .shiny-input-container {

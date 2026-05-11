@@ -36,7 +36,7 @@ updating = False
 # year = today.year
 # month = today.month
 year = 2026
-month = 4
+month = 5
 
 if month == 1:
     month = 12
@@ -75,7 +75,7 @@ h3 = (
     None
     if updating
     else xr.open_dataset(
-        Path(__file__).parent / f'mnt/data/zarr/analysis/h3-{year_ic}-{month_ic}-01.zarr',
+        Path(__file__).parent / f'mnt/data/zarr/analysis/wb-h3-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
         decode_coords="all",
@@ -86,7 +86,7 @@ h12 = (
     None
     if updating
     else xr.open_dataset(
-        Path(__file__).parent / f'mnt/data/zarr/analysis/h12-{year_ic}-{month_ic}-01.zarr',
+        Path(__file__).parent / f'mnt/data/zarr/analysis/wb-h12-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
         decode_coords="all",
@@ -97,7 +97,7 @@ f3 = (
     None
     if updating
     else xr.open_dataset(
-        Path(__file__).parent / f'mnt/data/zarr/analysis/f3-{year_ic}-{month_ic}-01.zarr',
+        Path(__file__).parent / f'mnt/data/zarr/analysis/wb-f3-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
         decode_coords="all",
@@ -108,7 +108,7 @@ f12 = (
     None
     if updating
     else xr.open_dataset(
-        Path(__file__).parent / f'mnt/data/zarr/analysis/f12-{year_ic}-{month_ic}-01.zarr',
+        Path(__file__).parent / f'mnt/data/zarr/analysis/wb-f12-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
         decode_coords="all",

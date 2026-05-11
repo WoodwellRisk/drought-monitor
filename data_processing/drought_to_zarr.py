@@ -126,7 +126,7 @@ def drought_pipeline():
     # year = today.year
     # month = today.month
     year = 2026
-    month = 4
+    month = 5
 
     if month == 1:
         month = 12
@@ -198,7 +198,7 @@ def drought_pipeline():
     for dataset in ['h3', 'h12', 'f3', 'f12']:
         subprocess.run(['echo', f'    Saving {dataset.upper()} data...'])
         dataset_dict[dataset].to_zarr(
-            f'gs://{BUCKET}/zarr/analysis/{dataset}-{year_ic}-{month_ic}-01.zarr',
+            f'gs://{BUCKET}/zarr/analysis/wb-{dataset}-{year_ic}-{month_ic}-01.zarr',
             consolidated=True,
             zarr_format=2,
             mode='w',
@@ -231,7 +231,7 @@ def drought_pipeline():
         pyramid_to_zarr(
             dataset_dict[dataset],
             levels,
-            f'gs://{BUCKET}/zarr/viz/{dataset}-{year_ic}-{month_ic}-01.zarr',
+            f'gs://{BUCKET}/zarr/viz/wb-{dataset}-{year_ic}-{month_ic}-01.zarr',
         )
     subprocess.run(['echo', ''])
 
