@@ -1,6 +1,8 @@
 name: Deploy Shiny Python app to Cloud Run
 
 on:
+  workflow_dispatch:
+
   push:
     branches: [main]
     paths:

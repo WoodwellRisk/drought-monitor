@@ -78,7 +78,7 @@ h3 = (
         Path(__file__).parent / f'mnt/data/zarr/analysis/wb-h3-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
-        decode_coords="all",
+        decode_coords='all',
         chunks=None,
     ).compute()
 )
@@ -89,7 +89,7 @@ h12 = (
         Path(__file__).parent / f'mnt/data/zarr/analysis/wb-h12-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
-        decode_coords="all",
+        decode_coords='all',
         chunks=None,
     ).compute()
 )
@@ -100,7 +100,7 @@ f3 = (
         Path(__file__).parent / f'mnt/data/zarr/analysis/wb-f3-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
-        decode_coords="all",
+        decode_coords='all',
         chunks=None,
     ).compute()
 )
@@ -111,7 +111,7 @@ f12 = (
         Path(__file__).parent / f'mnt/data/zarr/analysis/wb-f12-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
-        decode_coords="all",
+        decode_coords='all',
         chunks=None,
     ).compute()
 )
@@ -129,6 +129,7 @@ countries = (
     if updating
     else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
 )
+
 states = (
     gpd.GeoDataFrame(columns=['name', 'country', 'geometry'])
     if updating
@@ -234,11 +235,10 @@ wheat_production = (
 )
 
 # point the app to the static files directory
-static_dir = Path(__file__).parent / "www"
+static_dir = Path(__file__).parent / 'www'
 # get the font based on the path
 ginto = font_manager.FontProperties(fname='./www/GintoNormal-Regular.ttf')
 ginto_medium = font_manager.FontProperties(fname='./www/GintoNormal-Medium.ttf')
-print(ginto_medium)
 
 app_ui = ui.page_fluid(
     # css
@@ -299,14 +299,17 @@ app_ui = ui.page_fluid(
                             {'class': 'select-label-container'},
                             ui.p({'class': 'select-label'}, 'Select a country:'),
                         ),
-                        ui.input_text("country_filter", label='', placeholder='Filter by name'),
+                        ui.input_text('country_filter', label='', placeholder='Filter by name'),
                         # https://shiny.posit.co/py/api/core/ui.update_select.html
                         ui.input_select('country_select', '', [], size=5),
                         ui.div(
                             {'class': 'select-label-container'},
                             ui.p({'class': 'select-label'}, 'Select a state:'),
                         ),
+                        # ui.input_text('state_filter', label='', placeholder='Filter by name'),
                         ui.input_select('state_select', '', [], size=5),
+                        # ui.input_checkbox_group('state_checkbox', '', {}),
+                        # ui.output_ui('show_state_output'),
                         ui.panel_conditional(
                             'input.window_select == 3',
                             ui.div(
@@ -318,14 +321,14 @@ app_ui = ui.page_fluid(
                         ),
                         ui.div(
                             {'id': 'process-data-container'},
-                            ui.input_task_button("process_data_button", label="Run"),
+                            ui.input_task_button('process_data_button', label='Run'),
                         ),
                     ),
                 ),
             ),
             # figures and tables
             ui.div(
-                {"id": "main-container"},
+                {'id': 'main-container'},
                 ui.div(
                     {'id': 'main'},
                     ui.navset_tab(
@@ -349,14 +352,14 @@ app_ui = ui.page_fluid(
                                     'id': 'download-timeseries-container',
                                     'class': 'download-container',
                                 },
-                                ui.download_link("download_timeseries_link", 'Download timeseries'),
+                                ui.download_link('download_timeseries_link', 'Download timeseries'),
                             ),
                             ui.div(
                                 {'id': 'timeseries-container'},
                                 ui.div(
                                     {'id': 'timeseries-toggle-container'},
-                                    ui.input_checkbox("historical_checkbox", "Historical", True),
-                                    ui.input_checkbox("forecast_checkbox", "Forecast", True),
+                                    ui.input_checkbox('historical_checkbox', 'Historical', True),
+                                    ui.input_checkbox('forecast_checkbox', 'Forecast', True),
                                 ),
                                 ui.card(
                                     {'id': 'timeseries-inner-container'},
@@ -366,11 +369,11 @@ app_ui = ui.page_fluid(
                             ui.output_ui('show_time_slider'),
                             ui.div(
                                 {'id': 'download-csv-container', 'class': 'download-container'},
-                                ui.download_link("download_csv_link", 'Download CSV'),
+                                ui.download_link('download_csv_link', 'Download CSV'),
                             ),
                             ui.div(
                                 {'id': 'timeseries-table-container'},
-                                ui.output_data_frame("timeseries_table"),
+                                ui.output_data_frame('timeseries_table'),
                             ),
                             ui.busy_indicators.options(),
                         ),
@@ -387,12 +390,12 @@ app_ui = ui.page_fluid(
                 ),
             ),
             ui.panel_conditional(
-                "input.about_button > input.close_about_button",
+                'input.about_button > input.close_about_button',
                 ui.div(
                     {'id': 'about-inner-container'},
                     ui.div(
                         {'id': 'about-header'},
-                        ui.input_action_button("close_about_button", "X"),
+                        ui.input_action_button('close_about_button', 'X'),
                     ),
                     ui.div(
                         {'id': 'about-body'},
@@ -438,7 +441,21 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     countries_list = sorted(countries.name.values)
     country_options = reactive.value(countries_list)
+
+    # states_dict = states.groupby('country')['name'].apply(list).to_dict()
+    # states_list keeps track of all states within a given country so that
+    # we can reset state_options when filtering
+    states_list = reactive.value([])
+
+    # state_options are the options we show to the user at any given time
     state_options = reactive.value([])
+
+    # selected_states is meant to keep track of a list of selected states,
+    # even when filtering text changes
+    selected_states = reactive.value([])
+
+    # flag to prevent erasing selected_states when doing a programmatic update
+    # updating_checkbox_options = reactive.Value(False)
 
     crop_list = [
         'None',
@@ -459,9 +476,10 @@ def server(input: Inputs, output: Outputs, session: Session):
     country_name = reactive.value('')
     state_name = reactive.value('')
     crop_name = reactive.value('')
-    filter_text = reactive.value('')
+    country_filter_text = reactive.value('')
+    # state_filter_text = reactive.value('')
     bounds = reactive.value([])
-    bbox = reactive.value([])
+    bounding_box = reactive.value([])
 
     slider_date = reactive.value(min_slider_date)
 
@@ -512,27 +530,29 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @reactive.effect
     @reactive.event(input.about_button)
+    # def about_button_click():
     def action_button_click():
-        ui.update_action_button("about_button", disabled=True)
+        ui.update_action_button('about_button', disabled=True)
 
     @reactive.effect
     @reactive.event(input.close_about_button)
+    # def about_button_close_click():
     def action_button_close_click():
-        ui.update_action_button("about_button", disabled=False)
+        ui.update_action_button('about_button', disabled=False)
 
     @reactive.effect
     @reactive.event(input.country_filter)
-    def update_filter_text():
-        filter_text.set(input.country_filter())
+    def update_country_filter_text():
+        country_filter_text.set(input.country_filter())
 
     @render.text
-    def country_filter_text():
-        return filter_text()
+    def new_country_filter_text():
+        return country_filter_text()
 
     @reactive.effect
-    @reactive.event(filter_text)
+    @reactive.event(country_filter_text)
     def update_country_list():
-        query = filter_text()
+        query = country_filter_text()
         country_options.set(
             countries_list
             if query == ''
@@ -565,18 +585,21 @@ def server(input: Inputs, output: Outputs, session: Session):
             return
 
         df = states.query(" country == @cname ")
-        states_list = sorted(df.name.values.tolist())
+        slist = sorted(df.name.values.tolist())
+        # slist = states_dict[cname]
         # some countries have no administrative states / regions
-        if len(states_list) == 0:
+        if len(slist) == 0:
             new_options = ['All']
         else:
             if cname == 'USA':
-                states_list = [state for state in states_list if state != 'CONUS']
-                new_options = ['All', 'CONUS'] + states_list
+                slist = [state for state in slist if state != 'CONUS']
+                new_options = ['All', 'CONUS'] + slist
             else:
-                new_options = ['All'] + states_list
+                new_options = ['All'] + slist
 
         state_options.set(new_options)
+        states_list.set(new_options)
+        selected_states.set([])
 
     @reactive.effect
     @reactive.event(state_options)
@@ -611,7 +634,115 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         xmin, ymin, xmax, ymax = new_bounds
         new_bbox = create_bbox_from_coords(xmin, xmax, ymin, ymax)
-        bbox.set(new_bbox)
+        bounding_box.set(new_bbox)
+
+    # @reactive.effect
+    # @reactive.event(input.state_filter)
+    # def update_state_filter_text():
+    #     state_filter_text.set(input.state_filter())
+
+    # @render.text
+    # def new_state_filter_text():
+    #     return state_filter_text()
+
+    # @reactive.effect
+    # @reactive.event(state_filter_text)
+    # def update_country_list():
+    #     slist = states_list()
+    #     query = state_filter_text()
+
+    #     state_options.set(
+    #         slist
+    #         if query == ''
+    #         else [value for value in slist if query.lower() in value.lower()]
+    #     )
+
+    # @reactive.effect
+    # @reactive.event(input.state_checkbox)
+    # def update_selected_states():
+    #     if updating_checkbox_options():
+    #         return
+
+    #     currently_checked = list(input.state_checkbox()) or []
+    #     previously_selected = selected_states()
+    #     currently_visible = state_options()
+
+    #     newly_added = [s for s in currently_checked if s not in previously_selected]
+    #     newly_removed = [s for s in previously_selected if s not in currently_checked]
+
+    #     # only apply newly_added if the state is visible (user actually clicked it)
+    #     newly_added = [s for s in newly_added if s in currently_visible]
+
+    #     # only apply newly_removed if the state is still visible
+    #     # if it disappeared from view, don't remove it from our persistent list
+    #     newly_removed = [s for s in newly_removed if s in currently_visible]
+
+    #     updated_selection = previously_selected + newly_added
+    #     updated_selection = [s for s in updated_selection if s not in newly_removed]
+
+    #     # a user should not be able to select either 'All' or 'CONUS', as these as shortcuts for multiple states
+    #     if 'All' in updated_selection and len(updated_selection) > 1:
+    #         updated_selection = [s for s in updated_selection if s != 'All']
+    #         updating_checkbox_options.set(True)
+    #         ui.update_checkbox_group('state_checkbox', selected=updated_selection)
+    #         updating_checkbox_options.set(False)
+
+    #     # Handle 'CONUS' - if selected with other states, remove 'CONUS'
+    #     elif 'CONUS' in updated_selection and len(updated_selection) > 1:
+    #         updated_selection = [s for s in updated_selection if s != 'CONUS']
+    #         updating_checkbox_options.set(True)
+    #         ui.update_checkbox_group('state_checkbox', selected=updated_selection)
+    #         updating_checkbox_options.set(False)
+
+    #     selected_states.set(sorted(updated_selection))
+
+    # @reactive.effect
+    # @reactive.event(state_options)
+    # def update_state_checkbox():
+    #     new_options = state_options()
+    #     all_selected = selected_states()
+    #     visible_selected = [s for s in all_selected if s in new_options]
+
+    #     updating_checkbox_options.set(True)
+    #     ui.update_checkbox_group('state_checkbox', choices=new_options, selected=visible_selected)
+    #     updating_checkbox_options.set(False)
+
+    # @reactive.effect
+    # @reactive.event(state_options)
+    # def update_state_select_options():
+    #     new_options = state_options()
+    #     current_selected = selected_states() or []
+    #     ui.update_select('state_select', label=None, choices=new_options, selected=current_selected)
+
+    # @render.text
+    # def display_selected_states():
+    #     snames = selected_states()
+    #     return '' if snames is None else ', '.join(snames)
+
+    # @render.ui
+    # def show_state_output():
+    #     if not updating:
+    #         if len(selected_states()) >= 1:
+    #             return ui.TagList(
+    #                 ui.div(
+    #                     ui.p({'class': 'select-label'}, 'States selected:'),
+    #                 ),
+    #                 ui.output_text('display_selected_states'),
+    #                 ui.div(
+    #                     {'id': 'clear-selected-states-container'},
+    #                     ui.input_action_button('clear_states_button', label='Clear states'),
+    #                 ),
+    #             )
+    #         else:
+    #             return None
+
+    # @reactive.effect
+    # @reactive.event(input.clear_states_button)
+    # def clear_states_button_click():
+    #     updating_checkbox_options.set(True)
+    #     ui.update_checkbox_group('state_checkbox', selected=[])
+    #     selected_states.set([])
+    #     updating_checkbox_options.set(False)
 
     @reactive.effect
     @reactive.event(crop_options)
@@ -742,7 +873,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             historical = h12
             forecast = f12
         else:
-            raise ValueError("The integration window should be either 3 or 12 months.")
+            raise ValueError('The integration window should be either 3 or 12 months.')
 
         # on app start or page reload, these variables will be empty
         if cname == '' or sname == '' or crop == '' or historical is None or forecast is None:
@@ -922,13 +1053,13 @@ def server(input: Inputs, output: Outputs, session: Session):
             show_forecast is False and show_historical is False
         ):
             # df = pd.DataFrame({
-            #     'country': [], 'state': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
+            #     'country': [], 'states': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
             #     '5%': [], '20%': [], '80%': [], '95%': [],
             # })
             df = pd.DataFrame(
                 {
                     'country': [],
-                    'state': [],
+                    'states': [],
                     'type': [],
                     'crop': [],
                     'window': [],
@@ -955,7 +1086,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # df.columns = ['time', 'percentile', 'agreement']
                 df.columns = ['time', 'percentile']
                 df['country'] = cname
-                df['state'] = sname
+                df['states'] = sname
                 df['crop'] = crop
                 df['type'] = 'historical'
                 df['window'] = int(window_size)
@@ -969,7 +1100,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                     df[
                         [
                             'country',
-                            'state',
+                            'states',
                             'crop',
                             'type',
                             'window',
@@ -1001,17 +1132,17 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # df.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
                 df.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df['country'] = cname
-                df['state'] = sname
+                df['states'] = sname
                 df['crop'] = crop
                 df['type'] = 'forecast'
                 df['window'] = int(window_size)
 
-                # df = df[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
+                # df = df[['country', 'states', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
                 df = (
                     df[
                         [
                             'country',
-                            'state',
+                            'states',
                             'crop',
                             'type',
                             'window',
@@ -1041,7 +1172,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # df_historical.columns = ['time', 'percentile', 'agreement']
                 df_historical.columns = ['time', 'percentile']
                 df_historical['country'] = cname
-                df_historical['state'] = sname
+                df_historical['states'] = sname
                 df_historical['crop'] = crop
                 df_historical['type'] = 'historical'
                 df_historical['window'] = int(window_size)
@@ -1053,7 +1184,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_historical = df_historical[
                     [
                         'country',
-                        'state',
+                        'states',
                         'crop',
                         'type',
                         'window',
@@ -1079,7 +1210,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # df_forecast.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast['country'] = cname
-                df_forecast['state'] = sname
+                df_forecast['states'] = sname
                 df_forecast['crop'] = crop
                 df_forecast['type'] = 'forecast'
                 df_forecast['window'] = int(window_size)
@@ -1087,7 +1218,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_forecast = df_forecast[
                     [
                         'country',
-                        'state',
+                        'states',
                         'crop',
                         'type',
                         'window',
@@ -1118,26 +1249,26 @@ def server(input: Inputs, output: Outputs, session: Session):
         df = table_to_save()
 
         if df.empty:
-            ui.remove_ui(selector="#download_timeseries_link")
-            ui.remove_ui(selector="#download_csv_link")
+            ui.remove_ui(selector='#download_timeseries_link')
+            ui.remove_ui(selector='#download_csv_link')
             add_download_links.set(True)
         else:
             if add_download_links():
                 ui.insert_ui(
-                    ui.download_link("download_timeseries_link", 'Download timeseries'),
-                    selector="#download-timeseries-container",
-                    where="beforeEnd",
+                    ui.download_link('download_timeseries_link', 'Download timeseries'),
+                    selector='#download-timeseries-container',
+                    where='beforeEnd',
                 ),
                 ui.insert_ui(
-                    ui.download_link("download_csv_link", 'Download CSV'),
-                    selector="#download-csv-container",
-                    where="beforeEnd",
+                    ui.download_link('download_csv_link', 'Download CSV'),
+                    selector='#download-csv-container',
+                    where='beforeEnd',
                 ),
                 add_download_links.set(False)
 
     @render.plot
     @reactive.event(table_to_save, slider_date)
-    def timeseries(alt="A graph showing a timeseries of historical and forecasted water balance"):
+    def timeseries(alt='A graph showing a timeseries of historical and forecasted water balance'):
         # later if we want to make it so that we can dynamically change the timeframe:
         # https://plotly.com/python/range-slider/
         historical = historical_wb()
@@ -1352,27 +1483,33 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         window_label = f', {window_size}-month integration window'
 
-        # title = f"{historical_and_forecast_label} water balance percentile for {sname_label}{cname_label}{crop_label}"
-        title = f"{sname_label}{cname_label}{crop_label}{window_label}"
+        # title = f'{historical_and_forecast_label} water balance percentile for {sname_label}{cname_label}{crop_label}'
+        title = f'{sname_label}{cname_label}{crop_label}{window_label}'
         ax.set_title(title, fontproperties=ginto_medium)
 
         fig.subplots_adjust(top=0.9)
 
         with io.BytesIO() as buffer:
-            plt.savefig(buffer, format="png", dpi=300)
+            plt.savefig(buffer, format='png', dpi=300)
             yield buffer.getvalue()
 
     @render.ui
     @reactive.event(unweighted_forecast_wb)
-    def forecast_map(alt="a map showing the borders of a country of interest"):
+    def forecast_map(alt='a map showing the borders of a country of interest'):
 
         cname = country_name()
         sname = state_name()
         country = countries.query(" name == @cname ")
-        state = states.query(" name == @sname and country == @cname ")
+        # state = states.query(" name == @sname and country == @cname ")
         forecast = unweighted_forecast_wb()
 
+        bbox = bounds()
+        xmin, ymin, xmax, ymax = bbox
+
         if cname == '' or sname == '' or forecast is None:
+            return
+
+        if any(x is None for x in (xmin, ymin, xmax, ymax)):
             return
 
         config = {
@@ -1384,20 +1521,14 @@ def server(input: Inputs, output: Outputs, session: Session):
             'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'],
         }
 
-        if sname != 'All' and not state.empty:
-            bbox = json.loads(state.bbox.values[0])
-        else:
-            bbox = json.loads(country.bbox.values[0])
-        bounding_box = create_bbox_from_coords(*bbox).to_geo_dict()
-
-        max_bounds = max(abs(bbox[0] - bbox[2]), abs(bbox[1] - bbox[3])) * 111
+        max_bounds = max(abs(xmin - xmax), abs(ymin - ymax)) * 111
         zoom = 11 - np.log(max_bounds)
 
         country_forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
         df = country_forecast['perc'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
         df.columns = ['time', 'y', 'x', 'Percentile']
 
-        formatted_dates = [pd.to_datetime(date).strftime("%b-%Y") for date in forecast_dates]
+        formatted_dates = [pd.to_datetime(date).strftime('%b-%Y') for date in forecast_dates]
 
         fig = px.scatter_map(
             data_frame=df,
@@ -1415,7 +1546,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             animation_frame='time',
         )
 
-        fig["layout"].pop("updatemenus")
+        fig['layout'].pop('updatemenus')
 
         steps = []
         for idx in range(len(formatted_dates)):
@@ -1452,12 +1583,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         )
 
         fig.update_layout(coloraxis_colorbar_x=0.01, hoverlabel=dict(font_family='Ginto normal'))
-
-        fig.add_traces(px.scatter_geo(geojson=bounding_box).data)
-
-        # figurewidget = go.FigureWidget(fig)
-        # return figurewidget
-        # return fig
 
         # https://stackoverflow.com/questions/78834353/animated-plotly-graph-in-pyshiny-express
         """
