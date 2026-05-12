@@ -268,10 +268,10 @@ app_ui = ui.page_fluid(
                 {'id': 'menu-container'},
                 ui.div(
                     {'id': 'menu-inner-container'},
-                    ui.input_action_button(
-                        'about_button',
-                        'About',
-                    ),
+                    # ui.input_action_button(
+                    #     'about_button',
+                    #     'About',
+                    # ),
                     ui.input_action_button(
                         'settings_button', 'Settings', disabled=True
                     ),  # this could also be called options or controls
@@ -389,48 +389,41 @@ app_ui = ui.page_fluid(
                     ),
                 ),
             ),
-            ui.panel_conditional(
-                'input.about_button > input.close_about_button',
-                ui.div(
-                    {'id': 'about-inner-container'},
-                    ui.div(
-                        {'id': 'about-header'},
-                        ui.input_action_button('close_about_button', 'X'),
-                    ),
-                    ui.div(
-                        {'id': 'about-body'},
-                        ui.markdown(
-                            """
-                            ## Water balance
-                            This site displays near real-time moisture anomalies along with an experimental 6-month forecast.
-                            Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020.
-                            Values close to 0.5 represent normal conditions. Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively.
-                            Moisture anomalies are monitored on a monthly basis, from 2001 to present.
-
-
-                            ## Applications
-                            An integration window of 3 months is well suited for applications in agriculture, where shorter cycles of water balance are important.
-                            In order to examine the relationship between water balance anomalies and agriculture, we have provided the spatial extents of several crops.
-                            These can be used to get water balance data within a given country where a specific crop is currently grown (as of 2020).
-
-                            For sectors like the hydropower industry where longer-term patterns in water balance are more relevant, an integration window of 12 months is more appropriate.
-
-
-                            ## Data sources
-                            The water balance layers were created using <a href="https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en" target="_blank">ERA5 monthly averaged data</a>.
-
-                            National and state outlines were downloaded from <a href="https://www.naturalearthdata.com/" target="_blank">Natural Earth</a>.
-                            Crop masks were created using a modified version of the <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/SWPENT" target="_blank">SPAM 2020</a> combined rainfed- and irrigated production data for specific crops.
-
-                            ## Woodwell Risk
-                            You can find out more about the Woodwell Risk group and the work that we do on our <a href="https://www.woodwellclimate.org/research-area/risk/" target="_blank">website</a>.
-                            Whenever possible, we publish our <a href="https://woodwellrisk.github.io/" target="_blank">methodologies</a> and <a href="https://github.com/WoodwellRisk" target="_blank">code</a> on GitHub.
-                            """
-                        ),
-                    ),
-                ),
-                {'id': 'about-container'},
-            ),
+            # ui.panel_conditional(
+            #     'input.about_button > input.close_about_button',
+            #     ui.div(
+            #         {'id': 'about-inner-container'},
+            #         ui.div(
+            #             {'id': 'about-header'},
+            #             ui.input_action_button('close_about_button', 'X'),
+            #         ),
+            #         ui.div(
+            #             {'id': 'about-body'},
+            #             ui.markdown(
+            #                 """
+            #                 ## Water balance
+            #                 This site displays near real-time moisture anomalies along with an experimental 6-month forecast.
+            #                 Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020.
+            #                 Values close to 0.5 represent normal conditions. Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively.
+            #                 Moisture anomalies are monitored on a monthly basis, from 2001 to present.
+            #                 ## Applications
+            #                 An integration window of 3 months is well suited for applications in agriculture, where shorter cycles of water balance are important.
+            #                 In order to examine the relationship between water balance anomalies and agriculture, we have provided the spatial extents of several crops.
+            #                 These can be used to get water balance data within a given country where a specific crop is currently grown (as of 2020).
+            #                 For sectors like the hydropower industry where longer-term patterns in water balance are more relevant, an integration window of 12 months is more appropriate.
+            #                 ## Data sources
+            #                 The water balance layers were created using <a href="https://cds.climate.copernicus.eu/stac-browser/collections/reanalysis-era5-single-levels-monthly-means?.language=en" target="_blank">ERA5 monthly averaged data</a>.
+            #                 National and state outlines were downloaded from <a href="https://www.naturalearthdata.com/" target="_blank">Natural Earth</a>.
+            #                 Crop masks were created using a modified version of the <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/SWPENT" target="_blank">SPAM 2020</a> combined rainfed- and irrigated production data for specific crops.
+            #                 ## Woodwell Risk
+            #                 You can find out more about the Woodwell Risk group and the work that we do on our <a href="https://www.woodwellclimate.org/research-area/risk/" target="_blank">website</a>.
+            #                 Whenever possible, we publish our <a href="https://woodwellrisk.github.io/" target="_blank">methodologies</a> and <a href="https://github.com/WoodwellRisk" target="_blank">code</a> on GitHub.
+            #                 """
+            #             ),
+            #         ),
+            #     ),
+            #     {'id': 'about-container'},
+            # ),
             ui.output_ui('show_update_message'),
         ),
     ),
