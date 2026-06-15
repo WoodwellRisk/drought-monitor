@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 const MIN_HISTORICAL_DATE = '1991-01-01';
-const MAX_HISTORICAL_DATE = '2026-04-01';
+const MAX_HISTORICAL_DATE = '2026-05-01';
 
 export const arrayRange = (start, end, step) => {
   let output = [];
