@@ -36,7 +36,7 @@ updating = False
 # year = today.year
 # month = today.month
 year = 2026
-month = 5
+month = 6
 
 if month == 1:
     month = 12
