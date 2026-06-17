@@ -15,6 +15,9 @@ function Layers() {
   const colormapName = useStore((state) => state.colormapName);
   const colormap = useThemedColormap(colormapName);
 
+  const timePeriodOptions = useStore((state) => state.timePeriodOptions);
+  const setTimePeriodOptions = useStore((state) => state.setTimePeriodOptions);
+  const setTimePeriod = useStore((state) => state.setTimePeriod);
   const windowOptions = useStore((state) => state.windowOptions);
   const setWindowOptions = useStore((state) => state.setWindowOptions);
   const setWindow = useStore((state) => state.setWindow);
@@ -26,27 +29,123 @@ function Layers() {
   const setCropLayer = useStore((state) => state.setCropLayer);
   const setShowCropLayer = useStore((state) => state.setShowCropLayer);
 
-  const display = useStore((state) => state.display);
-  const setDisplay = useStore((state) => state.setDisplay);
-  const showDrought = useStore((state) => state.showDrought);
-  const setShowDrought = useStore((state) => state.setShowDrought);
   const setSliding = useStore((state) => state.setSliding);
 
-  const time = useStore((state) => state.time);
-  const setTime = useStore((state) => state.setTime);
   const validMonths = useStore((state) => state.validMonths);
   const validYears = useStore((state) => state.validYears);
+
   const maxHistoricalDate = useStore((state) => state.maxHistoricalDate);
   const historicalDates = useStore((state) => state.historicalDates);
-  const setHistoricalDate = useStore((state) => state.setHistoricalDate);
   const historicalSliderIndex = useStore((state) => state.historicalSliderIndex);
   const setHistoricalSliderIndex = useStore((state) => state.setHistoricalSliderIndex);
+
+  const forecastDates = useStore((state) => state.forecastDates);
+  const forecastSliderIndex = useStore((state) => state.forecastSliderIndex);
+  const setForecastSliderIndex = useStore((state) => state.setForecastSliderIndex);
+
+  const timePeriod = useStore((state) => state.timePeriod);
+  const time = useStore((state) => state.time);
+  const setTime = useStore((state) => state.setTime);
   const showTimeError = useStore((state) => state.showTimeError);
   const setShowTimeError = useStore((state) => state.setShowTimeError);
+
+  const [sliderIndex, setSliderIndex] = useState(historicalDates.length - 1);
+  const [maxSliderIndex, setMaxSliderIndex] = useState(historicalDates.length - 1);
+  const [minSliderYear, setMinSliderYear] = useState(
+    new Date(historicalDates.at(0) + 'T00:00:00').getFullYear()
+  );
+  const [maxSliderYear, setMaxSliderYear] = useState(
+    new Date(historicalDates.at(-1) + 'T00:00:00').getFullYear()
+  );
 
   const [defaultSkipYear, defaultSkipMonth, _] = maxHistoricalDate.split('-');
   const [skipMonth, setSkipMonth] = useState(defaultSkipMonth);
   const [skipYear, setSkipYear] = useState(defaultSkipYear);
+
+  const handleCropClick = (event) => {
+    let cropName = event.target.id.slice(4); // example: tag-coffee -> coffee
+    if (cropLayer == cropName) {
+      // this would mean that a user is un-clicking a tag of the same name
+      setCropLayer('');
+      if (cropName != '') {
+        setCropValues({ ...cropValues, [`${cropName}`]: false });
+      }
+      setShowCropLayer({});
+    } else {
+      // else change between tags
+      if (cropLayer == '') {
+        setCropValues({ ...cropValues, [`${cropName}`]: true });
+      } else {
+        setCropValues({ ...cropValues, [`${cropLayer}`]: false, [`${cropName}`]: true });
+      }
+      setCropLayer(cropName);
+      setShowCropLayer({ show: cropLayer });
+    }
+  };
+
+  const handleTimePeriodClick = (event) => {
+    let timePeriodLabel = event.target.innerText;
+    setTimePeriod(timePeriodLabel.toLowerCase());
+  };
+
+  const handleWindowClick = (event) => {
+    let windowLabel = event.target.innerText;
+    setWindow(windowLabel.substring(0, windowLabel.indexOf('-')));
+  };
+
+  useEffect(() => {
+    let index = timePeriod == 'historical' ? historicalDates.length - 1 : 0;
+    let t = timePeriod == 'historical' ? historicalDates.at(index) : forecastDates.at(index);
+    let maxIndex = timePeriod == 'historical' ? historicalDates.length - 1 : 5;
+    let minYear = new Date(
+      timePeriod == 'historical' ? historicalDates.at(0) : forecastDates.at(0) + 'T00:00:00'
+    ).getFullYear();
+    let maxYear = new Date(
+      timePeriod == 'historical' ? historicalDates.at(-1) : forecastDates.at(-1) + 'T00:00:00'
+    ).getFullYear();
+
+    setSliderIndex(index);
+    setMaxSliderIndex(maxIndex);
+    setMinSliderYear(minYear);
+    setMaxSliderYear(maxYear);
+  }, [timePeriod]);
+
+  useEffect(() => {
+    if (timePeriod == 'historical') {
+      setHistoricalSliderIndex(sliderIndex);
+      setTime(historicalDates.at(sliderIndex));
+    } else {
+      // forecast
+      setForecastSliderIndex(sliderIndex);
+      setTime(forecastDates.at(sliderIndex));
+    }
+  }, [sliderIndex]);
+
+  const handleMouseDown = useCallback(() => {
+    setSliding(true);
+  }, [time]);
+
+  const handleMouseUp = useCallback(() => {
+    setSliding(false);
+  }, [time]);
+
+  const handleSkipClick = useCallback(() => {
+    let tempSliderIndex = historicalDates.indexOf(`${skipYear}-${skipMonth}-01`);
+    if (tempSliderIndex != -1) {
+      setShowTimeError(false);
+      setHistoricalSliderIndex(tempSliderIndex);
+    } else {
+      setShowTimeError(true);
+    }
+  });
+
+  // hide the time bounds error after the time slider index resets
+  // when the map moves from small to medium / large screen sizes
+  useEffect(() => {
+    if (isWide) {
+      setShowTimeError(false);
+    }
+  }, [isWide]);
 
   const sx = {
     'layers-container': {
@@ -57,8 +156,7 @@ function Layers() {
     group: {
       mt: [2, 2, 3],
       mb: [3],
-      pl: [0, 4, 5, 6],
-      pr: [0, 5, 5, 6],
+      px: [0, 4, 5, 6],
       fontSize: [4, 4, 4, 5],
       fontFamily: 'heading',
       fontWeight: 'heading',
@@ -82,6 +180,7 @@ function Layers() {
       width: '100%',
       mt: [4],
       mb: [1],
+      // justifyContent: isWide ? 'space-between' : 'flex-start',
       justifyContent: 'flex-start',
       gap: isWide ? 2 : 4,
       alignItems: 'center',
@@ -126,64 +225,10 @@ function Layers() {
     },
   };
 
-  const handleDroughtChange = useCallback(() => {
-    setShowDrought(!showDrought);
-    setDisplay(!display);
-  });
-
-  const handleCropClick = (event) => {
-    let cropName = event.target.id.slice(4); // example: tag-coffee -> coffee
-    if (cropLayer == cropName) {
-      // this would mean that a user is un-clicking a tag of the same name
-      setCropLayer('');
-      if (cropName != '') {
-        setCropValues({ ...cropValues, [`${cropName}`]: false });
-      }
-      setShowCropLayer({});
-    } else {
-      // else change between tags
-      if (cropLayer == '') {
-        setCropValues({ ...cropValues, [`${cropName}`]: true });
-      } else {
-        setCropValues({ ...cropValues, [`${cropLayer}`]: false, [`${cropName}`]: true });
-      }
-      setCropLayer(cropName);
-      setShowCropLayer({ show: cropLayer });
-    }
-  };
-
-  const handleWindowClick = (event) => {
-    let windowLabel = event.target.innerText;
-    setWindow(windowLabel.substring(0, windowLabel.indexOf('-')));
-  };
-
-  const handleMouseDown = useCallback(() => {
-    setSliding(true);
-  }, [time]);
-
-  const handleMouseUp = useCallback(() => {
-    setSliding(false);
-  }, [time]);
-
-  useEffect(() => {
-    setHistoricalDate(historicalDates[historicalSliderIndex]);
-    setTime(historicalDates[historicalSliderIndex]);
-  }, [historicalSliderIndex]);
-
-  const handleSkipClick = useCallback(() => {
-    let tempSliderIndex = historicalDates.indexOf(`${skipYear}-${skipMonth}-01`);
-    if (tempSliderIndex != -1) {
-      setShowTimeError(false);
-      setHistoricalSliderIndex(tempSliderIndex);
-    } else {
-      setShowTimeError(true);
-    }
-  });
-
   return (
-    <Box>
-      <Box sx={sx.group}>
-        <Box sx={{ pt: isWide ? 2 : 0 }} className="var-container">
+    <Box sx={sx['layers-container']}>
+      <Box sx={{ ...sx.group, mt: 0 }}>
+        <Box className="var-container">
           <Box sx={{ mb: [2] }} className="var-title">
             {'Crops'}{' '}
             <Info>
@@ -213,7 +258,7 @@ function Layers() {
       </Box>
       <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
-      <Box sx={sx.group}>
+      <Box sx={{ ...sx.group, mb: timePeriod == 'historical' ? 3 : 0 }}>
         <Box sx={{ mb: [2] }} className="var-subtitle">
           {'Water balance'}{' '}
           <Info>
@@ -229,14 +274,13 @@ function Layers() {
           </Info>
         </Box>
 
-        <Tag
-          color={'red'}
-          value={showDrought}
-          onClick={handleDroughtChange}
-          sx={{ mr: [2], mb: [3], borderColor: 'red', width: 'max-content' }}
-        >
-          Water balance
-        </Tag>
+        <Filter
+          values={timePeriodOptions}
+          setValues={setTimePeriodOptions}
+          multiSelect={false}
+          onClick={handleTimePeriodClick}
+          sx={{ mr: [2], mb: [4], borderColor: 'primary', width: 'max-content' }}
+        />
 
         <Box sx={{ ...sx.label, mb: [4] }}>
           <Colorbar
@@ -273,20 +317,18 @@ function Layers() {
         />
 
         <Box id="time-slider-container">
-          <Box sx={{ ...sx.title, mb: [2] }}>
-            {`Date: ${historicalDates[historicalSliderIndex]}`}
-          </Box>
+          <Box sx={{ ...sx.title, mb: [2] }}>{`Date: ${time}`}</Box>
 
           <Slider
-            key={'historical-time-slider'}
+            key={'time-slider'}
             id={'time-slider'}
             sx={sx['time-slider']}
-            value={historicalSliderIndex}
-            onChange={(e) => setHistoricalSliderIndex(e.target.value)}
+            value={timePeriod == 'historical' ? historicalSliderIndex : forecastSliderIndex}
+            onChange={(e) => setSliderIndex(e.target.value)}
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             min={0}
-            max={historicalDates.length - 1}
+            max={maxSliderIndex}
             step={1}
           />
 
@@ -297,7 +339,7 @@ function Layers() {
                 float: 'left',
               }}
             >
-              {new Date(historicalDates.at(0) + 'T00:00:00').getFullYear()}
+              {minSliderYear}
             </Box>
 
             <Box
@@ -306,112 +348,114 @@ function Layers() {
                 display: 'inline-block',
               }}
             >
-              {new Date(historicalDates.at(-1) + 'T00:00:00').getFullYear()}
+              {maxSliderYear}
             </Box>
           </Box>
         </Box>
 
-        <Box
-          id={'skip-container'}
-          sx={{
-            ...sx.title,
-            display: 'flex',
-            flexWrap: 'wrap',
-            height: '2rem',
-            mb: isWide ? 7 : 4,
-          }}
-        >
-          <Text sx={{ fontSize: 1, flexBasis: isWide ? '100%' : 'auto', mb: 1 }}>Jump to:</Text>
-
-          <Select
-            id={'month-skip-select'}
-            className={'skip-select'}
-            sx={{ height: '100%', px: 3 }}
-            onChange={(e) => setSkipMonth(e.target.value)}
-          >
-            {validMonths.map((month, idx) => {
-              if (month == defaultSkipMonth) {
-                return (
-                  <option key={idx} value={month} selected>
-                    {month}
-                  </option>
-                );
-              } else {
-                return (
-                  <option key={idx} value={month}>
-                    {month}
-                  </option>
-                );
-              }
-            })}
-          </Select>
-
-          <Select
-            id={'year-skip-select'}
-            className={'skip-select'}
-            sx={{ height: '100%', px: 3 }}
-            onChange={(e) => setSkipYear(e.target.value)}
-          >
-            {validYears.map((year, idx) => {
-              if (year == defaultSkipYear) {
-                return (
-                  <option key={idx} value={year} selected>
-                    {year}
-                  </option>
-                );
-              } else {
-                return (
-                  <option key={idx} value={year}>
-                    {year}
-                  </option>
-                );
-              }
-            })}
-          </Select>
-
-          <Button
-            onClick={handleSkipClick}
+        {timePeriod == 'historical' && (
+          <Box
+            id={'skip-container'}
             sx={{
-              color: 'secondary',
-              bg: 'background',
-              outlineWidth: '1px',
-              outlineStyle: 'solid',
-              outlineColor: 'secondary',
-              letterSpacing: 'smallcaps',
-              textTransform: 'uppercase',
-              '&:hover': {
-                color: 'primary',
-                bg: alpha('muted', 0.5),
-                outlineWidth: '1px',
-                outlineStyle: 'solid',
-                outlineColor: 'primary',
-              },
-              '&:active': {
-                color: 'background',
-                bg: 'primary',
-                outlineWidth: '1px',
-                outlineStyle: 'solid',
-                outlineColor: 'primary',
-              },
-              '&:focus:not(:active)': {
-                color: 'primary',
-                bg: alpha('muted', 0.5),
-                outlineWidth: '1px',
-                outlineStyle: 'solid',
-                outlineColor: 'primary',
-              },
-              '&:focus:not(:hover)': {
+              ...sx.title,
+              display: 'flex',
+              flexWrap: 'wrap',
+              height: '2rem',
+              mb: 4,
+            }}
+          >
+            <Text sx={{ fontSize: 1, flexBasis: isWide ? '100%' : 'auto', mb: 1 }}>Jump to:</Text>
+
+            <Select
+              id={'month-skip-select'}
+              className={'skip-select'}
+              sx={{ height: '100%', px: 3 }}
+              onChange={(e) => setSkipMonth(e.target.value)}
+            >
+              {validMonths.map((month, idx) => {
+                if (month == defaultSkipMonth) {
+                  return (
+                    <option key={idx} value={month} selected>
+                      {month}
+                    </option>
+                  );
+                } else {
+                  return (
+                    <option key={idx} value={month}>
+                      {month}
+                    </option>
+                  );
+                }
+              })}
+            </Select>
+
+            <Select
+              id={'year-skip-select'}
+              className={'skip-select'}
+              sx={{ height: '100%', px: 3 }}
+              onChange={(e) => setSkipYear(e.target.value)}
+            >
+              {validYears.map((year, idx) => {
+                if (year == defaultSkipYear) {
+                  return (
+                    <option key={idx} value={year} selected>
+                      {year}
+                    </option>
+                  );
+                } else {
+                  return (
+                    <option key={idx} value={year}>
+                      {year}
+                    </option>
+                  );
+                }
+              })}
+            </Select>
+
+            <Button
+              onClick={handleSkipClick}
+              sx={{
                 color: 'secondary',
                 bg: 'background',
                 outlineWidth: '1px',
                 outlineStyle: 'solid',
                 outlineColor: 'secondary',
-              },
-            }}
-          >
-            <Text>go</Text>
-          </Button>
-        </Box>
+                letterSpacing: 'smallcaps',
+                textTransform: 'uppercase',
+                '&:hover': {
+                  color: 'primary',
+                  bg: alpha('muted', 0.5),
+                  outlineWidth: '1px',
+                  outlineStyle: 'solid',
+                  outlineColor: 'primary',
+                },
+                '&:active': {
+                  color: 'background',
+                  bg: 'primary',
+                  outlineWidth: '1px',
+                  outlineStyle: 'solid',
+                  outlineColor: 'primary',
+                },
+                '&:focus:not(:active)': {
+                  color: 'primary',
+                  bg: alpha('muted', 0.5),
+                  outlineWidth: '1px',
+                  outlineStyle: 'solid',
+                  outlineColor: 'primary',
+                },
+                '&:focus:not(:hover)': {
+                  color: 'secondary',
+                  bg: 'background',
+                  outlineWidth: '1px',
+                  outlineStyle: 'solid',
+                  outlineColor: 'secondary',
+                },
+              }}
+            >
+              <Text>go</Text>
+            </Button>
+          </Box>
+        )}
 
         {showTimeError && (
           <Box
@@ -420,9 +464,9 @@ function Layers() {
               outlineWidth: '1px',
               outlineStyle: 'solid',
               outlineColor: 'red',
-              mt: 4,
+              mt: 6,
               py: 2,
-              mx: 2,
+              mx: 0,
               textAlign: 'center',
             }}
           >

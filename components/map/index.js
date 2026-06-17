@@ -13,13 +13,14 @@ import { useStore } from '../store/index';
 const Map = ({ mobile }) => {
   const { theme } = useThemeUI();
   const container = useRef(null);
-  // const [map, setMap] = useState(null)
+
   const zoom = useStore((state) => state.zoom);
   const maxZoom = useStore((state) => state.maxZoom);
   const center = useStore((state) => state.center);
   const bounds = useStore((state) => state.bounds);
 
   const variable = useStore((state) => state.variable);
+  const timePeriod = useStore((state) => state.timePeriod);
   const window = useStore((state) => state.window);
   const maxHistoricalDate = useStore((state) => state.maxHistoricalDate);
   const time = useStore((state) => state.time);
@@ -63,12 +64,7 @@ const Map = ({ mobile }) => {
   return (
     <Box
       ref={container}
-      sx={{
-        display: 'flex',
-        flexBasis: '100%',
-        justifyContent: 'center',
-        'canvas.mapboxgl-canvas:focus': { outline: 'none' },
-      }}
+      sx={{ flexBasis: '100%', 'canvas.mapboxgl-canvas:focus': { outline: 'none' } }}
     >
       <MapContainer zoom={zoom} maxZoom={maxZoom} center={center} maxBounds={bounds}>
         <Fill
@@ -155,13 +151,16 @@ const Map = ({ mobile }) => {
         )}
 
         <Raster
-          key={`${variable}-${window}`}
+          key={`${variable}-${timePeriod}-${window}`}
           colormap={colormap}
           clim={clim}
           display={display}
           opacity={opacity}
           mode={'texture'}
-          source={`https://storage.googleapis.com/drought-monitor/zarr/viz/wb-h${window}-${maxHistoricalDate}.zarr`}
+          source={`https://storage.googleapis.com/drought-monitor/zarr/viz/wb-${timePeriod.substring(
+            0,
+            1
+          )}${window}-${maxHistoricalDate}.zarr`}
           variable={variable}
           selector={{ time }}
           regionOptions={{ setData: handleRegionData, selector: {} }}
