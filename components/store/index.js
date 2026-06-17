@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 const MIN_HISTORICAL_DATE = '1991-01-01';
-const MAX_HISTORICAL_DATE = '2026-03-01';
+const MAX_HISTORICAL_DATE = '2026-05-01';
 
 export const arrayRange = (start, end, step) => {
   let output = [];
@@ -59,10 +59,19 @@ const createHistoricalDates = () => {
     maxHistoricalDate: maxDate,
     historicalDate: maxDate,
     historicalDates: generateDates(minDate, monthsRange),
-    historicalSliderIndex: monthsRange.at(-1),
-    time: maxDate,
     validMonths: validMonths,
     validYears: validYears,
+  };
+};
+
+const createForecastDates = () => {
+  let maxHistoricalDate = MAX_HISTORICAL_DATE;
+  let minForecastDate = generateDates(maxHistoricalDate, arrayRange(1, 2, 1))[0];
+  let monthsRange = arrayRange(0, 6, 1);
+
+  return {
+    forecastDate: minForecastDate,
+    forecastDates: generateDates(minForecastDate, monthsRange),
   };
 };
 
@@ -93,6 +102,12 @@ export const useStore = create((set, get) => ({
   variable: 'perc',
   setVariable: (variable) => set({ variable }),
 
+  timePeriodOptions: { Historical: true, Forecast: false },
+  setTimePeriodOptions: (timePeriodOptions) => set({ timePeriodOptions }),
+
+  timePeriod: 'historical',
+  setTimePeriod: (timePeriod) => set({ timePeriod }),
+
   windowOptions: { 3: true, 12: false },
   setWindowOptions: (windowOptions) => set({ windowOptions }),
 
@@ -106,6 +121,12 @@ export const useStore = create((set, get) => ({
   ...createHistoricalDates(),
   setHistoricalDate: (historicalDate) => set({ historicalDate }),
   setHistoricalSliderIndex: (historicalSliderIndex) => set({ historicalSliderIndex }),
+
+  ...createForecastDates(),
+  setForecastDate: (forecastDate) => set({ forecastDate }),
+  setForecastSliderIndex: (forecastSliderIndex) => set({ forecastSliderIndex }),
+
+  time: MAX_HISTORICAL_DATE,
   setTime: (time) => set({ time }),
 
   showTimeError: false,

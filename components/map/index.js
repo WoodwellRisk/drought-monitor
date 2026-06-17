@@ -20,6 +20,7 @@ const Map = ({ mobile }) => {
   const bounds = useStore((state) => state.bounds);
 
   const variable = useStore((state) => state.variable);
+  const timePeriod = useStore((state) => state.timePeriod);
   const window = useStore((state) => state.window);
   const maxHistoricalDate = useStore((state) => state.maxHistoricalDate);
   const time = useStore((state) => state.time);
@@ -150,13 +151,16 @@ const Map = ({ mobile }) => {
         )}
 
         <Raster
-          key={`${variable}-${window}`}
+          key={`${variable}-${timePeriod}-${window}`}
           colormap={colormap}
           clim={clim}
           display={display}
           opacity={opacity}
           mode={'texture'}
-          source={`https://storage.googleapis.com/drought-monitor/zarr/viz/h${window}-${maxHistoricalDate}.zarr`}
+          source={`https://storage.googleapis.com/drought-monitor/zarr/viz/wb-${timePeriod.substring(
+            0,
+            1
+          )}${window}-${maxHistoricalDate}.zarr`}
           variable={variable}
           selector={{ time }}
           regionOptions={{ setData: handleRegionData, selector: {} }}

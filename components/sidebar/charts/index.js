@@ -13,10 +13,6 @@ const StatsDisplay = (props) => {
 
   const time = useStore((state) => state.time);
 
-  console.log(data);
-  console.log(time);
-  console.log(variable);
-
   if (!data || !data[variable]) {
     // ex: if(!'drought' or Object["drought"]) {...}
     return;
