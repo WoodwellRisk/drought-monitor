@@ -2,6 +2,7 @@ import os
 import timeit
 from concurrent.futures import ThreadPoolExecutor
 
+import gcsfs
 import numpy as np
 import pandas as pd
 import rioxarray
@@ -131,14 +132,14 @@ def drought_pipeline():
     dates = pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')
     h3_files = sorted(
         [
-            f'gs://{BUCKET}/historical/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc'
+            f'gs://{BUCKET}/era5/monthly/wb/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc'
             for date in dates
         ]
     )
     h12_files = sorted([file.replace('w3', 'w12') for file in h3_files])
 
     forecast_files = [
-        f'gs://{BUCKET}/forecast/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc'
+        f'gs://{BUCKET}/nmme/ensemble/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc'
         for window in [3, 12]
     ]
     f3_file = [file for file in forecast_files if 'w3' in file][0]
