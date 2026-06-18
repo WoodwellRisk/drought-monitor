@@ -78,6 +78,7 @@ body {
     display: flex;
     height: 100%;
     width: 100%;
+    margin: 0 10px;
 }
 
 #tab_menu {
@@ -125,7 +126,6 @@ body {
     display: flex;
     height: 100%;
     align-items: center;
-    padding: 0px 5px;
 }
 
 #org-title {
@@ -147,10 +147,6 @@ body {
     height: 80%;
     width: 100%;
     margin: auto 0;
-}
-
-#settings_button {
-    margin: 0 5px;
 }
 
 #load_data_button {
