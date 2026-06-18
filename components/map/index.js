@@ -69,14 +69,14 @@ const Map = ({ mobile }) => {
       <MapContainer zoom={zoom} maxZoom={maxZoom} center={center} maxBounds={bounds}>
         <Fill
           color={theme.rawColors.background}
-          source={'https://storage.googleapis.com/drought-monitor/vector/ocean'}
+          source={'https://storage.googleapis.com/water-balance/vector/ocean'}
           variable={'ocean'}
         />
 
         {showStatesOutline && (
           <Line
             color={'gray'}
-            source={'https://storage.googleapis.com/drought-monitor/vector/states'}
+            source={'https://storage.googleapis.com/water-balance/vector/states'}
             variable={'states'}
             width={zoom < 3.5 ? 0.5 : 1}
           />
@@ -85,7 +85,7 @@ const Map = ({ mobile }) => {
         {showCountriesOutline && (
           <Line
             color={theme.rawColors.primary}
-            source={'https://storage.googleapis.com/drought-monitor/vector/countries'}
+            source={'https://storage.googleapis.com/water-balance/vector/countries'}
             variable={'countries'}
             width={showStatesOutline && zoom > 3.5 ? 1.5 : 1}
           />
@@ -93,20 +93,20 @@ const Map = ({ mobile }) => {
 
         <Fill
           color={theme.rawColors.background}
-          source={'https://storage.googleapis.com/drought-monitor/vector/lakes'}
+          source={'https://storage.googleapis.com/water-balance/vector/lakes'}
           variable={'lakes'}
         />
 
         <Line
           color={theme.rawColors.primary}
-          source={'https://storage.googleapis.com/drought-monitor/vector/lakes'}
+          source={'https://storage.googleapis.com/water-balance/vector/lakes'}
           variable={'lakes'}
           width={1}
         />
 
         <Line
           color={theme.rawColors.primary}
-          source={'https://storage.googleapis.com/drought-monitor/vector/land'}
+          source={'https://storage.googleapis.com/water-balance/vector/land'}
           variable={'land'}
           width={1}
         />
@@ -123,7 +123,7 @@ const Map = ({ mobile }) => {
           <>
             <Fill
               key={`${cropLayer}_mask`}
-              source={`https://storage.googleapis.com/drought-monitor/vector/${cropLayer}_mask`}
+              source={`https://storage.googleapis.com/water-balance/vector/${cropLayer}_mask`}
               variable={`${cropLayer}_mask`}
               color={theme.rawColors.secondary}
               opacity={0.5}
@@ -131,7 +131,7 @@ const Map = ({ mobile }) => {
 
             <Line
               key={`${cropLayer}`}
-              source={`https://storage.googleapis.com/drought-monitor/vector/${cropLayer}`}
+              source={`https://storage.googleapis.com/water-balance/vector/${cropLayer}`}
               variable={`${cropLayer}`}
               color={'black'}
               width={1}
@@ -157,7 +157,7 @@ const Map = ({ mobile }) => {
           display={display}
           opacity={opacity}
           mode={'texture'}
-          source={`https://storage.googleapis.com/drought-monitor/zarr/viz/wb-${timePeriod.substring(
+          source={`https://storage.googleapis.com/water-balance/zarr/viz/wb-${timePeriod.substring(
             0,
             1
           )}${window}-${maxHistoricalDate}.zarr`}
