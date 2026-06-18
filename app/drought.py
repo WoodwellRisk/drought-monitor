@@ -246,6 +246,7 @@ app_ui = ui.page_fluid(
         ui.include_css(static_dir / 'stylesheet.css'),
         ui.include_js('./scripts/reset-sidebar-visibility.js', method='inline'),
         ui.include_js('./scripts/sidebar-visibility.js', method='inline'),
+        ui.include_js('./scripts/navbar-width.js', method='inline'),
     ),
     ui.div(
         {'id': 'layout'},
@@ -253,140 +254,53 @@ app_ui = ui.page_fluid(
         ui.div(
             {'id': 'navbar'},
             ui.div(
-                {'id': 'logo-container'},
+                {'id': 'navbar-inner-container'},
                 ui.div(
-                    {'id': 'logo-inner-container'},
-                    ui.img(
-                        src='woodwell-risk.png',
-                        width='45px',
-                        alt='Woodwell Climate Research Center Risk group logo',
+                    {'id': 'menu-container'},
+                    ui.div(
+                        {'id': 'menu-inner-container'},
+                        # ui.input_action_button(
+                        #     'about_button',
+                        #     'About',
+                        # ),
+                        ui.input_action_button(
+                            'settings_button', 'Settings', disabled=True
+                        ),  # this could also be called options or controls
+                        ui.navset_tab(
+                            ui.nav_panel('Explore data', ''),
+                            ui.nav_panel('Download data', ''),
+                            id='tab_menu',
+                        ),
                     ),
-                    ui.p({'id': 'org-title'}, 'Woodwell Risk'),
                 ),
-            ),
-            ui.div(
-                {'id': 'menu-container'},
                 ui.div(
-                    {'id': 'menu-inner-container'},
-                    # ui.input_action_button(
-                    #     'about_button',
-                    #     'About',
-                    # ),
-                    ui.input_action_button(
-                        'settings_button', 'Settings', disabled=True
-                    ),  # this could also be called options or controls
+                    {'id': 'logo-container'},
+                    ui.div(
+                        {'id': 'logo-inner-container'},
+                        ui.p({'id': 'org-title'}, 'Woodwell Risk'),
+                        ui.img(
+                            src='woodwell-logo.png',
+                            width='45px',
+                            alt='Woodwell Climate Research Center Risk group logo',
+                        ),
+                    ),
                 ),
             ),
         ),
         # wrapper container for sidebar and main panel
         ui.div(
             {'id': 'container'},
-            # sidebar
             ui.div(
                 {'id': 'sidebar-container', 'class': 'show'},
-                ui.div(
-                    {'id': 'sidebar'},
-                    ui.div(
-                        {'id': 'sidebar-inner-container'},
-                        ui.div(
-                            {'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select an integration window:'),
-                        ),
-                        ui.input_select(
-                            'window_select', '', {3: '3 month', 12: '12 month'}, size=2
-                        ),
-                        ui.div(
-                            {'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select a country:'),
-                        ),
-                        ui.input_text('country_filter', label='', placeholder='Filter by name'),
-                        # https://shiny.posit.co/py/api/core/ui.update_select.html
-                        ui.input_select('country_select', '', [], size=5),
-                        ui.div(
-                            {'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select a state:'),
-                        ),
-                        # ui.input_text('state_filter', label='', placeholder='Filter by name'),
-                        ui.input_select('state_select', '', [], size=5),
-                        # ui.input_checkbox_group('state_checkbox', '', {}),
-                        # ui.output_ui('show_state_output'),
-                        ui.panel_conditional(
-                            'input.window_select == 3',
-                            ui.div(
-                                {'class': 'select-label-container'},
-                                ui.p({'class': 'select-label'}, 'Select a crop:'),
-                            ),
-                            ui.input_select('crop_select', '', [], size=5),
-                            {'id': 'crop-select-conditional-panel'},
-                        ),
-                        ui.div(
-                            {'id': 'process-data-container'},
-                            ui.input_task_button('process_data_button', label='Run'),
-                        ),
-                    ),
-                ),
+                # sidebar
+                ui.output_ui('sidebar_content'),
             ),
             # figures and tables
             ui.div(
                 {'id': 'main-container'},
                 ui.div(
                     {'id': 'main'},
-                    ui.navset_tab(
-                        # historical data tab
-                        ui.nav_panel(
-                            'Historical data',
-                            ui.div(
-                                {'id': 'iframe-container'},
-                                ui.tags.iframe(
-                                    src='https://woodwellrisk.github.io/drought-monitor',
-                                    height='100%',
-                                    width='100%',
-                                ),
-                            ),
-                        ),
-                        # timeseries and table tab
-                        ui.nav_panel(
-                            'Timeseries',
-                            ui.div(
-                                {
-                                    'id': 'download-timeseries-container',
-                                    'class': 'download-container',
-                                },
-                                ui.download_link('download_timeseries_link', 'Download timeseries'),
-                            ),
-                            ui.div(
-                                {'id': 'timeseries-container'},
-                                ui.div(
-                                    {'id': 'timeseries-toggle-container'},
-                                    ui.input_checkbox('historical_checkbox', 'Historical', True),
-                                    ui.input_checkbox('forecast_checkbox', 'Forecast', True),
-                                ),
-                                ui.card(
-                                    {'id': 'timeseries-inner-container'},
-                                    ui.output_plot('timeseries', width='100%', height='100%'),
-                                ),
-                            ),
-                            ui.output_ui('show_time_slider'),
-                            ui.div(
-                                {'id': 'download-csv-container', 'class': 'download-container'},
-                                ui.download_link('download_csv_link', 'Download CSV'),
-                            ),
-                            ui.div(
-                                {'id': 'timeseries-table-container'},
-                                ui.output_data_frame('timeseries_table'),
-                            ),
-                            ui.busy_indicators.options(),
-                        ),
-                        # forecast map tab
-                        ui.nav_panel(
-                            'Forecast map',
-                            ui.div(
-                                {'id': 'forecast-map-container'},
-                                ui.output_ui('forecast_map'),
-                            ),
-                        ),
-                        id='tab_menu',
-                    ),
+                    ui.output_ui('main_content'),
                 ),
             ),
             # ui.panel_conditional(
@@ -493,6 +407,106 @@ def server(input: Inputs, output: Outputs, session: Session):
     add_download_links = reactive.value(True)
 
     display_bounds_error = reactive.value(False)
+
+    @render.ui
+    def sidebar_content():
+        selected_tab = input.tab_menu()
+
+        if selected_tab == 'Explore data':
+            return None
+        else:  # 'Download data'
+            return ui.TagList(
+                ui.div(
+                    {'id': 'sidebar'},
+                    ui.div(
+                        {'id': 'sidebar-inner-container'},
+                        ui.div(
+                            {'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select an integration window:'),
+                        ),
+                        ui.input_select(
+                            'window_select', '', {3: '3 month', 12: '12 month'}, size=2
+                        ),
+                        ui.div(
+                            {'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select a country:'),
+                        ),
+                        ui.input_text('country_filter', label='', placeholder='Filter by name'),
+                        # https://shiny.posit.co/py/api/core/ui.update_select.html
+                        ui.input_select('country_select', '', [], size=5),
+                        ui.div(
+                            {'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select a state:'),
+                        ),
+                        # ui.input_text('state_filter', label='', placeholder='Filter by name'),
+                        ui.input_select('state_select', '', [], size=5),
+                        # ui.input_checkbox_group('state_checkbox', '', {}),
+                        # ui.output_ui('show_state_output'),
+                        ui.panel_conditional(
+                            'input.window_select == 3',
+                            ui.div(
+                                {'class': 'select-label-container'},
+                                ui.p({'class': 'select-label'}, 'Select a crop:'),
+                            ),
+                            ui.input_select('crop_select', '', [], size=5),
+                            {'id': 'crop-select-conditional-panel'},
+                        ),
+                        ui.div(
+                            {'id': 'process-data-container'},
+                            ui.input_task_button('process_data_button', label='Run'),
+                        ),
+                    ),
+                ),
+            )
+
+    @render.ui
+    def main_content():
+        selected_tab = input.tab_menu()
+
+        if selected_tab == 'Explore data':
+            return ui.TagList(
+                ui.div(
+                    {'id': 'iframe-container'},
+                    ui.tags.iframe(
+                        src='https://woodwellrisk.github.io/drought-monitor',
+                        height='100%',
+                        width='100%',
+                    ),
+                ),
+            )
+
+        else:  # 'Download data'
+            return ui.TagList(
+                ui.div(
+                    {
+                        'id': 'download-timeseries-container',
+                        'class': 'download-container',
+                    },
+                    ui.download_link('download_timeseries_link', 'Download timeseries'),
+                ),
+                ui.div(
+                    {'id': 'timeseries-container'},
+                    ui.div(
+                        {'id': 'timeseries-toggle-container'},
+                        ui.input_checkbox('historical_checkbox', 'Historical', True),
+                        ui.input_checkbox('forecast_checkbox', 'Forecast', True),
+                    ),
+                    ui.card(
+                        {'id': 'timeseries-inner-container'},
+                        ui.output_plot('timeseries', width='100%', height='100%'),
+                    ),
+                ),
+                ui.output_ui('show_time_slider'),
+                ui.div(
+                    {'id': 'download-csv-container', 'class': 'download-container'},
+                    ui.download_link('download_csv_link', 'Download CSV'),
+                ),
+                ui.div(
+                    {'id': 'timeseries-table-container'},
+                    ui.output_data_frame('timeseries_table'),
+                ),
+                ui.busy_indicators.options(),
+            )
 
     @render.ui
     def show_update_message():
@@ -815,6 +829,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                             min=0,
                             max=len(slider_dates) - 1,
                             value=skip_index,
+                            step=1,
                         ),
                     ),
                     {'id': 'show-slider-container'},
@@ -1485,112 +1500,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         with io.BytesIO() as buffer:
             plt.savefig(buffer, format='png', dpi=300)
             yield buffer.getvalue()
-
-    @render.ui
-    @reactive.event(unweighted_forecast_wb)
-    def forecast_map(alt='a map showing the borders of a country of interest'):
-
-        cname = country_name()
-        sname = state_name()
-        country = countries.query(" name == @cname ")
-        # state = states.query(" name == @sname and country == @cname ")
-        forecast = unweighted_forecast_wb()
-
-        bbox = bounds()
-        xmin, ymin, xmax, ymax = bbox
-
-        if cname == '' or sname == '' or forecast is None:
-            return
-
-        if any(x is None for x in (xmin, ymin, xmax, ymax)):
-            return
-
-        config = {
-            # 'staticPlot': False,
-            'displaylogo': False,
-            # 'displayModeBar': False,
-            'scrollZoom': True,
-            # 'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'toImage']
-            'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'],
-        }
-
-        max_bounds = max(abs(xmin - xmax), abs(ymin - ymax)) * 111
-        zoom = 11 - np.log(max_bounds)
-
-        country_forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
-        df = country_forecast['perc'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
-        df.columns = ['time', 'y', 'x', 'Percentile']
-
-        formatted_dates = [pd.to_datetime(date).strftime('%b-%Y') for date in forecast_dates]
-
-        fig = px.scatter_map(
-            data_frame=df,
-            lat=df.y,
-            lon=df.x,
-            color=df['Percentile'],
-            color_continuous_scale=px.colors.diverging.RdYlBu,
-            # color_continuous_scale = px.colors.sequential.Plasma,
-            range_color=[0, 1],
-            hover_data={'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
-            map_style='carto-positron-nolabels',
-            # map_style = 'carto-darkmatter-nolabels',
-            zoom=zoom,
-            height=445,
-            animation_frame='time',
-        )
-
-        fig['layout'].pop('updatemenus')
-
-        steps = []
-        for idx in range(len(formatted_dates)):
-            step = dict(method='animate', label=formatted_dates[idx])
-            steps.append(step)
-
-        fig.update_layout(
-            sliders=[
-                {
-                    'currentvalue': {'prefix': 'Time: '},
-                    'len': 0.8,
-                    'pad': {'b': 10, 't': 0},
-                    'steps': steps,
-                    # 'transition': {'easing': 'circle-in'},
-                    'bgcolor': '#f7f7f7',
-                    'bordercolor': '#1b1e23',
-                    'activebgcolor': '#1b1e23',
-                    'tickcolor': '#1b1e23',
-                    'font': {'color': '#1b1e23', 'family': 'Ginto normal'},
-                }
-            ],
-            margin=dict(l=0, r=0, t=0, b=0),
-            paper_bgcolor='#f7f7f7',
-        )
-
-        fig.update_coloraxes(
-            colorbar_title_side='right',
-            colorbar_title_font=dict(color='#1b1e23', family='Ginto normal'),
-            # colorbar_title_font=dict(color='#f7f7f7', family='Ginto normal'),
-            colorbar_len=0.8,
-            colorbar_thickness=20,
-            colorbar_tickfont=dict(color='#1b1e23', family='Ginto normal'),
-            # colorbar_tickfont=dict(color='#f7f7f7', family='Ginto normal'),
-        )
-
-        fig.update_layout(coloraxis_colorbar_x=0.01, hoverlabel=dict(font_family='Ginto normal'))
-
-        # https://stackoverflow.com/questions/78834353/animated-plotly-graph-in-pyshiny-express
-        """
-        The below is not working in CSS: the background color and border radius change, but not the padding.
-        So I could try to directly change the HTML string to add the padding in myself.
-
-        .maplibregl-ctrl-attrib-inner {
-            background-color: lightgray;
-            border-radius: 10px;
-            padding: 2px 5px;
-        }
-        """
-
-        # to save individual images later: https://github.com/plotly/plotly.py/issues/664
-        return ui.HTML(fig.to_html(config=config, auto_play=False))
 
     @render.data_frame
     @reactive.event(table_to_save)

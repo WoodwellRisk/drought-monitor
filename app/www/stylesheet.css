@@ -1,6 +1,6 @@
 :root {
     --mobile-breakpoint: 575px;
-    --navbar-height: 50px;
+    --navbar-height: 60px;
     --light-gray: #ebebec;
     --gray: #808080;
     --dark-gray: #393a3d;
@@ -71,43 +71,79 @@ body {
     background-color: var(--background-color);
     border-bottom: 1px solid var(--border-color);
     --bs-gutter-x: 0;
+    /* border: 1px solid orange; */
+}
+
+#navbar-inner-container {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
+
+#tab_menu {
+    /* margin: 0px 1px; */
+    margin: 0px 0px;
+}
+
+.nav-tabs {
+    --bs-nav-tabs-border-width: 0px;
+    --bs-nav-tabs-border-color: none;
+    --bs-nav-tabs-border-radius: none;
+    --bs-nav-tabs-link-active-bg: var(--white);
+    --bs-nav-tabs-link-active-color: var(--black);
+    --bs-nav-tabs-link-hover-border-color: none;
+}
+
+.nav {
+    --bs-nav-link-color: var(--gray);
+    --bs-nav-link-hover-color: none;
+    --bs-nav-link-padding-x: 1rem;
+}
+
+.nav-tabs .nav-link, .nav-tabs > li > a {
+    padding: 0rem 0rem;
+}
+
+.nav-item {
+    margin: auto 1rem;
+}
+
+.nav-item > .nav-link.active {
+    border-bottom: 1px solid var(--black);
 }
 
 #logo-container {
     display: flex;
-    flex: 1;
-    width: 25%;
-    min-width: 190px;
-    max-width: 350px;
+    justify-content: flex-end;
+    width: fit-content;
     height: var(--navbar-height);
     margin: 0px auto;
+    /* border: 1px solid purple; */
 }
 
 #logo-inner-container {
     display: flex;
     height: 100%;
-    width: 100%;
-    max-width: 300px;
-    margin: 0px auto;
     align-items: center;
     padding: 0px 5px;
 }
 
 #org-title {
-    padding: 5px 0px 5px 10px;
+    padding: 5px 10px 5px 5px;
     margin-bottom: 0px;
     font-size: 1.0rem;
 }
 
 #menu-container {
     display: flex;
-    flex: 3;
+    flex: 1;
     height: var(--navbar-height);
+    /* border: 1px solid limegreen; */
 }
 
 #menu-inner-container {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     height: 80%;
     width: 100%;
     margin: auto 0;
@@ -446,29 +482,6 @@ select option:active, select option:checked, select option:focus, select option:
     font-size: 1.5rem;
 }
 
-#tab_menu {
-    margin: 0px 10px;
-}
-
-.nav-tabs {
-    --bs-nav-tabs-border-width: 0px;
-    --bs-nav-tabs-border-color: none;
-    --bs-nav-tabs-border-radius: none;
-    --bs-nav-tabs-link-active-bg: var(--white);
-    --bs-nav-tabs-link-active-color: var(--black);
-    --bs-nav-tabs-link-hover-border-color: none;
-}
-
-.nav {
-    --bs-nav-link-color: var(--gray);
-    --bs-nav-link-hover-color: none;
-    --bs-nav-link-padding-x: 1rem;
-}
-
-.nav-item > .nav-link.active {
-    border-bottom: 1px solid var(--black);
-}
-
 #country_filter_text, #country_name_text, #country_bbox_text, #crop_name_text {
     border: 1px solid var(--border-color);
     height: 30px;
@@ -482,13 +495,6 @@ select option:active, select option:checked, select option:focus, select option:
 
 #country_name_text, #country_bbox_text {
     display: inline-block;
-}
-
-#forecast-map-container {
-    border: 1px solid var(--border-color);
-    height: 450px;
-    /* max-width: 900px; */
-    margin: 30px 10px 5px 10px;
 }
 
 .js-plotly-plot .plotly .modebar-group {
@@ -542,7 +548,7 @@ select option:active, select option:checked, select option:focus, select option:
 
 #iframe-container {
     border: 1px solid var(--border-color);
-    height: 550px;
+    height: 600px;
     margin: 30px 10px 10px 10px;
 }
 
@@ -804,21 +810,6 @@ shiny-data-frame#timeseries_table {
     #sidebar-inner-container > .shiny-input-container:last-of-type {
         padding-bottom: 10px;
     }
-
-    /* #forecast-map-container,  {
-        display: block;
-        margin: 5px auto;
-    } */
-
-    /* div#main {
-        width: 100%;
-    }  */
-
-    /* #forecast-map-container, #timeseries-container, #timeseries-table-container {
-        display: block;
-        width: 425px;
-        margin: 10px auto;
-    } */
 
     .nav {
         --bs-nav-link-padding-x: 1rem;
