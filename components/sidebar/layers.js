@@ -134,6 +134,7 @@ function Layers() {
     if (tempSliderIndex != -1) {
       setShowTimeError(false);
       setHistoricalSliderIndex(tempSliderIndex);
+      setTime(historicalDates.at(tempSliderIndex));
     } else {
       setShowTimeError(true);
     }
