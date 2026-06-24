@@ -22,7 +22,6 @@ const DensityPlot = ({ data, colormap }) => {
   const month = useStore((state) => state.month);
   const time = useStore((state) => state.time);
   const variable = useStore((state) => state.variable);
-  const window = useStore((state) => state.window);
   const year = useStore((state) => state.year);
 
   const min = 0.0;
@@ -41,7 +40,7 @@ const DensityPlot = ({ data, colormap }) => {
   const xMax = (max + binWidth) * 100;
 
   if (!data || !data[variable]) {
-    // ex: if(!'drought' or Object["drought"]) {...}
+    // ex: if(!'perc' or Object["perc"]) {...}
     return;
   }
 
@@ -97,9 +96,9 @@ const DensityPlot = ({ data, colormap }) => {
     return binnedData;
   };
 
-  let plotData = binData(data[variable][window][time], bin);
+  let plotData = binData(data[variable][time], bin);
   if (new Date(previousTime) >= new Date(minDate)) {
-    plotPreviousData = binData(data[variable][window][previousTime], bin);
+    plotPreviousData = binData(data[variable][previousTime], bin);
   }
   // console.log(plotData)
 

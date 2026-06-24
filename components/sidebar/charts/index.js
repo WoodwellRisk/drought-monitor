@@ -13,12 +13,6 @@ const StatsDisplay = (props) => {
 
   const time = useStore((state) => state.time);
   const timePeriod = useStore((state) => state.timePeriod);
-  const window = useStore((state) => state.window);
-
-  // if (!data || !data[variable] || !data[variable][window] || !data[variable][window][time]) {
-  //   // ex: if(!'perc' or Object["perc"] or Object["perc"]['3'] ...) {...}
-  //   return;
-  // }
 
   let result;
 
@@ -28,34 +22,25 @@ const StatsDisplay = (props) => {
   // https://github.com/carbonplan/forest-carbon-web/blob/9012c0fd99a952b68a08a6a25ba645af736bb8fb/components/regional-emissions.js
   let chartData = useMemo(() => {
     let avgData = {};
-    // let top95 = {}
-    // let bottom95 = {}
 
     if (!data) return {};
-    data.coordinates.window.forEach((w) => {
-      avgData[w] = {};
-
-      data.coordinates.time.forEach((t) => {
-        let filteredData = data[variable][w][t].filter((d) => d !== 9.969209968386869e36);
-        const average = filteredData.reduce((a, b) => a + b, 0) / filteredData.length;
-        avgData[w][t] = average;
-        // top95[t] = d3.quantile(filteredData, 0.95)
-        // bottom95[t] = d3.quantile(filteredData, 0.05)
-      });
-      // return {'avg': avgData, 'top95': top95, 'bottom95': bottom95}
+    data.coordinates.time.forEach((t) => {
+      let filteredData = data[variable][t].filter((d) => d !== 9.969209968386869e36);
+      const average = filteredData.reduce((a, b) => a + b, 0) / filteredData.length;
+      avgData[t] = average;
     });
     return { avg: avgData };
-  }, [data, timePeriod]);
+  }, [data]);
 
   console.log(chartData);
-  if (!data || !data[variable] || !data[variable][window] || !data[variable][window][time]) {
-    // ex: if(!'perc' or Object["perc"] or Object["perc"]['3'] ...) {...}
+  if (!data || !data[variable] || !data[variable][time]) {
+    // ex: if(!'perc' or Object["perc"] or Object["perc"]['1991-01-01'] ...) {...}
     return;
   }
 
   if (!chartData['avg']) return;
 
-  let avg = chartData['avg'][window][time];
+  let avg = chartData['avg'][time];
   if (isNaN(avg)) {
     result = 'no data in region';
   } else {

@@ -20,7 +20,6 @@ const sx = {
 const BarChart = ({ data, colormap }) => {
   const time = useStore((state) => state.time);
   const variable = useStore((state) => state.variable);
-  const window = useStore((state) => state.window);
 
   const min = 0.0;
   const max = 1.0;
@@ -28,11 +27,11 @@ const BarChart = ({ data, colormap }) => {
   let graphData = [];
 
   if (!data || !data[variable]) {
-    // ex: if(!'drought' or Object["drought"]) {...}
+    // ex: if(!'perc' or Object["perc"]) {...}
     return;
   }
 
-  data[variable][window][time].forEach(function (element, idx) {
+  data[variable][time].forEach(function (element, idx) {
     if (element !== 9.969209968386869e36) {
       if (element > max) {
         graphData.push(max);
@@ -76,7 +75,6 @@ const BarChart = ({ data, colormap }) => {
   );
   const xMin = (min - binWidth) * 100;
   const xMax = (max + binWidth) * 100;
-  // console.log(plotData)
 
   return (
     <Box sx={{ ...sx.chart }} className="chart-container">
@@ -90,17 +88,19 @@ const BarChart = ({ data, colormap }) => {
           <Bar data={plotData} color={plotData.map((_, i) => colormap[i])} strokeWidth={0.5} />
         </Plot>
       </Chart>
-      {/* <Box sx={{
-                    ml: [2],
-                    mb: [2],
-                    pl: [5],
-                    mt: ['-1px'],
-                    fontFamily: 'mono',
-                    letterSpacing: 'mono',
-                    textTransform: 'uppercase',
-                }}>
-                    Download Data <DownloadButton time={time} data={plotData} region={data['coordinates']} />
-            </Box> */}
+      {/* 
+      <Box sx={{
+              ml: [2],
+              mb: [2],
+              pl: [5],
+              mt: ['-1px'],
+              fontFamily: 'mono',
+              letterSpacing: 'mono',
+              textTransform: 'uppercase',
+          }}>
+              Download Data <DownloadButton time={time} data={plotData} region={data['coordinates']} />
+      </Box> 
+    */}
     </Box>
   );
 };
