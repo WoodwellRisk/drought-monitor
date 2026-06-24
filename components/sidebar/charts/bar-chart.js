@@ -2,19 +2,25 @@ import { Box, IconButton } from 'theme-ui';
 import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/charts';
 import Bar from './bar';
 import DownloadButton from '../icons/download';
+
+import { useStore } from '../../store/index';
 import * as d3 from 'd3';
 
-const BarChart = ({ data, variable, time, colormap }) => {
-  const sx = {
-    chart: {
-      mt: [4],
-      mx: 'auto',
-      // pl: [0, 1, 1, 1],
-      // pr: [0, 1, 1, 1,],
-      width: '100%',
-      height: '200px',
-    },
-  };
+const sx = {
+  chart: {
+    mt: [4],
+    mx: 'auto',
+    // pl: [0, 1, 1, 1],
+    // pr: [0, 1, 1, 1,],
+    width: '100%',
+    height: '200px',
+  },
+};
+
+const BarChart = ({ data, colormap }) => {
+  const time = useStore((state) => state.time);
+  const variable = useStore((state) => state.variable);
+  const window = useStore((state) => state.window);
 
   const min = 0.0;
   const max = 1.0;
@@ -25,9 +31,8 @@ const BarChart = ({ data, variable, time, colormap }) => {
     // ex: if(!'drought' or Object["drought"]) {...}
     return;
   }
-  // console.log(data)
 
-  data[variable][time].forEach(function (element, idx) {
+  data[variable][window][time].forEach(function (element, idx) {
     if (element !== 9.969209968386869e36) {
       if (element > max) {
         graphData.push(max);
@@ -96,8 +101,6 @@ const BarChart = ({ data, variable, time, colormap }) => {
                 }}>
                     Download Data <DownloadButton time={time} data={plotData} region={data['coordinates']} />
             </Box> */}
-
-      {/* <SidebarDivider sx={{ width: '100%', my: 4 }} /> */}
     </Box>
   );
 };

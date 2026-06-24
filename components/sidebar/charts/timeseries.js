@@ -19,8 +19,10 @@ import Bar from './bar';
 import { useStore } from '../../store/index';
 import * as d3 from 'd3';
 
-const TimeBar = ({ data, time, colormap }) => {
+const TimeBar = ({ data, colormap }) => {
   const sliding = useStore((state) => state.sliding);
+  const time = useStore((state) => state.time);
+  const window = useStore((state) => state.window);
 
   const sx = {
     chart: {
@@ -43,7 +45,7 @@ const TimeBar = ({ data, time, colormap }) => {
     },
   };
 
-  let mean = data['avg'];
+  let mean = data['avg'][window];
   // let top = data['top95']
   // let bottom = data['bottom95']
 
@@ -104,18 +106,20 @@ const TimeBar = ({ data, time, colormap }) => {
               }}
             />
 
-            {/* <Bar
-                            data={plotTop.map(([x, y]) => [x, 0.5, y])}
-                            color={'gray'}
-                            strokeWidth={0.0}
-                            alpha={0.5}
-                        />
+            {/* 
+              <Bar
+                  data={plotTop.map(([x, y]) => [x, 0.5, y])}
+                  color={'gray'}
+                  strokeWidth={0.0}
+                  alpha={0.5}
+              />
 
-                        <Bar
-                            data={plotBottom.map(([x, y]) => [x, 0.5, y])}
-                            color={'gray'}
-                            strokeWidth={0.0}
-                        /> */}
+              <Bar
+                  data={plotBottom.map(([x, y]) => [x, 0.5, y])}
+                  color={'gray'}
+                  strokeWidth={0.0}
+              /> 
+            */}
 
             <Line data={plotMean} width={1.5} color={'black'} />
 

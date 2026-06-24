@@ -151,18 +151,19 @@ const Map = ({ mobile }) => {
         )}
 
         <Raster
-          key={`${variable}-${timePeriod}-${window}`}
+          key={`wb-${timePeriod}`}
           colormap={colormap}
           clim={clim}
           display={display}
           opacity={opacity}
           mode={'texture'}
-          source={`https://storage.googleapis.com/water-balance/zarr/viz/wb-${timePeriod.substring(
-            0,
-            1
-          )}${window}-${maxHistoricalDate}.zarr`}
+          source={
+            timePeriod == 'historical'
+              ? `https://storage.googleapis.com/water-balance/zarr/viz/wb-h.zarr`
+              : `https://storage.googleapis.com/water-balance/zarr/viz/wb-f-${maxHistoricalDate}.zarr`
+          }
           variable={variable}
-          selector={{ time }}
+          selector={{ window, time }}
           regionOptions={{ setData: handleRegionData, selector: {} }}
         />
 

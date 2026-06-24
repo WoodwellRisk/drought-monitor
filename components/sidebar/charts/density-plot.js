@@ -6,21 +6,24 @@ import Bar from './bar';
 import { useStore } from '../../store/index';
 import * as d3 from 'd3';
 
-const DensityPlot = ({ data, variable, time, colormap }) => {
-  const year = useStore((state) => state.year);
-  const month = useStore((state) => state.month);
-  const minDate = useStore((state) => state.minDate);
+const sx = {
+  chart: {
+    mt: [4],
+    mx: 'auto',
+    pl: [0, 1, 1, 1],
+    pr: [0, 1, 1, 1],
+    width: '100%',
+    height: '200px',
+  },
+};
 
-  const sx = {
-    chart: {
-      mt: [4],
-      mx: 'auto',
-      pl: [0, 1, 1, 1],
-      pr: [0, 1, 1, 1],
-      width: '100%',
-      height: '200px',
-    },
-  };
+const DensityPlot = ({ data, colormap }) => {
+  const minDate = useStore((state) => state.minDate);
+  const month = useStore((state) => state.month);
+  const time = useStore((state) => state.time);
+  const variable = useStore((state) => state.variable);
+  const window = useStore((state) => state.window);
+  const year = useStore((state) => state.year);
 
   const min = 0.0;
   const max = 1.0;
@@ -94,9 +97,9 @@ const DensityPlot = ({ data, variable, time, colormap }) => {
     return binnedData;
   };
 
-  let plotData = binData(data[variable][time], bin);
+  let plotData = binData(data[variable][window][time], bin);
   if (new Date(previousTime) >= new Date(minDate)) {
-    plotPreviousData = binData(data[variable][previousTime], bin);
+    plotPreviousData = binData(data[variable][window][previousTime], bin);
   }
   // console.log(plotData)
 
@@ -138,22 +141,26 @@ const DensityPlot = ({ data, variable, time, colormap }) => {
                     /> */}
           {plotPreviousData && (
             <>
-              {/* <Area
-                                data={plotPreviousData}
-                                width={1.5}
-                                opacity={0.3}
-                                color={'gray'}
-                                curve={d3.curveMonotoneX} // d3.curveBumpX is another good option
-                            /> */}
+              {/* 
+              <Area
+                  data={plotPreviousData}
+                  width={1.5}
+                  opacity={0.3}
+                  color={'gray'}
+                  curve={d3.curveMonotoneX} // d3.curveBumpX is another good option
+              /> 
+              */}
               <Line data={plotPreviousData} width={1.5} color={'gray'} curve={d3.curveMonotoneX} />
             </>
           )}
 
-          {/* <Bar
-                        data={plotData}
-                        color={plotData.map((_, i) => colormap[i])}
-                        strokeWidth={0.5}
-                    /> */}
+          {/* 
+          <Bar
+              data={plotData}
+              color={plotData.map((_, i) => colormap[i])}
+              strokeWidth={0.5}
+          /> 
+          */}
 
           <Area
             data={plotData}

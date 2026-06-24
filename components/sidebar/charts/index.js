@@ -12,13 +12,18 @@ const StatsDisplay = (props) => {
   const { data, variable, colormap, hexmapBar, hexmapTime } = props;
 
   const time = useStore((state) => state.time);
+  const timePeriod = useStore((state) => state.timePeriod);
+  const window = useStore((state) => state.window);
 
-  if (!data || !data[variable]) {
-    // ex: if(!'drought' or Object["drought"]) {...}
-    return;
-  }
+  // if (!data || !data[variable] || !data[variable][window] || !data[variable][window][time]) {
+  //   // ex: if(!'perc' or Object["perc"] or Object["perc"]['3'] ...) {...}
+  //   return;
+  // }
 
   let result;
+
+  console.log(data);
+  console.log();
 
   // https://github.com/carbonplan/forest-carbon-web/blob/9012c0fd99a952b68a08a6a25ba645af736bb8fb/components/regional-emissions.js
   let chartData = useMemo(() => {
@@ -27,20 +32,30 @@ const StatsDisplay = (props) => {
     // let bottom95 = {}
 
     if (!data) return {};
-    data.coordinates.time.forEach((t) => {
-      let filteredData = data[variable][t].filter((d) => d !== 9.969209968386869e36);
-      const average = filteredData.reduce((a, b) => a + b, 0) / filteredData.length;
-      avgData[t] = average;
-      // top95[t] = d3.quantile(filteredData, 0.95)
-      // bottom95[t] = d3.quantile(filteredData, 0.05)
+    data.coordinates.window.forEach((w) => {
+      avgData[w] = {};
+
+      data.coordinates.time.forEach((t) => {
+        let filteredData = data[variable][w][t].filter((d) => d !== 9.969209968386869e36);
+        const average = filteredData.reduce((a, b) => a + b, 0) / filteredData.length;
+        avgData[w][t] = average;
+        // top95[t] = d3.quantile(filteredData, 0.95)
+        // bottom95[t] = d3.quantile(filteredData, 0.05)
+      });
+      // return {'avg': avgData, 'top95': top95, 'bottom95': bottom95}
     });
-    // return {'avg': avgData, 'top95': top95, 'bottom95': bottom95}
     return { avg: avgData };
-  }, [data]);
+  }, [data, timePeriod]);
+
+  console.log(chartData);
+  if (!data || !data[variable] || !data[variable][window] || !data[variable][window][time]) {
+    // ex: if(!'perc' or Object["perc"] or Object["perc"]['3'] ...) {...}
+    return;
+  }
 
   if (!chartData['avg']) return;
 
-  let avg = chartData['avg'][time];
+  let avg = chartData['avg'][window][time];
   if (isNaN(avg)) {
     result = 'no data in region';
   } else {
@@ -60,19 +75,19 @@ const StatsDisplay = (props) => {
         {result}
       </Box>
 
-      <BarChart data={data} variable={variable} time={time} colormap={hexmapBar} />
+      <BarChart data={data} colormap={hexmapBar} />
 
-      {/* <TimeSeries data={chartData} time={time} colormap={hexmapTime} /> */}
+      {/* <TimeSeries data={chartData} colormap={hexmapTime} /> */}
 
-      {/* <DensityPlot data={data} variable={variable} time={time} colormap={hexmapBar} /> */}
+      {/* <DensityPlot data={data} colormap={hexmapBar} /> */}
     </>
   );
 };
 
 const Charts = () => {
-  const variable = useStore((state) => state.variable);
   const regionData = useStore((state) => state.regionData);
   const showRegionPicker = useStore((state) => state.showRegionPicker);
+  const variable = useStore((state) => state.variable);
 
   const colormapName = useStore((state) => state.colormapName);
   const colormap = useThemedColormap(colormapName);
