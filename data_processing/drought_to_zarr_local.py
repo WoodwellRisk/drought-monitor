@@ -95,8 +95,9 @@ def pyramid_to_zarr(ds: xr.Dataset, levels: int, path: str) -> None:
     dt = pyramid_reproject(
         ds.drop_encoding(),
         levels=levels,
-        extra_dim='window',
-        other_chunks={'window': len(ds.window), 'time': len(ds.time)},
+        # extra_dim='window',
+        # other_chunks={'window': len(ds.window), 'time': len(ds.time)},
+        other_chunks={'time': len(ds.time)},
     )
 
     dt.to_zarr(path, zarr_format=2, consolidated=True, mode='w')
@@ -178,33 +179,18 @@ def drought_pipeline():
     f12 = f12.rename({'L': 'time', '50%': 'perc'})
     f12 = f12[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
-    print('Concatenating historical datasets.')
-    h = xr.concat([h3, h12], data_vars='all', dim='window').assign_coords(
-        {'window': np.array(['3', '12'], dtype='U10')}
-    )
-
-    print('Concatenating forecast datasets.')
-    print()
-    f = xr.concat([f3, f12], data_vars='all', dim='window').assign_coords(
-        {'window': np.array(['3', '12'], dtype='U10')}
-    )
-
     dataset_dict = {
-        'h': h,
-        'f': f,
+        'h3': h3,
+        'h12': h12,
+        'f3': f3,
+        'f12': f12,
     }
 
     print('Saving Zarr stores used for analysis.')
     # save the data as zarr stores that we will use for analysis
     for dataset in dataset_dict.keys():
-        if dataset == 'h':
-            save_print_label = 'historical'
-            save_to = f'gs://{BUCKET}/zarr/analysis/wb-{dataset}.zarr'
-        else:
-            save_print_label = 'forecast'
-            save_to = f'gs://{BUCKET}/zarr/analysis/wb-{dataset}-{year_ic}-{month_ic}-01.zarr'
-
-        print(f'    Saving {save_print_label} data...')
+        print(f'    Saving {dataset.upper()} data...')
+        save_to = f'gs://{BUCKET}/zarr/analysis/wb-{dataset}-{year_ic}-{month_ic}-01.zarr'
         dataset_dict[dataset].to_zarr(
             save_to,
             consolidated=True,
@@ -216,36 +202,38 @@ def drought_pipeline():
     print('Saving Zarr stores used for visualization.')
     # next, save the data as zarr stores that we will use for visualization
     # first, we need to save their time coordinates as object arrays
-    h['time'] = np.array(
-        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h.time.values], dtype='U10'
+    h3['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h3.time.values], dtype='U10'
     )
-    f['time'] = np.array(
-        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f.time.values], dtype='U10'
+    h12['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h12.time.values], dtype='U10'
+    )
+
+    f3['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f3.time.values], dtype='U10'
+    )
+    f12['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f12.time.values], dtype='U10'
     )
 
     # redeclare dict since data has changed
     dataset_dict = {
-        'h': h,
-        'f': f,
+        'h3': h3,
+        'h12': h12,
+        'f3': f3,
+        'f12': f12,
     }
 
     # next, calculate the number of zoom levels to use for the output Zarr
     pixels_per_tile = 128
-    longitude_length = h.perc.x.shape[0]
-    # longitude_length = f.perc.x.shape[0]
+    longitude_length = h3.perc.x.shape[0]
     max_levels = round(np.sqrt(longitude_length / pixels_per_tile)) + 1
     levels = max_levels
 
     # create pyramids for each dataset, then save the pyramid to zarr
     for dataset in dataset_dict.keys():
-        if dataset == 'h':
-            save_print_label = 'historical'
-            save_to = f'gs://{BUCKET}/zarr/viz/wb-{dataset}.zarr'
-        else:
-            save_print_label = 'forecast'
-            save_to = f'gs://{BUCKET}/zarr/viz/wb-{dataset}-{year_ic}-{month_ic}-01.zarr'
-
-        print(f'    Saving {save_print_label} data...')
+        print(f'    Saving {dataset.upper()} data...')
+        save_to = f'gs://{BUCKET}/zarr/viz/wb-{dataset}-{year_ic}-{month_ic}-01.zarr'
         pyramid_to_zarr(dataset_dict[dataset], levels, save_to)
     print()
 
