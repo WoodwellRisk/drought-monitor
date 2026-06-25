@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { Box, useThemeUI } from 'theme-ui';
+import { useBreakpointIndex } from '@theme-ui/match-media';
 import { useThemedColormap } from '@carbonplan/colormaps';
 import { Map as MapContainer, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps';
 
@@ -11,6 +12,8 @@ import Router from './router';
 import { useStore } from '../store/index';
 
 const Map = ({ mobile }) => {
+  const isWide = useBreakpointIndex() > 0;
+
   const { theme } = useThemeUI();
   const container = useRef(null);
 
@@ -139,7 +142,7 @@ const Map = ({ mobile }) => {
           </>
         )}
 
-        {showRegionPicker && (
+        {showRegionPicker && isWide && (
           <RegionPicker
             color={theme.colors.primary}
             backgroundColor={theme.rawColors.background}
