@@ -25,6 +25,10 @@ from utils import create_bbox_from_coords, open_production_data
 
 updating = False
 
+explorer_tab_name = 'Global view'
+timeseries_tab_name = 'Figures and tables'
+forecast_tab_name = 'Clipped forecast'
+
 # calculate the initial conditions from today's year and month
 # in general, the month (and potentially year) roll back one month
 # for example: if we are producing the forecast in january,
@@ -56,7 +60,6 @@ forecast_dates = [
     date.strftime('%Y-%m-%d')
     for date in pd.date_range(start=f'{year_ic}-{month_ic}-01', freq='MS', periods=7)
 ][1:]
-# print(forecast_dates)
 
 # this is used in the the filename for downloading plots and tables, but is also used in slider values
 min_date = None if updating else historical_dates[0]
@@ -267,8 +270,9 @@ app_ui = ui.page_fluid(
                             'settings_button', 'Settings', disabled=True
                         ),  # this could also be called options or controls
                         ui.navset_tab(
-                            ui.nav_panel('Explore data', ''),
-                            ui.nav_panel('Download data', ''),
+                            ui.nav_panel(explorer_tab_name, ''),
+                            ui.nav_panel(timeseries_tab_name, ''),
+                            ui.nav_panel(forecast_tab_name, ''),
                             id='tab_menu',
                         ),
                     ),
@@ -409,62 +413,11 @@ def server(input: Inputs, output: Outputs, session: Session):
     display_bounds_error = reactive.value(False)
 
     @render.ui
-    def sidebar_content():
-        selected_tab = input.tab_menu()
-
-        if selected_tab == 'Explore data':
-            return None
-        else:  # 'Download data'
-            return ui.TagList(
-                ui.div(
-                    {'id': 'sidebar'},
-                    ui.div(
-                        {'id': 'sidebar-inner-container'},
-                        ui.div(
-                            {'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select an integration window:'),
-                        ),
-                        ui.input_select(
-                            'window_select', '', {3: '3 month', 12: '12 month'}, size=2
-                        ),
-                        ui.div(
-                            {'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select a country:'),
-                        ),
-                        ui.input_text('country_filter', label='', placeholder='Filter by name'),
-                        # https://shiny.posit.co/py/api/core/ui.update_select.html
-                        ui.input_select('country_select', '', [], size=5),
-                        ui.div(
-                            {'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select a state:'),
-                        ),
-                        # ui.input_text('state_filter', label='', placeholder='Filter by name'),
-                        ui.input_select('state_select', '', [], size=5),
-                        # ui.input_checkbox_group('state_checkbox', '', {}),
-                        # ui.output_ui('show_state_output'),
-                        ui.panel_conditional(
-                            'input.window_select == 3',
-                            ui.div(
-                                {'class': 'select-label-container'},
-                                ui.p({'class': 'select-label'}, 'Select a crop:'),
-                            ),
-                            ui.input_select('crop_select', '', [], size=5),
-                            {'id': 'crop-select-conditional-panel'},
-                        ),
-                        ui.div(
-                            {'id': 'process-data-container'},
-                            ui.input_task_button('process_data_button', label='Run'),
-                        ),
-                    ),
-                ),
-            )
-
-    @render.ui
     def main_content():
-        selected_tab = input.tab_menu()
-
-        if selected_tab == 'Explore data':
-            return ui.TagList(
+        return ui.TagList(
+            # data explorer tab
+            ui.panel_conditional(
+                f"input.tab_menu == '{explorer_tab_name}'",
                 ui.div(
                     {'id': 'iframe-container'},
                     ui.tags.iframe(
@@ -473,10 +426,10 @@ def server(input: Inputs, output: Outputs, session: Session):
                         width='100%',
                     ),
                 ),
-            )
-
-        else:  # 'Download data'
-            return ui.TagList(
+            ),
+            # timeseries and table tab
+            ui.panel_conditional(
+                f"input.tab_menu == '{timeseries_tab_name}'",
                 ui.div(
                     {
                         'id': 'download-timeseries-container',
@@ -506,7 +459,67 @@ def server(input: Inputs, output: Outputs, session: Session):
                     ui.output_data_frame('timeseries_table'),
                 ),
                 ui.busy_indicators.options(),
-            )
+            ),
+            # forecast map tab
+            ui.panel_conditional(
+                f"input.tab_menu == '{forecast_tab_name}'",
+                ui.div(
+                    {'id': 'forecast-map-container'},
+                    ui.output_ui('forecast_map'),
+                ),
+            ),
+        )
+
+    @render.ui
+    def sidebar_content():
+        return ui.TagList(
+            ui.panel_conditional(
+                f"input.tab_menu != '{explorer_tab_name}'",
+                {'id': 'sidebar'},
+                ui.div(
+                    {'id': 'sidebar-inner-container'},
+                    ui.div(
+                        {'class': 'select-label-container'},
+                        ui.p({'class': 'select-label'}, 'Select a country:'),
+                    ),
+                    ui.input_text('country_filter', label='', placeholder='Filter by name'),
+                    # https://shiny.posit.co/py/api/core/ui.update_select.html
+                    ui.input_select('country_select', '', countries_list, size=5),
+                    ui.div(
+                        {'class': 'select-label-container'},
+                        ui.p({'class': 'select-label'}, 'Select a state:'),
+                    ),
+                    # ui.input_text('state_filter', label='', placeholder='Filter by name'),
+                    ui.input_select('state_select', '', [], size=5),
+                    # ui.input_checkbox_group('state_checkbox', '', {}),
+                    # ui.output_ui('show_state_output'),
+                    ui.div(
+                        {'class': 'select-label-container'},
+                        ui.p({'class': 'select-label'}, 'Select an integration window:'),
+                    ),
+                    ui.input_select(
+                        'window_select',
+                        '',
+                        {3: '3 month', 12: '12 month'},
+                        size=2,
+                        selected=3,
+                    ),
+                    ui.panel_conditional(
+                        'input.window_select == 3',
+                        ui.div(
+                            {'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select a crop:'),
+                        ),
+                        ui.input_select('crop_select', '', crop_list, size=5),
+                        {'id': 'crop-select-conditional-panel'},
+                    ),
+                    ui.div(
+                        {'id': 'process-data-container'},
+                        ui.input_task_button('process_data_button', label='Run'),
+                    ),
+                ),
+            ),
+        )
 
     @render.ui
     def show_update_message():
@@ -1436,6 +1449,114 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         timeseries_to_save.set(fig)
         return fig
+
+    @render.ui
+    @reactive.event(unweighted_forecast_wb)
+    def forecast_map(alt='a map showing the borders of a country of interest'):
+        forecast = unweighted_forecast_wb()
+        if not forecast:
+            return
+
+        cname = country_name()
+        sname = state_name()
+        country = countries.query(" name == @cname ")
+        # state = states.query(" name == @sname and country == @cname ")
+
+        bbox = bounds()
+        xmin, ymin, xmax, ymax = bbox
+
+        if cname == '' or sname == '' or forecast is None:
+            return
+
+        if any(x is None for x in (xmin, ymin, xmax, ymax)):
+            return
+
+        config = {
+            # 'staticPlot': False,
+            'displaylogo': False,
+            # 'displayModeBar': False,
+            'scrollZoom': True,
+            # 'modeBarButtonsToRemove': ['zoom', 'pan', 'select', 'lasso2d', 'toImage']
+            'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'],
+        }
+
+        max_bounds = max(abs(xmin - xmax), abs(ymin - ymax)) * 111
+        zoom = 11 - np.log(max_bounds)
+
+        country_forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
+        df = country_forecast['perc'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
+        df.columns = ['time', 'y', 'x', 'Percentile']
+
+        formatted_dates = [pd.to_datetime(date).strftime('%b-%Y') for date in forecast_dates]
+
+        fig = px.scatter_map(
+            data_frame=df,
+            lat=df.y,
+            lon=df.x,
+            color=df['Percentile'],
+            color_continuous_scale=px.colors.diverging.RdYlBu,
+            # color_continuous_scale = px.colors.sequential.Plasma,
+            range_color=[0, 1],
+            hover_data={'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
+            map_style='carto-positron-nolabels',
+            # map_style = 'carto-darkmatter-nolabels',
+            zoom=zoom,
+            height=495,
+            animation_frame='time',
+        )
+
+        fig['layout'].pop('updatemenus')
+
+        steps = []
+        for idx in range(len(formatted_dates)):
+            step = dict(method='animate', label=formatted_dates[idx])
+            steps.append(step)
+
+        fig.update_layout(
+            sliders=[
+                {
+                    'currentvalue': {'prefix': 'Time: '},
+                    'len': 0.8,
+                    'pad': {'b': 10, 't': 0},
+                    'steps': steps,
+                    # 'transition': {'easing': 'circle-in'},
+                    'bgcolor': '#f7f7f7',
+                    'bordercolor': '#1b1e23',
+                    'activebgcolor': '#1b1e23',
+                    'tickcolor': '#1b1e23',
+                    'font': {'color': '#1b1e23', 'family': 'Ginto normal'},
+                }
+            ],
+            margin=dict(l=0, r=0, t=0, b=0),
+            paper_bgcolor='#f7f7f7',
+        )
+
+        fig.update_coloraxes(
+            colorbar_title_side='right',
+            colorbar_title_font=dict(color='#1b1e23', family='Ginto normal'),
+            # colorbar_title_font=dict(color='#f7f7f7', family='Ginto normal'),
+            colorbar_len=0.8,
+            colorbar_thickness=20,
+            colorbar_tickfont=dict(color='#1b1e23', family='Ginto normal'),
+            # colorbar_tickfont=dict(color='#f7f7f7', family='Ginto normal'),
+        )
+
+        fig.update_layout(coloraxis_colorbar_x=0.01, hoverlabel=dict(font_family='Ginto normal'))
+
+        # https://stackoverflow.com/questions/78834353/animated-plotly-graph-in-pyshiny-express
+        """
+        The below is not working in CSS: the background color and border radius change, but not the padding.
+        So I could try to directly change the HTML string to add the padding in myself.
+
+        .maplibregl-ctrl-attrib-inner {
+            background-color: lightgray;
+            border-radius: 10px;
+            padding: 2px 5px;
+        }
+        """
+
+        # to save individual images later: https://github.com/plotly/plotly.py/issues/664
+        return ui.HTML(fig.to_html(config=config, auto_play=False))
 
     @render.download(
         filename=lambda: f'drought-timeseries-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.png'.replace(

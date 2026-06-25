@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   tabs.forEach(tab => {
       tab.addEventListener('click', () => {
-        if(tab.innerText == 'Explore data') {
+        if(tab.innerText == 'Global view') {
           settingsButton.setAttribute('disabled', '');
           sidebarContainer.style.display = 'none';
           main.style.maxWidth = '100%';

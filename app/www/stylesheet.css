@@ -71,7 +71,7 @@ body {
     background-color: var(--background-color);
     border-bottom: 1px solid var(--border-color);
     --bs-gutter-x: 0;
-    /* border: 1px solid orange; */
+    overflow: hidden;
 }
 
 #navbar-inner-container {
@@ -79,11 +79,31 @@ body {
     height: 100%;
     width: 100%;
     margin: 0 10px;
+    overflow: hidden;
+}
+
+#menu-container {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    height: var(--navbar-height);
+}
+
+#menu-inner-container {
+    display: flex;
+    justify-content: flex-start;
+    height: 80%;
+    width: 100%;
+    margin: auto 0;
 }
 
 #tab_menu {
     /* margin: 0px 1px; */
+    flex: 1;
+    min-width: 0;
     margin: 0px 0px;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .nav-tabs {
@@ -93,20 +113,25 @@ body {
     --bs-nav-tabs-link-active-bg: var(--white);
     --bs-nav-tabs-link-active-color: var(--black);
     --bs-nav-tabs-link-hover-border-color: none;
+    flex-wrap: nowrap;
 }
 
 .nav {
     --bs-nav-link-color: var(--gray);
     --bs-nav-link-hover-color: none;
     --bs-nav-link-padding-x: 1rem;
+    flex-wrap: nowrap;
 }
 
 .nav-tabs .nav-link, .nav-tabs > li > a {
     padding: 0rem 0rem;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .nav-item {
     margin: auto 1rem;
+    flex-shrink: 0;
 }
 
 .nav-item > .nav-link.active {
@@ -115,6 +140,7 @@ body {
 
 #logo-container {
     display: flex;
+    flex-shrink: 0;
     justify-content: flex-end;
     width: fit-content;
     height: var(--navbar-height);
@@ -132,21 +158,6 @@ body {
     padding: 5px 10px 5px 5px;
     margin-bottom: 0px;
     font-size: 1.0rem;
-}
-
-#menu-container {
-    display: flex;
-    flex: 1;
-    height: var(--navbar-height);
-    /* border: 1px solid limegreen; */
-}
-
-#menu-inner-container {
-    display: flex;
-    justify-content: flex-start;
-    height: 80%;
-    width: 100%;
-    margin: auto 0;
 }
 
 #load_data_button {
@@ -491,6 +502,13 @@ select option:active, select option:checked, select option:focus, select option:
 
 #country_name_text, #country_bbox_text {
     display: inline-block;
+}
+
+#forecast-map-container {
+    border: 1px solid var(--border-color);
+    height: 500px;
+    /* max-width: 900px; */
+    margin: 30px 10px 5px 10px;
 }
 
 .js-plotly-plot .plotly .modebar-group {
