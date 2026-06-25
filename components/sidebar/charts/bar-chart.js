@@ -2,19 +2,24 @@ import { Box, IconButton } from 'theme-ui';
 import { AxisLabel, Chart, Grid, Plot, Ticks, TickLabels } from '@carbonplan/charts';
 import Bar from './bar';
 import DownloadButton from '../icons/download';
+
+import { useStore } from '../../store/index';
 import * as d3 from 'd3';
 
-const BarChart = ({ data, variable, time, colormap }) => {
-  const sx = {
-    chart: {
-      mt: [4],
-      mx: 'auto',
-      // pl: [0, 1, 1, 1],
-      // pr: [0, 1, 1, 1,],
-      width: '100%',
-      height: '200px',
-    },
-  };
+const sx = {
+  chart: {
+    mt: [4],
+    mx: 'auto',
+    // pl: [0, 1, 1, 1],
+    // pr: [0, 1, 1, 1,],
+    width: '100%',
+    height: '200px',
+  },
+};
+
+const BarChart = ({ data, colormap }) => {
+  const time = useStore((state) => state.time);
+  const variable = useStore((state) => state.variable);
 
   const min = 0.0;
   const max = 1.0;
@@ -22,10 +27,9 @@ const BarChart = ({ data, variable, time, colormap }) => {
   let graphData = [];
 
   if (!data || !data[variable]) {
-    // ex: if(!'drought' or Object["drought"]) {...}
+    // ex: if(!'perc' or Object["perc"]) {...}
     return;
   }
-  // console.log(data)
 
   data[variable][time].forEach(function (element, idx) {
     if (element !== 9.969209968386869e36) {
@@ -71,7 +75,6 @@ const BarChart = ({ data, variable, time, colormap }) => {
   );
   const xMin = (min - binWidth) * 100;
   const xMax = (max + binWidth) * 100;
-  // console.log(plotData)
 
   return (
     <Box sx={{ ...sx.chart }} className="chart-container">
@@ -85,19 +88,19 @@ const BarChart = ({ data, variable, time, colormap }) => {
           <Bar data={plotData} color={plotData.map((_, i) => colormap[i])} strokeWidth={0.5} />
         </Plot>
       </Chart>
-      {/* <Box sx={{
-                    ml: [2],
-                    mb: [2],
-                    pl: [5],
-                    mt: ['-1px'],
-                    fontFamily: 'mono',
-                    letterSpacing: 'mono',
-                    textTransform: 'uppercase',
-                }}>
-                    Download Data <DownloadButton time={time} data={plotData} region={data['coordinates']} />
-            </Box> */}
-
-      {/* <SidebarDivider sx={{ width: '100%', my: 4 }} /> */}
+      {/* 
+      <Box sx={{
+              ml: [2],
+              mb: [2],
+              pl: [5],
+              mt: ['-1px'],
+              fontFamily: 'mono',
+              letterSpacing: 'mono',
+              textTransform: 'uppercase',
+          }}>
+              Download Data <DownloadButton time={time} data={plotData} region={data['coordinates']} />
+      </Box> 
+    */}
     </Box>
   );
 };

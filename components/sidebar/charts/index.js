@@ -12,31 +12,27 @@ const StatsDisplay = (props) => {
   const { data, variable, colormap, hexmapBar, hexmapTime } = props;
 
   const time = useStore((state) => state.time);
-
-  if (!data || !data[variable]) {
-    // ex: if(!'drought' or Object["drought"]) {...}
-    return;
-  }
+  const timePeriod = useStore((state) => state.timePeriod);
 
   let result;
 
   // https://github.com/carbonplan/forest-carbon-web/blob/9012c0fd99a952b68a08a6a25ba645af736bb8fb/components/regional-emissions.js
   let chartData = useMemo(() => {
     let avgData = {};
-    // let top95 = {}
-    // let bottom95 = {}
 
     if (!data) return {};
     data.coordinates.time.forEach((t) => {
       let filteredData = data[variable][t].filter((d) => d !== 9.969209968386869e36);
       const average = filteredData.reduce((a, b) => a + b, 0) / filteredData.length;
       avgData[t] = average;
-      // top95[t] = d3.quantile(filteredData, 0.95)
-      // bottom95[t] = d3.quantile(filteredData, 0.05)
     });
-    // return {'avg': avgData, 'top95': top95, 'bottom95': bottom95}
     return { avg: avgData };
   }, [data]);
+
+  if (!data || !data[variable] || !data[variable][time]) {
+    // ex: if(!'perc' or Object["perc"] or Object["perc"]['1991-01-01'] ...) {...}
+    return;
+  }
 
   if (!chartData['avg']) return;
 
@@ -60,19 +56,20 @@ const StatsDisplay = (props) => {
         {result}
       </Box>
 
-      <BarChart data={data} variable={variable} time={time} colormap={hexmapBar} />
+      <BarChart data={data} colormap={hexmapBar} />
 
-      {/* <TimeSeries data={chartData} time={time} colormap={hexmapTime} /> */}
+      {/* this chart is not working well for the forecast data, it looks too compressed */}
+      {/* <TimeSeries data={chartData} colormap={hexmapTime} /> */}
 
-      {/* <DensityPlot data={data} variable={variable} time={time} colormap={hexmapBar} /> */}
+      {/* <DensityPlot data={data} colormap={hexmapBar} /> */}
     </>
   );
 };
 
 const Charts = () => {
-  const variable = useStore((state) => state.variable);
   const regionData = useStore((state) => state.regionData);
   const showRegionPicker = useStore((state) => state.showRegionPicker);
+  const variable = useStore((state) => state.variable);
 
   const colormapName = useStore((state) => state.colormapName);
   const colormap = useThemedColormap(colormapName);
