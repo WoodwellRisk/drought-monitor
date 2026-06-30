@@ -21,7 +21,7 @@ function Desktop() {
 
       <About mobile={false} />
 
-      <Map mobile={false} />
+      <Map mobile={false} sx={{ position: 'relative' }} />
     </Flex>
   );
 }

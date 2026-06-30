@@ -3,7 +3,7 @@ import { Box, Flex, Grid } from 'theme-ui';
 import { alpha } from '@theme-ui/color';
 import Map from '../map';
 import Layers from '../sidebar/layers';
-import Content from '../sidebar/about/content';
+import AboutContent from '../sidebar/about/about-content';
 import MobileHeader from './mobile-header';
 
 import { useStore } from '../store/index';
@@ -24,9 +24,9 @@ function Mobile({ expanded }) {
 
   const sx = {
     map: {
-      display: 'flex',
+      display: showAboutMobile ? 'none' : 'flex',
       width: '100vw',
-      height: showAboutMobile ? '0vh' : '100vh',
+      height: '100vh',
     },
     about: {
       width: '100%',
@@ -105,7 +105,7 @@ function Mobile({ expanded }) {
 
       {showAboutMobile && (
         <Box sx={sx['about']}>
-          <Content />
+          <AboutContent />
         </Box>
       )}
 

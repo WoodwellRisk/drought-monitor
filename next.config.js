@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+  devIndicators: false,
   output: 'export',
   webpack: (config, options) => {
     if (options.isServer) {

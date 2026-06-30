@@ -1,7 +1,7 @@
 import { Box, Flex } from 'theme-ui';
 import { keyframes } from '@emotion/react';
 
-const Loading = ({ mobile = false }) => {
+const Loading = () => {
   const fade = keyframes({
     from: {
       opacity: 1,
@@ -22,8 +22,10 @@ const Loading = ({ mobile = false }) => {
         animationDelay: '1s',
         animationName: fade.toString(),
         animationFillMode: 'forwards',
-        position: mobile ? 'absolute' : 'relative',
-        maxWidth: '1920px',
+        position: 'absolute',
+        zIndex: 20,
+        top: 0,
+        maxWidth: '100%',
         pointerEvents: 'none',
         userSelect: 'none',
       }}
@@ -31,17 +33,15 @@ const Loading = ({ mobile = false }) => {
       <Flex
         sx={{
           justifyContent: 'center',
-          lineHeight: 'body',
           alignItems: 'center',
           textTransform: 'uppercase',
-          letterSpacing: 'mono',
-          height: mobile ? 'calc(100vh - 300px)' : '100vh',
+          height: '100%',
           width: '100%',
           color: 'secondary',
           fontSize: [2, 2, 2, 3],
         }}
       >
-        loading map...
+        loading...
       </Flex>
     </Box>
   );

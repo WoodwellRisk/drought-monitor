@@ -77,9 +77,11 @@ const createForecastDates = () => {
 
 export const useStore = create((set, get) => ({
   // map container state
+  initialZoom: 1.3,
   zoom: 1.3,
   setZoom: (zoom) => set({ zoom }),
 
+  minZoom: 1,
   maxZoom: 8,
 
   zoomToBox: null,
@@ -88,6 +90,7 @@ export const useStore = create((set, get) => ({
   zoomInitialized: false,
   setZoomInitialized: (zoomInitialized) => set({ zoomInitialized }),
 
+  initialCenter: [-40, 40],
   center: [-40, 40],
   setCenter: (center) => set({ center }),
 
@@ -97,6 +100,10 @@ export const useStore = create((set, get) => ({
     [-360, -60.5], // southwest
     [360, 85], // northeast
   ],
+
+  // doesn't work, this needs to be placed in the router component
+  // mapReady: false,
+  // setMapReady: (mapReady) => set({ mapReady }),
 
   // general / raster state variables
   variable: 'perc',
@@ -162,10 +169,10 @@ export const useStore = create((set, get) => ({
   },
   setCropValues: (cropValues) => set({ cropValues }),
 
-  cropLayer: false,
+  cropLayer: '',
   setCropLayer: (cropLayer) => set({ cropLayer }),
 
-  showCropLayer: {}, // or is it this: [{}]
+  showCropLayer: false,
   setShowCropLayer: (showCropLayer) => set({ showCropLayer }),
 
   // show / hide layers
@@ -175,11 +182,11 @@ export const useStore = create((set, get) => ({
   display: true,
   setDisplay: (display) => set({ display }),
 
-  showCountriesOutline: false,
-  setShowCountriesOutline: (showCountriesOutline) => set({ showCountriesOutline }),
+  showCountriesLayer: false,
+  setShowCountriesLayer: (showCountriesLayer) => set({ showCountriesLayer }),
 
-  showStatesOutline: false,
-  setShowStatesOutline: (showStatesOutline) => set({ showStatesOutline }),
+  showStatesLayer: false,
+  setShowStatesLayer: (showStatesLayer) => set({ showStatesLayer }),
 
   sliding: false,
   setSliding: (sliding) => set({ sliding }),

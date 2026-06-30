@@ -24,10 +24,10 @@ const sx = {
 };
 
 const Overlays = () => {
-  const showStatesOutline = useStore((state) => state.showStatesOutline);
-  const setShowStatesOutline = useStore((state) => state.setShowStatesOutline);
-  const showCountriesOutline = useStore((state) => state.showCountriesOutline);
-  const setShowCountriesOutline = useStore((state) => state.setShowCountriesOutline);
+  const showStatesLayer = useStore((state) => state.showStatesLayer);
+  const setShowStatesLayer = useStore((state) => state.setShowStatesLayer);
+  const showCountriesLayer = useStore((state) => state.showCountriesLayer);
+  const setShowCountriesLayer = useStore((state) => state.setShowCountriesLayer);
 
   return (
     <Box sx={sx['overlays-container']}>
@@ -35,8 +35,8 @@ const Overlays = () => {
         <Box sx={sx.label}>Countries</Box>
         <Toggle
           sx={sx['toggle']}
-          value={showCountriesOutline}
-          onClick={() => setShowCountriesOutline(!showCountriesOutline)}
+          value={showCountriesLayer}
+          onClick={() => setShowCountriesLayer(!showCountriesLayer)}
         />
       </Flex>
 
@@ -44,8 +44,8 @@ const Overlays = () => {
         <Box sx={sx.label}>States</Box>
         <Toggle
           sx={sx['toggle']}
-          value={showStatesOutline}
-          onClick={() => setShowStatesOutline(!showStatesOutline)}
+          value={showStatesLayer}
+          onClick={() => setShowStatesLayer(!showStatesLayer)}
         />
       </Flex>
     </Box>

@@ -26,7 +26,7 @@ const Sidebar = () => {
   const sx = {
     'sidebar-container': {
       display: ['none', 'flex', 'flex'],
-      flexBasis: '100%',
+      flex: '0 0 auto',
       flexDirection: 'column',
       maxWidth: [0, '300px', '350px'],
       height: '100%',
@@ -93,8 +93,8 @@ const Sidebar = () => {
         <Layers />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        <ExpandingSection
-          label="Charts"
+        {/* <ExpandingSection
+          label='Charts'
           expanded={showRegionPicker}
           setExpanded={setShowRegionPicker}
         >
@@ -104,7 +104,7 @@ const Sidebar = () => {
             </Box>
           )}
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', my: 4 }} />
+        <SidebarDivider sx={{ width: '100%', my: 4 }} /> */}
 
         <ExpandingSection label="Overlays" expanded={showOverlays} setExpanded={setShowOverlays}>
           <Overlays />

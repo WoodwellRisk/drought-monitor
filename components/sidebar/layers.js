@@ -70,7 +70,7 @@ function Layers() {
       if (cropName != '') {
         setCropValues({ ...cropValues, [`${cropName}`]: false });
       }
-      setShowCropLayer({});
+      setShowCropLayer(false);
     } else {
       // else change between tags
       if (cropLayer == '') {
@@ -79,7 +79,7 @@ function Layers() {
         setCropValues({ ...cropValues, [`${cropLayer}`]: false, [`${cropName}`]: true });
       }
       setCropLayer(cropName);
-      setShowCropLayer({ show: cropLayer });
+      setShowCropLayer(true);
     }
   };
 

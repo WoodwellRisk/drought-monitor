@@ -22,7 +22,7 @@ const Ruler = () => {
   useRuler({
     showAxes,
     showGrid,
-    fontFamily: theme.fonts.faux,
+    // fontFamily: theme.fonts.faux,
     gridColor: theme.colors.secondary,
   });
 

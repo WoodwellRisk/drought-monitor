@@ -13,13 +13,15 @@ const sx = {
     pb: [2],
     mb: [3],
     fontSize: [2, 2, 2, 3],
-    // border: '1px solid',
-    // borderColor: 'blue',
+    border: '1px solid',
+    borderColor: 'blue',
+    // backgroundColor: 'background',
     width: 'fit-content',
+    zIndex: 20,
   },
 };
 
-const Content = () => {
+const AboutContent = () => {
   const [showGraticule, setShowGraticule] = useState(false);
   const toggleGraticule = () => setShowGraticule(!showGraticule);
 
@@ -81,4 +83,4 @@ const Content = () => {
   );
 };
 
-export default Content;
+export default AboutContent;
