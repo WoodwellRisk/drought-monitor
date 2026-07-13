@@ -145,6 +145,12 @@ export const useStore = create((set, get) => ({
   clim: [0.0, 1.0],
   setClim: (clim) => set({ clim }),
 
+  historicalRaster: { current: null },
+  setHistoricalRaster: (ref) => set((state) => ({ historicalRaster: ref })),
+
+  forecastRaster: { current: null },
+  setForecastRaster: (ref) => set((state) => ({ forecastRaster: ref })),
+
   regionData: { loading: true },
   setRegionData: (regionData) => set({ regionData }),
 

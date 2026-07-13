@@ -8,6 +8,7 @@ import Basemap from './basemap';
 import Fill from './fill';
 import Line from './line';
 import Raster from './raster';
+import PointQuery from './point-query';
 import LayerOrder from './layer-order';
 import Loading from '../view/loading';
 // import Ruler from './ruler';
@@ -27,20 +28,14 @@ const Map = ({ mobile }) => {
   const center = useStore((state) => state.center);
   const bounds = useStore((state) => state.bounds);
 
-  const variable = useStore((state) => state.variable);
   const timePeriod = useStore((state) => state.timePeriod);
   const window = useStore((state) => state.window);
   const maxHistoricalDate = useStore((state) => state.maxHistoricalDate);
-  const time = useStore((state) => state.time);
-  // const opacity = useStore((state) => state.opacity);
-  const clim = useStore((state) => state.clim);
-  const colormapName = useStore((state) => state.colormapName);
-  const colormap = useThemedColormap(colormapName).slice(0);
 
-  // const showRegionPicker = useStore((state) => state.showRegionPicker);
-  // const setRegionData = useStore((state) => state.setRegionData);
-  // const setRegionDataLoading = useStore((state) => state.setRegionDataLoading);
-  // const display = useStore((state) => state.display);
+  const setHistoricalRaster = useStore((state) => state.setHistoricalRaster);
+  const setForecastRaster = useStore((state) => state.setForecastRaster);
+
+  const showRegionPicker = useStore((state) => state.showRegionPicker);
   const cropLayer = useStore((state) => state.cropLayer);
   const showCropLayer = useStore((state) => state.showCropLayer);
   const showCountriesLayer = useStore((state) => state.showCountriesLayer);
@@ -56,72 +51,23 @@ const Map = ({ mobile }) => {
     },
   };
 
-  // this callback was modified from its source: https://github.com/carbonplan/oae-web/blob/3eff3fb99a24a024f6f9a8278add9233a31e853b/components/map.js#L93
-  // const handleRegionData = useCallback(
-  //   (data) => {
-  //     if (data.value == null) {
-  //       setRegionDataLoading(true);
-  //     } else if (data.value[variable]) {
-  //       setRegionData(data.value);
-  //       setRegionDataLoading(false);
-  //     }
-  //   },
-  //   [setRegionData, setRegionDataLoading]
-  // );
-
   return (
     <Box key={isWide} sx={{ flex: '1 1 auto', position: 'relative', minWidth: 0 }}>
       <MapProvider>
         <Basemap />
 
-        <Fill
-          id="ocean"
-          source={'https://storage.googleapis.com/water-balance/vector/ocean'}
-          variable={'ocean'}
-          color={theme.rawColors.background}
+        <Raster
+          id={`historical-raster`}
+          source={`https://storage.googleapis.com/water-balance/zarr/viz/wb-h${window}-${maxHistoricalDate}.zarr`}
+          opacity={timePeriod == 'forecast' ? 0 : 1}
+          setRaster={setHistoricalRaster}
         />
 
-        {showStatesLayer && (
-          <Line
-            id="states"
-            source={'https://storage.googleapis.com/water-balance/vector/states'}
-            variable={'states'}
-            color={'gray'}
-            width={zoom < 3.5 ? 0.5 : 1}
-          />
-        )}
-
-        {showCountriesLayer && (
-          <Line
-            id={'countries'}
-            source={'https://storage.googleapis.com/water-balance/vector/countries'}
-            variable={'countries'}
-            color={theme.rawColors.primary}
-            width={showStatesLayer && zoom > 3.5 ? 1.5 : 1}
-          />
-        )}
-
-        <Fill
-          id={'lakes-fill'}
-          source={'https://storage.googleapis.com/water-balance/vector/lakes'}
-          variable={'lakes'}
-          color={theme.rawColors.background}
-        />
-
-        <Line
-          id={'lakes'}
-          source={'https://storage.googleapis.com/water-balance/vector/lakes'}
-          variable={'lakes'}
-          color={theme.rawColors.primary}
-          width={1}
-        />
-
-        <Line
-          id={'land'}
-          source={'https://storage.googleapis.com/water-balance/vector/land'}
-          variable={'land'}
-          color={theme.rawColors.primary}
-          width={1}
+        <Raster
+          id={`forecast-raster`}
+          source={`https://storage.googleapis.com/water-balance/zarr/viz/wb-f${window}-${maxHistoricalDate}.zarr`}
+          opacity={timePeriod == 'forecast' ? 1 : 0}
+          setRaster={setForecastRaster}
         />
 
         {/* 
@@ -154,13 +100,54 @@ const Map = ({ mobile }) => {
           </>
         )}
 
-        <Raster
-          // key={`wb-${timePeriod}-${window}`}
-          // id={`raster`}
-          source={`https://storage.googleapis.com/water-balance/zarr/viz/wb-${timePeriod
-            .substring(0, 1)
-            .toLowerCase()}${window}-${maxHistoricalDate}.zarr`}
-          variable={variable}
+        <Fill
+          id={'lakes-fill'}
+          source={'https://storage.googleapis.com/water-balance/vector/lakes'}
+          variable={'lakes'}
+          color={theme.rawColors.background}
+        />
+
+        <Line
+          id={'lakes'}
+          source={'https://storage.googleapis.com/water-balance/vector/lakes'}
+          variable={'lakes'}
+          color={theme.rawColors.primary}
+          width={1}
+        />
+
+        <Fill
+          id="ocean"
+          source={'https://storage.googleapis.com/water-balance/vector/ocean'}
+          variable={'ocean'}
+          color={theme.rawColors.background}
+        />
+
+        {showStatesLayer && (
+          <Line
+            id="states"
+            source={'https://storage.googleapis.com/water-balance/vector/states'}
+            variable={'states'}
+            color={'gray'}
+            width={zoom < 3.5 ? 0.5 : 1}
+          />
+        )}
+
+        {showCountriesLayer && (
+          <Line
+            id={'countries'}
+            source={'https://storage.googleapis.com/water-balance/vector/countries'}
+            variable={'countries'}
+            color={theme.rawColors.primary}
+            width={showStatesLayer && zoom > 3.5 ? 1.5 : 1}
+          />
+        )}
+
+        <Line
+          id={'land'}
+          source={'https://storage.googleapis.com/water-balance/vector/land'}
+          variable={'land'}
+          color={theme.rawColors.primary}
+          width={1}
         />
 
         {/* {showRegionPicker && isWide && (
@@ -173,6 +160,8 @@ const Map = ({ mobile }) => {
               maxRadius={1500}
             />
           )} */}
+
+        {showRegionPicker && isWide && <PointQuery id={'point-query'} />}
 
         {/* {!mobile && <Ruler />} */}
 

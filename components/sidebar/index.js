@@ -1,8 +1,8 @@
 import { Box, Text } from 'theme-ui';
 import { useBreakpointIndex } from '@theme-ui/match-media';
-import { SidebarDivider } from '@carbonplan/layouts';
 
 import SidebarHeader from './sidebar-header';
+import SidebarDivider from './sidebar-divider';
 import Menu from './menu';
 import Layers from './layers';
 import ExpandingSection from './expanding-section';
@@ -93,18 +93,18 @@ const Sidebar = () => {
         <Layers />
         <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
-        {/* <ExpandingSection
-          label='Charts'
+        <ExpandingSection
+          label="Charts"
           expanded={showRegionPicker}
           setExpanded={setShowRegionPicker}
         >
-          {showRegionPicker && isWide && (
+          {/* {showRegionPicker && isWide && (
             <Box sx={{ ...sx.stats }}>
               <Charts />
             </Box>
-          )}
+          )} */}
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', my: 4 }} /> */}
+        <SidebarDivider sx={{ width: '100%', my: 4 }} />
 
         <ExpandingSection label="Overlays" expanded={showOverlays} setExpanded={setShowOverlays}>
           <Overlays />

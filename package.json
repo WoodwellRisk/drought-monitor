@@ -5,10 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "next -p 3000",
-    "build": "next build && next export",
-    "start": "next start",
-    "export": "next build && next export"
+    "dev": "next dev --turbopack -p 3000",
+    "build": "next build",
+    "start": "next start"
   },
   "keywords": [
     "Woodwell",
@@ -29,7 +28,6 @@
     "@carbonplan/colormaps": "^4.0.0",
     "@carbonplan/components": "^12.6.1",
     "@carbonplan/icons": "^2.0.0",
-    "@carbonplan/layouts": "^4.1.0",
     "@carbonplan/minimaps": "^2.4.1",
     "@carbonplan/theme": "^8.1.0",
     "@carbonplan/zarr-layer": "^0.5.1",
@@ -40,10 +38,10 @@
     "file-saver": "^2.0.5",
     "maplibre-gl": "^5.24.0",
     "nanoid": "^3.3.8",
-    "next": "<16",
+    "next": ">=16.2.3",
     "react-animate-height": "^3.2.3",
     "theme-ui": "^0.16.2",
-    "uuid": "^13.0.0",
+    "uuid": ">=13.0.1",
     "zustand": "^5.0.0-rc.2"
   },
   "peerDependencies": {
