@@ -5,10 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "next -p 3000",
-    "build": "next build && next export",
-    "start": "next start",
-    "export": "next build && next export"
+    "dev": "next dev --turbopack -p 3000",
+    "build": "next build",
+    "start": "next start"
   },
   "keywords": [
     "Woodwell",
@@ -38,11 +37,11 @@
     "@theme-ui/match-media": "^0.16.2",
     "d3": "^7.9.0",
     "file-saver": "^2.0.5",
-    "next": "^14.2.21",
+    "next": ">=16.2.3",
     "nanoid": "^3.3.8",
     "react-animate-height": "^3.2.3",
     "theme-ui": "^0.16.2",
-    "uuid": "^8.3.2",
+    "uuid": ">=13.0.1",
     "zustand": "^5.0.0-rc.2"
   },
   "peerDependencies": {
