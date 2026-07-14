@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+import gcsfs
 import geopandas as gpd
 import matplotlib
 import matplotlib.dates as mdates
@@ -19,223 +20,35 @@ from matplotlib.lines import Line2D
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shinywidgets import output_widget, render_plotly, render_widget
 
-from utils import create_bbox_from_coords, open_production_data
+from utils import (
+    create_bbox_from_coords,
+    forecast_dates,
+    historical_dates,
+    load_countries,
+    load_crop_extent_vector,
+    load_crop_production_raster,
+    load_forecast_wb,
+    load_historical_wb,
+    load_states,
+)
 
 # shiny run --reload drought.py
-
-updating = False
 
 explorer_tab_name = 'Global view'
 timeseries_tab_name = 'Figures and tables'
 forecast_tab_name = 'Clipped forecast'
 
-# calculate the initial conditions from today's year and month
-# in general, the month (and potentially year) roll back one month
-# for example: if we are producing the forecast in january,
-# then the initial conditions are from december of the previous year
-
-# this is what we would like to do,
-# except that it would roll over in the new month before we have the new data
-# today = datetime.today()
-# year = today.year
-# month = today.month
-year = 2026
-month = 7
-
-if month == 1:
-    month = 12
-    year = year - 1
-else:
-    month -= 1
-
-month_ic = str(month) if month >= 10 else '0' + str(month)
-year_ic = str(year)
-
-# generate the list of date we expect to find for historical data
-historical_dates = [
-    date.strftime('%Y-%m-%d')
-    for date in pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')
-]
-forecast_dates = [
-    date.strftime('%Y-%m-%d')
-    for date in pd.date_range(start=f'{year_ic}-{month_ic}-01', freq='MS', periods=7)
-][1:]
-
 # this is used in the the filename for downloading plots and tables, but is also used in slider values
-min_date = None if updating else historical_dates[0]
+min_date = historical_dates[0]
 min_slider_date = min_date
-max_slider_date = None if updating else historical_dates[-5]
-forecast_date = None if updating else forecast_dates[0]
+max_slider_date = historical_dates[-5]
+forecast_date = forecast_dates[0]
 slider_dates = historical_dates[:-4]
 
-min_index = None if updating else 0
-max_year = None if updating else year  # we calculated this above
-skip_index = None if updating else slider_dates.index(f'{max_year - 4}-01-01')
-max_index = None if updating else len(slider_dates) - 1
-
-# open historical and forecast data for both integration windows
-h3 = (
-    None
-    if updating
-    else xr.open_dataset(
-        Path(__file__).parent / f'mnt/data/zarr/analysis/wb-h3-{year_ic}-{month_ic}-01.zarr',
-        engine='zarr',
-        consolidated=True,
-        decode_coords='all',
-        chunks=None,
-    ).compute()
-)
-h12 = (
-    None
-    if updating
-    else xr.open_dataset(
-        Path(__file__).parent / f'mnt/data/zarr/analysis/wb-h12-{year_ic}-{month_ic}-01.zarr',
-        engine='zarr',
-        consolidated=True,
-        decode_coords='all',
-        chunks=None,
-    ).compute()
-)
-f3 = (
-    None
-    if updating
-    else xr.open_dataset(
-        Path(__file__).parent / f'mnt/data/zarr/analysis/wb-f3-{year_ic}-{month_ic}-01.zarr',
-        engine='zarr',
-        consolidated=True,
-        decode_coords='all',
-        chunks=None,
-    ).compute()
-)
-f12 = (
-    None
-    if updating
-    else xr.open_dataset(
-        Path(__file__).parent / f'mnt/data/zarr/analysis/wb-f12-{year_ic}-{month_ic}-01.zarr',
-        engine='zarr',
-        consolidated=True,
-        decode_coords='all',
-        chunks=None,
-    ).compute()
-)
-
-# the data variables can come back in a different order when you read in the Zarr instead of the NetCDF
-# f3 = f3[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
-# f12 = f12[['mean', 'mode', 'agree', '5%', '20%', 'perc', '80%', '95%']]
-if not updating:
-    f3 = f3[['5%', '20%', 'perc', '80%', '95%']]
-    f12 = f12[['5%', '20%', 'perc', '80%', '95%']]
-
-# open country boundary layer
-countries = (
-    gpd.GeoDataFrame(columns=['name', 'geometry'])
-    if updating
-    else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/countries.parquet')
-)
-
-states = (
-    gpd.GeoDataFrame(columns=['name', 'country', 'geometry'])
-    if updating
-    else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/states.parquet')
-)
-
-# open crop polygon layers
-barley = (
-    None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/barley.parquet')
-)
-cocoa = (
-    None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cocoa.parquet')
-)
-coffee = (
-    None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/coffee.parquet')
-)
-cotton = (
-    None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/cotton.parquet')
-)
-maize = (
-    None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/maize.parquet')
-)
-rice = (
-    None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/rice.parquet')
-)
-soy = (
-    None
-    if updating
-    else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/soybean.parquet')
-)
-sugarcane = (
-    None
-    if updating
-    else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/sugarcane.parquet')
-)
-wheat = (
-    None if updating else gpd.read_parquet(Path(__file__).parent / 'mnt/data/vector/wheat.parquet')
-)
-
-# open crop raster layers
-barley_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_barley.tif'
-    )
-)
-cocoa_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cocoa.tif'
-    )
-)
-coffee_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_coffee-all.tif'
-    )
-)
-cotton_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_cotton.tif'
-    )
-)
-maize_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_maize.tif'
-    )
-)
-rice_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_rice.tif'
-    )
-)
-soy_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_soybean.tif'
-    )
-)
-sugarcane_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_sugarcane.tif'
-    )
-)
-wheat_production = (
-    None
-    if updating
-    else open_production_data(
-        Path(__file__).parent / 'mnt/data/spam/crop_production_era5-grid_wheat.tif'
-    )
-)
+min_index = 0
+max_year = int(historical_dates[-1][:4])
+skip_index = slider_dates.index(f'{max_year - 4}-01-01')
+max_index = len(slider_dates) - 1
 
 # point the app to the static files directory
 static_dir = Path(__file__).parent / 'www'
@@ -274,6 +87,7 @@ app_ui = ui.page_fluid(
                             ui.nav_panel(timeseries_tab_name, ''),
                             ui.nav_panel(forecast_tab_name, ''),
                             id='tab_menu',
+                            selected=explorer_tab_name,
                         ),
                     ),
                 ),
@@ -342,13 +156,15 @@ app_ui = ui.page_fluid(
             #     ),
             #     {'id': 'about-container'},
             # ),
-            ui.output_ui('show_update_message'),
         ),
     ),
 )
 
 
 def server(input: Inputs, output: Outputs, session: Session):
+
+    countries = load_countries()
+    states = load_states()
 
     countries_list = sorted(countries.name.values)
     country_options = reactive.value(countries_list)
@@ -376,7 +192,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         'Cotton',
         'Maize',
         'Rice',
-        'Soy',
+        'Soybean',
         'Sugarcane',
         'Wheat',
     ]
@@ -411,6 +227,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     add_download_links = reactive.value(True)
 
     display_bounds_error = reactive.value(False)
+    data_has_loaded = reactive.value(False)
 
     @render.ui
     def main_content():
@@ -470,69 +287,81 @@ def server(input: Inputs, output: Outputs, session: Session):
             ),
         )
 
-    @render.ui
-    def sidebar_content():
-        return ui.TagList(
-            ui.panel_conditional(
-                f"input.tab_menu != '{explorer_tab_name}'",
-                {'id': 'sidebar'},
-                ui.div(
-                    {'id': 'sidebar-inner-container'},
-                    ui.div(
-                        {'class': 'select-label-container'},
-                        ui.p({'class': 'select-label'}, 'Select a country:'),
-                    ),
-                    ui.input_text('country_filter', label='', placeholder='Filter by name'),
-                    # https://shiny.posit.co/py/api/core/ui.update_select.html
-                    ui.input_select('country_select', '', countries_list, size=5),
-                    ui.div(
-                        {'class': 'select-label-container'},
-                        ui.p({'class': 'select-label'}, 'Select a state:'),
-                    ),
-                    # ui.input_text('state_filter', label='', placeholder='Filter by name'),
-                    ui.input_select('state_select', '', [], size=5),
-                    # ui.input_checkbox_group('state_checkbox', '', {}),
-                    # ui.output_ui('show_state_output'),
-                    ui.div(
-                        {'class': 'select-label-container'},
-                        ui.p({'class': 'select-label'}, 'Select an integration window:'),
-                    ),
-                    ui.input_select(
-                        'window_select',
-                        '',
-                        {3: '3 month', 12: '12 month'},
-                        size=2,
-                        selected=3,
-                    ),
-                    ui.panel_conditional(
-                        'input.window_select == 3',
-                        ui.div(
-                            {'class': 'select-label-container'},
-                            ui.p({'class': 'select-label'}, 'Select a crop:'),
-                        ),
-                        ui.input_select('crop_select', '', crop_list, size=5),
-                        {'id': 'crop-select-conditional-panel'},
-                    ),
-                    ui.div(
-                        {'id': 'process-data-container'},
-                        ui.input_task_button('process_data_button', label='Run'),
-                    ),
-                ),
-            ),
-        )
+    @reactive.effect
+    @reactive.event(input.load_data_button)
+    def load_data():
+        load_historical_wb('12')
+        load_forecast_wb('12')
+
+        load_historical_wb('3')
+        load_forecast_wb('3')
+
+        data_has_loaded.set(True)
 
     @render.ui
-    def show_update_message():
-        if updating:
-            return ui.TagList(
+    def sidebar_content():
+        if data_has_loaded():
+            sidebar_content = ui.TagList(
                 ui.div(
-                    {'id': 'update-message-container'},
+                    {'id': 'sidebar'},
                     ui.div(
-                        {'id': 'update-message'},
-                        'The website is currently being updated. Please check back later.',
+                        {'id': 'sidebar-inner-container'},
+                        ui.div(
+                            {'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select a country:'),
+                        ),
+                        ui.input_text('country_filter', label='', placeholder='Filter by name'),
+                        # https://shiny.posit.co/py/api/core/ui.update_select.html
+                        ui.input_select('country_select', '', countries_list, size=5),
+                        ui.div(
+                            {'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select a state:'),
+                        ),
+                        # ui.input_text('state_filter', label='', placeholder='Filter by name'),
+                        ui.input_select('state_select', '', [], size=5),
+                        # ui.input_checkbox_group('state_checkbox', '', {}),
+                        # ui.output_ui('show_state_output'),
+                        ui.div(
+                            {'class': 'select-label-container'},
+                            ui.p({'class': 'select-label'}, 'Select an integration window:'),
+                        ),
+                        ui.input_select(
+                            'window_select',
+                            '',
+                            {3: '3 month', 12: '12 month'},
+                            size=2,
+                            selected=3,
+                        ),
+                        ui.panel_conditional(
+                            'input.window_select == 3',
+                            ui.div(
+                                {'class': 'select-label-container'},
+                                ui.p({'class': 'select-label'}, 'Select a crop:'),
+                            ),
+                            ui.input_select('crop_select', '', crop_list, size=5),
+                            {'id': 'crop-select-conditional-panel'},
+                        ),
+                        ui.div(
+                            {'id': 'process-data-container'},
+                            ui.input_task_button('process_data_button', label='Run'),
+                        ),
                     ),
                 ),
             )
+        else:
+            sidebar_content = ui.TagList(
+                ui.div(
+                    {'id': 'load-data-container'},
+                    ui.div(
+                        ui.p({'id': 'load-data-message'}, 'Please load data before continuing'),
+                    ),
+                    ui.input_task_button(
+                        "load_data_button", label='Load Data', label_busy='Loading...'
+                    ),
+                ),
+            )
+
+        return ui.panel_conditional(f'input.tab_menu != "{explorer_tab_name}"', sidebar_content)
 
     @reactive.effect
     @reactive.event(input.window_select)
@@ -741,20 +570,19 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     # @render.ui
     # def show_state_output():
-    #     if not updating:
-    #         if len(selected_states()) >= 1:
-    #             return ui.TagList(
-    #                 ui.div(
-    #                     ui.p({'class': 'select-label'}, 'States selected:'),
-    #                 ),
-    #                 ui.output_text('display_selected_states'),
-    #                 ui.div(
-    #                     {'id': 'clear-selected-states-container'},
-    #                     ui.input_action_button('clear_states_button', label='Clear states'),
-    #                 ),
-    #             )
-    #         else:
-    #             return None
+    #     if len(selected_states()) >= 1:
+    #         return ui.TagList(
+    #             ui.div(
+    #                 ui.p({'class': 'select-label'}, 'States selected:'),
+    #             ),
+    #             ui.output_text('display_selected_states'),
+    #             ui.div(
+    #                 {'id': 'clear-selected-states-container'},
+    #                 ui.input_action_button('clear_states_button', label='Clear states'),
+    #             ),
+    #         )
+    #     else:
+    #         return None
 
     # @reactive.effect
     # @reactive.event(input.clear_states_button)
@@ -776,40 +604,12 @@ def server(input: Inputs, output: Outputs, session: Session):
         new_crop = input.crop_select().lower()
         crop_name.set(new_crop)
 
-        match new_crop:
-            case '':
-                crop_layer.set(None)
-                crop_production.set(None)
-            case 'none':
-                crop_layer.set(None)
-                crop_production.set(None)
-            case 'barley':
-                crop_layer.set(barley)
-                crop_production.set(barley_production)
-            case 'cocoa':
-                crop_layer.set(cocoa)
-                crop_production.set(cocoa_production)
-            case 'coffee':
-                crop_layer.set(coffee)
-                crop_production.set(coffee_production)
-            case 'cotton':
-                crop_layer.set(cotton)
-                crop_production.set(cotton_production)
-            case 'maize':
-                crop_layer.set(maize)
-                crop_production.set(maize_production)
-            case 'rice':
-                crop_layer.set(rice)
-                crop_production.set(rice_production)
-            case 'soy':
-                crop_layer.set(soy)
-                crop_production.set(soy_production)
-            case 'sugarcane':
-                crop_layer.set(sugarcane)
-                crop_production.set(sugarcane_production)
-            case 'wheat':
-                crop_layer.set(wheat)
-                crop_production.set(wheat_production)
+        if new_crop == '' or new_crop == 'none':
+            crop_layer.set(None)
+            crop_production.set(None)
+        else:
+            crop_layer.set(load_crop_extent_vector(new_crop))
+            crop_production.set(load_crop_production_raster(new_crop))
 
     @render.text
     def crop_name_text():
@@ -817,37 +617,34 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @render.ui
     def show_time_slider():
-        if not updating:
-            return ui.TagList(
-                ui.panel_conditional(
-                    'input.historical_checkbox == true',
-                    ui.div(
-                        {'id': 'time-slider-container'},
-                        ui.input_action_link(
-                            'skip_months_button', 'Last 5 months', class_='skip-button'
-                        ),
-                        ui.input_action_link(
-                            'skip_years_button', 'Last 5 years', class_='skip-button'
-                        ),
-                        ui.input_action_link('reset_skip_button', 'All data', class_='skip-button'),
-                        ui.div(
-                            {'id': 'time-slider-labels-container'},
-                            ui.div({'class': 'time-slider-label'}, min_slider_date),
-                            ui.output_text('time_slider_output'),
-                            ui.div({'class': 'time-slider-label'}, max_slider_date),
-                        ),
-                        ui.input_slider(
-                            'time_slider',
-                            '',
-                            min=0,
-                            max=len(slider_dates) - 1,
-                            value=skip_index,
-                            step=1,
-                        ),
+        return ui.TagList(
+            ui.panel_conditional(
+                'input.historical_checkbox == true',
+                ui.div(
+                    {'id': 'time-slider-container'},
+                    ui.input_action_link(
+                        'skip_months_button', 'Last 5 months', class_='skip-button'
                     ),
-                    {'id': 'show-slider-container'},
+                    ui.input_action_link('skip_years_button', 'Last 5 years', class_='skip-button'),
+                    ui.input_action_link('reset_skip_button', 'All data', class_='skip-button'),
+                    ui.div(
+                        {'id': 'time-slider-labels-container'},
+                        ui.div({'class': 'time-slider-label'}, min_slider_date),
+                        ui.output_text('time_slider_output'),
+                        ui.div({'class': 'time-slider-label'}, max_slider_date),
+                    ),
+                    ui.input_slider(
+                        'time_slider',
+                        '',
+                        min=0,
+                        max=len(slider_dates) - 1,
+                        value=skip_index,
+                        step=1,
+                    ),
                 ),
-            )
+                {'id': 'show-slider-container'},
+            ),
+        )
 
     @reactive.effect
     @reactive.event(input.reset_skip_button)
@@ -887,12 +684,9 @@ def server(input: Inputs, output: Outputs, session: Session):
 
         window_size = integration_window()
 
-        if window_size == '3':
-            historical = h3
-            forecast = f3
-        elif window_size == '12':
-            historical = h12
-            forecast = f12
+        if window_size == '3' or window_size == '12':
+            historical = load_historical_wb(window_size)
+            forecast = load_forecast_wb(window_size)
         else:
             raise ValueError('The integration window should be either 3 or 12 months.')
 

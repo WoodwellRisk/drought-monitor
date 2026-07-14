@@ -38,7 +38,7 @@ repos:
           # ignore unused imports error in data processing files
           # this often occurs when Python needs to load a package to use it,
           # but doesn't call it directly
-          - --per-file-ignores=data_processing/*:F401,app/drought.py:F401
+          - --per-file-ignores=data_processing/*:F401,app/drought.py:F401, app/utils.py:F401
           - --exclude=.git,__pycache__,build,dist,.eggs,*.egg-info,migrations,venv,.venv
 
   # cleanup hooks

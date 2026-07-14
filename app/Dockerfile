@@ -2,6 +2,10 @@
 # 2. Build Docker image: docker build -t shiny-app:latest --platform linux/amd64 .
 # 3. Run Docker container: docker run --platform linux/amd64 -p 8080:8080 shiny-app:latest
 
+# If you run into errors testing the container locally, you may need to set up your gcloud credentials first:
+# 3a. gcloud auth application-default login
+# 3b. docker run -v ~/.config/gcloud:/root/.config/gcloud -p 8080:8080 shiny-app:latest
+
 # https://hub.docker.com/_/python/
 FROM python:3.12
 

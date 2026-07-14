@@ -1,6 +1,7 @@
 anywidget
 fiona
 folium
+gcsfs
 geopandas
 h5netcdf
 matplotlib
