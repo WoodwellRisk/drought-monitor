@@ -13,29 +13,7 @@ import zarr
 from ndpyramid import pyramid_reproject
 
 
-def open_historical_dataset(path: str) -> xr.Dataset:
-    """
-    Open a single Xarray Dataset based on a file path and assign a time dimension.
-
-    Parameters:
-        path(str): a filename pointing to a Xarray Dataset
-
-    Returns:
-        ds(xr.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
-    """
-    ACCESS_TOKEN = os.getenv('GCLOUD_ACCESS_TOKEN')
-    ds = xr.open_dataset(
-        path,
-        engine='h5netcdf',
-        chunks={'x': 128, 'y': 128},
-        storage_options={'token': ACCESS_TOKEN},
-    )
-    ds = ds.assign_coords({'time': pd.to_datetime(path[-13:-3])})
-
-    return ds
-
-
-def open_forecast_dataset(path: str) -> xr.Dataset:
+def open_dataset(path: str) -> xr.Dataset:
     """
     Open a single Xarray Dataset based on a file path.
 
@@ -68,7 +46,7 @@ def open_files_in_parallel(files: list) -> list:
     """
     with ThreadPoolExecutor() as executor:
         # map the function to all files
-        ds_list = list(executor.map(open_historical_dataset, files))
+        ds_list = list(executor.map(open_dataset, files))
 
     return ds_list
 
@@ -188,15 +166,15 @@ def drought_pipeline():
 
     # open forecast data for both integration windows
     subprocess.run(['echo', '    Opening F3 data...'])
-    f3 = open_forecast_dataset(f3_file)
+    f3 = open_dataset(f3_file)
     f3 = process_dataset(f3)
-    f3 = f3.rename({'L': 'time', '50%': 'perc'})
+    f3 = f3.rename({'50%': 'perc'})
     f3 = f3[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
     subprocess.run(['echo', '    Opening F12 data...'])
-    f12 = open_forecast_dataset(f12_file)
+    f12 = open_dataset(f12_file)
     f12 = process_dataset(f12)
-    f12 = f12.rename({'L': 'time', '50%': 'perc'})
+    f12 = f12.rename({'50%': 'perc'})
     f12 = f12[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
     dataset_dict = {

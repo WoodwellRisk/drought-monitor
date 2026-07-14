@@ -11,23 +11,7 @@ import zarr
 from ndpyramid import pyramid_reproject
 
 
-def open_historical_dataset(path: str) -> xr.Dataset:
-    """
-    Opens a single file from GCS, extracts time dimension from filename, and returns a chunked dataset.
-
-    Parameters:
-        path(str): a filename pointing to a Xarray Dataset on a GCS bucket
-
-    Returns:
-        ds(xr.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
-    """
-    ds = xr.open_dataset(path, engine='h5netcdf', chunks={'x': 128, 'y': 128})
-    ds = ds.assign_coords({'time': pd.to_datetime(path[-13:-3])})
-
-    return ds
-
-
-def open_forecast_dataset(path: str) -> xr.Dataset:
+def open_dataset(path: str) -> xr.Dataset:
     """
     Opens a single file from GCS and returns a chunked dataset.
 
@@ -54,7 +38,7 @@ def open_files_in_parallel(files: list) -> list:
     """
     with ThreadPoolExecutor(max_workers=4) as executor:
         # map the function to all files
-        ds_list = list(executor.map(open_historical_dataset, files))
+        ds_list = list(executor.map(open_dataset, files))
 
     return ds_list
 
@@ -119,7 +103,7 @@ def drought_pipeline():
     # year = today.year
     # month = today.month
     year = 2026
-    month = 6
+    month = 7
 
     if month == 1:
         month = 12
@@ -139,14 +123,14 @@ def drought_pipeline():
     dates = pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')
     h3_files = sorted(
         [
-            f'gs://{BUCKET}/era5/monthly/wb/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc'
+            f'gs://{BUCKET}/era5/monthly/water_balance_hamon_percentiles/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc'
             for date in dates
         ]
     )
     h12_files = sorted([file.replace('w3', 'w12') for file in h3_files])
 
     forecast_files = [
-        f'gs://{BUCKET}/nmme/ensemble/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc'
+        f'gs://{BUCKET}/nmme/ensemble/water_balance_hamon_percentiles/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc'
         for window in [3, 12]
     ]
     f3_file = [file for file in forecast_files if 'w3' in file][0]
@@ -167,16 +151,16 @@ def drought_pipeline():
 
     # open forecast data for both integration windows
     print('    Opening F3 data...')
-    f3 = open_forecast_dataset(f3_file)
+    f3 = open_dataset(f3_file)
     f3 = process_dataset(f3)
-    f3 = f3.rename({'L': 'time', '50%': 'perc'})
+    f3 = f3.rename({'50%': 'perc'})
     f3 = f3[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
     print('    Opening F12 data...')
     print()
-    f12 = open_forecast_dataset(f12_file)
+    f12 = open_dataset(f12_file)
     f12 = process_dataset(f12)
-    f12 = f12.rename({'L': 'time', '50%': 'perc'})
+    f12 = f12.rename({'50%': 'perc'})
     f12 = f12[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
     dataset_dict = {

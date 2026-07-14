@@ -40,7 +40,7 @@ forecast_tab_name = 'Clipped forecast'
 # year = today.year
 # month = today.month
 year = 2026
-month = 6
+month = 7
 
 if month == 1:
     month = 12
