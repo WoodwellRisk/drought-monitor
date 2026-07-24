@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { makeColormap } from '@carbonplan/colormaps';
+import { IcechunkStore } from 'icechunk-js';
+import { open, get } from 'zarrita';
 import { ZarrLayer } from '@carbonplan/zarr-layer';
 import { useMap } from './map-provider';
 import { useMapView } from './use-map-view';
 import { useStore } from '../store/index';
 
-const Raster = ({ id, source, opacity, setRaster }) => {
+const IcechunkLayer = ({ id, source, opacity, setRaster }) => {
+  const [store, setStore] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(true);
   const zarrLayerRef = useRef(null);
   const removed = useRef(false);
   const { map } = useMap();
@@ -16,6 +21,45 @@ const Raster = ({ id, source, opacity, setRaster }) => {
   const variable = useStore((state) => state.variable);
   const time = useStore((state) => state.time);
   const window = useStore((state) => state.window);
+
+  useEffect(() => {
+    const loadStore = async () => {
+      try {
+        setLoading(true);
+        const icechunkStore = await IcechunkStore.open(source, {
+          branch: 'main',
+          formatVersion: 'v2',
+        });
+        setStore(icechunkStore);
+      } catch (err) {
+        setError(err);
+        console.error('Failed to load Icechunk store:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStore();
+    console.log(store);
+
+    return () => {
+      removed.current = true;
+    };
+  }, [source]);
+
+  useEffect(() => {
+    if (!store) return;
+
+    (async () => {
+      try {
+        const array = await open(store.resolve('/perc'), { kind: 'array' });
+        const data = await get(array, [0, 0, null]);
+        console.log('Data read successfully:', data);
+      } catch (err) {
+        console.error('Error reading data:', err);
+      }
+    })();
+  }, [store]);
 
   useEffect(() => {
     if (!zarrLayerRef.current) return;
@@ -96,11 +140,11 @@ const Raster = ({ id, source, opacity, setRaster }) => {
   }, [map]);
 
   useEffect(() => {
-    if (!map) return;
+    if (!store || !map) return;
 
     const zarrLayer = new ZarrLayer({
       id: id,
-      source: source,
+      store,
       zarrVersion: 2,
       variable: variable,
       clim: clim,
@@ -141,9 +185,9 @@ const Raster = ({ id, source, opacity, setRaster }) => {
     let layer = zarrLayerRef.current;
 
     layer.setOpacity(opacity);
-  }, [map, opacity]);
+  }, [store, map, opacity]);
 
   return null;
 };
 
-export default Raster;
+export default IcechunkLayer;
