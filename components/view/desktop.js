@@ -18,7 +18,7 @@ function Desktop() {
     >
       <Sidebar />
 
-      <Map mobile={false} />
+      <Map mobile={false} sx={{ position: 'relative' }} />
     </Flex>
   );
 }

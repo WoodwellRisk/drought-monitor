@@ -17,3 +17,8 @@
 select + svg {
   display: none;
 }
+
+.maplibregl-ctrl-attrib-button,
+.maplibregl-ctrl-attrib-inner {
+  display: none;
+}

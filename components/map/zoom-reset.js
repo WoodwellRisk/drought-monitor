@@ -1,13 +1,13 @@
 import { IconButton } from 'theme-ui';
 import { keyframes } from '@emotion/react';
 import { useCallback, useRef } from 'react';
-import { useMapbox } from '@carbonplan/maps';
 import { Reset } from '@carbonplan/icons';
 
+import { useMap } from './map-provider';
 import { useStore } from '../store/index';
 
 const ZoomReset = () => {
-  const { map } = useMapbox();
+  const { map } = useMap();
   const zoom = useStore((state) => state.zoom);
   const initialZoom = 1.3;
   const center = useStore((state) => state.center);

@@ -70,7 +70,7 @@ function Layers() {
       if (cropName != '') {
         setCropValues({ ...cropValues, [`${cropName}`]: false });
       }
-      setShowCropLayer({});
+      setShowCropLayer(false);
     } else {
       // else change between tags
       if (cropLayer == '') {
@@ -79,7 +79,7 @@ function Layers() {
         setCropValues({ ...cropValues, [`${cropLayer}`]: false, [`${cropName}`]: true });
       }
       setCropLayer(cropName);
-      setShowCropLayer({ show: cropLayer });
+      setShowCropLayer(true);
     }
   };
 
@@ -371,22 +371,15 @@ function Layers() {
               id={'month-skip-select'}
               className={'skip-select'}
               sx={{ height: '100%', px: 3 }}
+              defaultValue={defaultSkipMonth}
               onChange={(e) => setSkipMonth(e.target.value)}
             >
               {validMonths.map((month, idx) => {
-                if (month == defaultSkipMonth) {
-                  return (
-                    <option key={idx} value={month} selected>
-                      {month}
-                    </option>
-                  );
-                } else {
-                  return (
-                    <option key={idx} value={month}>
-                      {month}
-                    </option>
-                  );
-                }
+                return (
+                  <option key={idx} value={month}>
+                    {month}
+                  </option>
+                );
               })}
             </Select>
 
@@ -394,22 +387,15 @@ function Layers() {
               id={'year-skip-select'}
               className={'skip-select'}
               sx={{ height: '100%', px: 3 }}
+              defaultValue={skipYear}
               onChange={(e) => setSkipYear(e.target.value)}
             >
               {validYears.map((year, idx) => {
-                if (year == defaultSkipYear) {
-                  return (
-                    <option key={idx} value={year} selected>
-                      {year}
-                    </option>
-                  );
-                } else {
-                  return (
-                    <option key={idx} value={year}>
-                      {year}
-                    </option>
-                  );
-                }
+                return (
+                  <option key={idx} value={year}>
+                    {year}
+                  </option>
+                );
               })}
             </Select>
 

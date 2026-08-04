@@ -4,6 +4,8 @@ import { alpha } from '@theme-ui/color';
 import Map from '../map';
 import Layers from '../sidebar/layers';
 
+import { useStore } from '../store/index';
+
 import { keyframes } from '@emotion/react';
 const fade = keyframes({
   from: {
@@ -16,10 +18,11 @@ const fade = keyframes({
 
 function Mobile({ expanded }) {
   const [showSettings, setShowSettings] = useState(false);
+  const showAboutMobile = useStore((state) => state.showAboutMobile);
 
   const sx = {
     map: {
-      display: 'flex',
+      display: showAboutMobile ? 'none' : 'flex',
       width: '100vw',
       height: '100vh',
     },
@@ -57,6 +60,7 @@ function Mobile({ expanded }) {
     },
     footer: {
       position: 'fixed',
+      opacity: showAboutMobile ? 0 : 1,
       bottom: 0,
       width: '100vw',
       bg: 'background',

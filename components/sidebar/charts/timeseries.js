@@ -11,7 +11,7 @@ import {
   Ticks,
   TickLabels,
 } from '@carbonplan/charts';
-import { SidebarDivider } from '@carbonplan/layouts';
+import { SidebarDivider } from '../sidebar-divider';
 import { useThemedColormap } from '@carbonplan/colormaps';
 import { Colorbar } from '@carbonplan/components';
 import Bar from './bar';

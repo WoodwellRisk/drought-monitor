@@ -1,7 +1,7 @@
-import { Box } from 'theme-ui';
+import { Box, Text } from 'theme-ui';
 import { useBreakpointIndex } from '@theme-ui/match-media';
-import SidebarDivider from './sidebar-divider';
 
+import SidebarDivider from './sidebar-divider';
 import Layers from './layers';
 import ExpandingSection from './expanding-section';
 import Overlays from './overlays';
@@ -14,13 +14,17 @@ const Sidebar = () => {
 
   const showRegionPicker = useStore((state) => state.showRegionPicker);
   const setShowRegionPicker = useStore((state) => state.setShowRegionPicker);
+  const showAbout = useStore((state) => state.showAbout);
+  const setShowAbout = useStore((state) => state.setShowAbout);
+  const showMenu = useStore((state) => state.showMenu);
+  const setShowMenu = useStore((state) => state.setShowMenu);
   const showOverlays = useStore((state) => state.showOverlays);
   const setShowOverlays = useStore((state) => state.setShowOverlays);
 
   const sx = {
     'sidebar-container': {
       display: ['none', 'flex', 'flex'],
-      flexBasis: '100%',
+      flex: '0 0 auto',
       flexDirection: 'column',
       maxWidth: [0, '300px', '350px'],
       height: '100%',
@@ -28,8 +32,32 @@ const Sidebar = () => {
       borderWidth: '0px',
       borderRightWidth: '1px',
       borderColor: 'muted',
-      zIndex: 900,
+      zIndex: 100,
       backgroundColor: 'background',
+    },
+    'about-section': {
+      mx: [3, 4, 5, 5],
+      pt: [1],
+      mt: ['12px'],
+      fontSize: [2, 2, 2, 3],
+      width: 'fit-content',
+      fontFamily: 'heading',
+      letterSpacing: 'smallcaps',
+      textTransform: 'uppercase',
+      cursor: 'pointer',
+      transition: '0.25s all',
+      '&:hover': {
+        color: 'secondary',
+      },
+    },
+    arrow: {
+      display: 'inline-block',
+      fontSize: [4],
+      ml: [2],
+      top: '3px',
+      position: 'relative',
+      transition: 'transform 0.2s',
+      transform: showAbout ? 'scaleX(-1)' : 'scaleX(1)',
     },
     expander: {
       '&:hover > #charts-expander, &:hover > #overlays-expander': {
@@ -51,10 +79,17 @@ const Sidebar = () => {
         id="sidebar"
         sx={{ position: 'relative', flex: 1, overflowY: 'scroll', overflowX: 'hidden' }}
       >
+        {/* <Menu visible={showMenu} />
+
+        <Box onClick={() => setShowAbout(!showAbout)} sx={sx['about-section']}>
+          How to use this site <Text sx={sx.arrow}>→</Text>
+        </Box>
+        <SidebarDivider sx={{ width: '100%', my: 3 }} /> */}
+
         <Layers />
         <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
-        <ExpandingSection
+        {/* <ExpandingSection
           label="Charts"
           expanded={showRegionPicker}
           setExpanded={setShowRegionPicker}
@@ -65,12 +100,12 @@ const Sidebar = () => {
             </Box>
           )}
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
+        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} /> */}
 
         <ExpandingSection label="Overlays" expanded={showOverlays} setExpanded={setShowOverlays}>
           <Overlays />
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', ml: 0, mt: 4 }} />
+        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
       </Box>
     </Box>
   );
