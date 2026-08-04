@@ -1,7 +1,33 @@
 import { create } from 'zustand';
 
+function calculateICMonthYear() {
+  // Calculate the date of the initial conditions for the forecast file.
+  // This is based off of the month and year of the max date from the historical data.
+  const today = new Date();
+  const day = today.getDate();
+
+  let targetMonth = today.getMonth() + 1;
+  let targetYear = today.getFullYear();
+
+  // subtract 1 month if day >= 15, else subtract 2 months
+  const monthsBack = day >= 15 ? 1 : 2;
+  targetMonth -= monthsBack;
+
+  // handle year rollover
+  while (targetMonth <= 0) {
+    targetMonth += 12;
+    targetYear -= 1;
+  }
+
+  const yearIC = String(targetYear);
+  const monthIC = String(targetMonth).padStart(2, '0');
+
+  return { yearIC, monthIC };
+}
+
 const MIN_HISTORICAL_DATE = '1991-01-01';
-const MAX_HISTORICAL_DATE = '2026-06-01';
+const { yearIC, monthIC } = calculateICMonthYear();
+const MAX_HISTORICAL_DATE = `${yearIC}-${monthIC}-01`;
 
 export const arrayRange = (start, end, step) => {
   let output = [];
