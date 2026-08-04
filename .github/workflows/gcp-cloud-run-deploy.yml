@@ -78,6 +78,8 @@ jobs:
 
       # deploy (or update) the cloud run service
       - name: Deploy to Cloud Run
+        env:
+            BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
         run: |
           echo "Deploying ${{ env.SERVICE_NAME }} (region ${{ env.REGION }})"
 
@@ -87,6 +89,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --service-account "${{ env.SERVICE_ACCOUNT }}" \
+            --set-env-vars BUCKET_NAME="${BUCKET_NAME}" \
             --port 8080 \
             --memory 32Gi \
             --cpu 8 \

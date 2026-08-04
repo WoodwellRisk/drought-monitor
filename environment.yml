@@ -11,6 +11,7 @@ dependencies:
   - geopandas
   - h5netcdf
   - matplotlib
+  - ndpyramid
   - netcdf4
   - numpy
   - pandas
@@ -27,3 +28,6 @@ dependencies:
   - shinywidgets
   - xarray
   - zarr
+  - pip:
+    - geoparquet-io
+    - topozarr

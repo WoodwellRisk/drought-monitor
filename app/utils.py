@@ -1,4 +1,6 @@
 import functools
+import os
+from datetime import datetime
 
 import gcsfs
 import geopandas as gpd
@@ -6,27 +8,26 @@ import pandas as pd
 import shapely
 import xarray as xr
 
-# calculate the initial conditions from today's year and month
+# calculate the initial conditions from today's day, month, and year
 # in general, the month (and potentially year) roll back one month
-# for example: if we are producing the forecast in january,
-# then the initial conditions are from december of the previous year
+# however, right before the update occurs, there are times when the month looks back two months
 
-# this is what we would like to do,
-# except that it would roll over in the new month before we have the new data
-# today = datetime.today()
-# year = today.year
-# month = today.month
-year = 2026
-month = 7
+today = datetime.today()
 
-if month == 1:
-    month = 12
-    year = year - 1
-else:
-    month -= 1
+# Determine how many months to go back
+months_back = 1 if today.day >= 15 else 2
 
-month_ic = str(month) if month >= 10 else '0' + str(month)
-year_ic = str(year)
+# Calculate the target month and year
+target_month = today.month - months_back
+target_year = today.year
+
+# Handle year rollover (handles both going back to previous December and beyond)
+while target_month <= 0:
+    target_month += 12
+    target_year -= 1
+
+year_ic = str(target_year)
+month_ic = str(target_month).zfill(2)
 
 # generate the list of date we expect to find for historical data
 historical_dates = [
@@ -38,7 +39,7 @@ forecast_dates = [
     for date in pd.date_range(start=f'{year_ic}-{month_ic}-01', freq='MS', periods=7)
 ][1:]
 
-bucket = 'drought-monitor'
+BUCKET = os.getenv('BUCKET_NAME')
 
 
 def create_bbox_from_coords(
@@ -62,7 +63,7 @@ def create_bbox_from_coords(
 @functools.lru_cache(maxsize=2)
 def load_historical_wb(window: str) -> xr.Dataset:
     return xr.open_dataset(
-        f'gs://{bucket}/zarr/analysis/wb-h{window}-{year_ic}-{month_ic}-01.zarr',
+        f'gs://{BUCKET}/zarr/analysis/wb-h{window}-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
         decode_coords='all',
@@ -72,7 +73,7 @@ def load_historical_wb(window: str) -> xr.Dataset:
 @functools.lru_cache(maxsize=2)
 def load_forecast_wb(window: str) -> xr.Dataset:
     return xr.open_dataset(
-        f'gs://{bucket}/zarr/analysis/wb-f{window}-{year_ic}-{month_ic}-01.zarr',
+        f'gs://{BUCKET}/zarr/analysis/wb-f{window}-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
         decode_coords='all',
@@ -82,13 +83,13 @@ def load_forecast_wb(window: str) -> xr.Dataset:
 # lazy load country boundary layer
 @functools.lru_cache(maxsize=1)
 def load_countries() -> gpd.GeoDataFrame:
-    return gpd.read_parquet(f'gs://{bucket}/vector/countries.parquet')
+    return gpd.read_parquet(f'gs://{BUCKET}/vector/countries.parquet')
 
 
 # lazy load country boundary layer
 @functools.lru_cache(maxsize=1)
 def load_states() -> gpd.GeoDataFrame:
-    return gpd.read_parquet(f'gs://{bucket}/vector/states.parquet')
+    return gpd.read_parquet(f'gs://{BUCKET}/vector/states.parquet')
 
 
 # lazy load crop extent vector
@@ -97,7 +98,7 @@ def load_crop_extent_vector(crop_name: str) -> None | gpd.GeoDataFrame:
     if crop_name == '' or crop_name == 'none':
         return None
     return gpd.read_parquet(
-        f'gs://{bucket}/vector/{crop_name}.parquet',
+        f'gs://{BUCKET}/vector/{crop_name}.parquet',
     )
 
 
@@ -108,7 +109,7 @@ def load_crop_production_raster(crop_name: str) -> None | xr.Dataset:
         return None
     return (
         xr.open_dataset(
-            f'gs://{bucket}/zarr/spam-crop-production.zarr',
+            f'gs://{BUCKET}/zarr/spam-crop-production.zarr',
             engine='zarr',
             consolidated=True,
         )
