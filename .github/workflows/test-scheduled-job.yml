@@ -1,0 +1,34 @@
+name: Run Python script on a schedule
+
+on:
+  workflow_dispatch:
+  schedule:
+    # runs at 7:15am UTC-7
+    # - cron: "15 14 * * *"
+    # more explicit: 7:15am LA local time
+    - cron: "15 7 * * *"
+      timezone: "America/Los_Angeles"
+
+jobs:
+  test-scheduled-script-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.x'
+
+      - name: Run Python script
+        run: |
+          python3 -c "
+          from datetime import datetime
+
+          today = datetime.today().strftime('%m/%d/%Y')
+
+          print('Running GitHub Actions workflow on a schedule.')
+          print(f'Today\'s date is: {today}')
+          "
