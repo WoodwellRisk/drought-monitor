@@ -26,8 +26,9 @@ function calculateICMonthYear() {
 }
 
 const MIN_HISTORICAL_DATE = '1991-01-01';
-const { yearIC, monthIC } = calculateICMonthYear();
-const MAX_HISTORICAL_DATE = `${yearIC}-${monthIC}-01`;
+// const { yearIC, monthIC } = calculateICMonthYear();
+// const MAX_HISTORICAL_DATE = `${yearIC}-${monthIC}-01`;
+const MAX_HISTORICAL_DATE = '2026-07-01';
 
 export const arrayRange = (start, end, step) => {
   let output = [];
