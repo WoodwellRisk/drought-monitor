@@ -1,5 +1,4 @@
 import os
-import subprocess
 import timeit
 from concurrent.futures import ThreadPoolExecutor
 
@@ -14,21 +13,15 @@ from ndpyramid import pyramid_reproject
 
 def open_dataset(path: str) -> xr.Dataset:
     """
-    Open a single Xarray Dataset based on a file path.
+    Opens a single file from GCS and returns a chunked dataset.
 
     Parameters:
-        path(str): a filename pointing to a Xarray Dataset
+        path(str): a filename pointing to a Xarray Dataset on a GCS bucket
 
     Returns:
         ds(xr.Dataset): an opened Xarray Dataset with dims ['time', 'x', 'y']
     """
-    ACCESS_TOKEN = os.getenv('GCLOUD_ACCESS_TOKEN')
-    ds = xr.open_dataset(
-        path,
-        engine='h5netcdf',
-        chunks={'x': 128, 'y': 128},
-        storage_options={'token': ACCESS_TOKEN},
-    )
+    ds = xr.open_dataset(path, engine='h5netcdf', chunks={})
 
     return ds
 
@@ -68,7 +61,7 @@ def process_dataset(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
-def pyramid_to_zarr(ds: xr.core.dataset.Dataset, levels: int, path: str) -> None:
+def pyramid_to_zarr(ds: xr.Dataset, levels: int, path: str) -> None:
     """
     Convert a Xarray Dataset into a Zarr for visualization using CarbonPlan's `maps` package.
 
@@ -83,8 +76,15 @@ def pyramid_to_zarr(ds: xr.core.dataset.Dataset, levels: int, path: str) -> None
         None
     """
     # https://github.com/zarr-developers/zarr-python/issues/2964
-    dt = pyramid_reproject(ds.drop_encoding(), levels=levels, other_chunks={'time': len(ds.time)})
-    dt.to_zarr(path, consolidated=True, zarr_format=2, mode='w')
+    dt = pyramid_reproject(
+        ds.drop_encoding(),
+        levels=levels,
+        # extra_dim='window',
+        # other_chunks={'window': len(ds.window), 'time': len(ds.time)},
+        other_chunks={'time': len(ds.time)},
+    )
+
+    dt.to_zarr(path, zarr_format=2, consolidated=True, mode='w')
 
 
 def drought_pipeline():
@@ -103,7 +103,7 @@ def drought_pipeline():
     # year = today.year
     # month = today.month
     year = 2026
-    month = 6
+    month = 8
 
     if month == 1:
         month = 12
@@ -111,53 +111,53 @@ def drought_pipeline():
     else:
         month -= 1
 
-    month_ic = str(month) if month >= 10 else '0' + str(month)
     year_ic = str(year)
+    month_ic = str(month).zfill(2)
 
-    # environment variables comes from .github/workflows/generate-wb-zarr.yml
+    # environment variables
     BUCKET = os.getenv('BUCKET_NAME')
 
-    subprocess.run(['echo', 'Generating input file list.'])
+    print('Generating input file list.')
+    print()
     # create file list
     dates = pd.date_range(start='1991-01-01', end=f'{year_ic}-{month_ic}-01', freq='MS')
     h3_files = sorted(
         [
-            f'gs://{BUCKET}/historical/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc'
+            f'gs://{BUCKET}/era5/monthly/water_balance_hamon_percentiles/era5_water-balance-perc-w3_bl-1991-2020_mon_{date.strftime("%Y-%m-%d")}.nc'
             for date in dates
         ]
     )
     h12_files = sorted([file.replace('w3', 'w12') for file in h3_files])
 
     forecast_files = [
-        f'gs://{BUCKET}/forecast/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc'
+        f'gs://{BUCKET}/nmme/ensemble/water_balance_hamon_percentiles/nmme_ensemble_water-balance-perc-w{window}_mon_ic-{year_ic}-{month_ic}-01_leads-6.nc'
         for window in [3, 12]
     ]
     f3_file = [file for file in forecast_files if 'w3' in file][0]
     f12_file = [file for file in forecast_files if 'w12' in file][0]
 
-    subprocess.run(['echo', 'Opening NetCDF files.'])
+    print('Opening data.')
     # open historical data for both integration windows
     # parallelize data reads
-    # note: if we tried to use xr.open_mfdataset(...parallel=True),
-    # we would not be able to extract the time from the filename for each NetCDF
-    subprocess.run(['echo', '    Opening H3 data...'])
+    print('    Opening H3 data...')
     ds_list = open_files_in_parallel(h3_files)
     h3 = xr.concat(ds_list, dim='time')
     h3 = process_dataset(h3)
 
-    subprocess.run(['echo', '    Opening H12 data...'])
+    print('    Opening H12 data...')
     ds_list = open_files_in_parallel(h12_files)
     h12 = xr.concat(ds_list, dim='time')
     h12 = process_dataset(h12)
 
     # open forecast data for both integration windows
-    subprocess.run(['echo', '    Opening F3 data...'])
+    print('    Opening F3 data...')
     f3 = open_dataset(f3_file)
     f3 = process_dataset(f3)
     f3 = f3.rename({'50%': 'perc'})
     f3 = f3[['time', 'y', 'x', 'spatial_ref', '5%', '20%', 'perc', '80%', '95%']]
 
-    subprocess.run(['echo', '    Opening F12 data...'])
+    print('    Opening F12 data...')
+    print()
     f12 = open_dataset(f12_file)
     f12 = process_dataset(f12)
     f12 = f12.rename({'50%': 'perc'})
@@ -170,54 +170,63 @@ def drought_pipeline():
         'f12': f12,
     }
 
-    subprocess.run(['echo', 'Saving Zarr stores used for analysis.'])
+    print('Saving Zarr stores used for analysis.')
     # save the data as zarr stores that we will use for analysis
-    for dataset in ['h3', 'h12', 'f3', 'f12']:
-        subprocess.run(['echo', f'    Saving {dataset.upper()} data...'])
+    for dataset in dataset_dict.keys():
+        print(f'    Saving {dataset.upper()} data...')
+        save_to = f'gs://{BUCKET}/zarr/analysis/wb-{dataset}-{year_ic}-{month_ic}-01.zarr'
         dataset_dict[dataset].to_zarr(
-            f'gs://{BUCKET}/zarr/analysis/wb-{dataset}-{year_ic}-{month_ic}-01.zarr',
+            save_to,
             consolidated=True,
             zarr_format=2,
             mode='w',
         )
-    subprocess.run(['echo', ''])
+    print()
 
-    subprocess.run(['echo', 'Saving Zarr stores used for visualization.'])
+    print('Saving Zarr stores used for visualization.')
     # next, save the data as zarr stores that we will use for visualization
-    # first, we need to save their time coordinates as strings
-    h3['time'] = [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h3.time.values]
-    h12['time'] = [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h12.time.values]
-    f3['time'] = [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f3.time.values]
-    f12['time'] = [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f12.time.values]
+    # first, we need to save their time coordinates as object arrays
+    h3['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h3.time.values], dtype='U10'
+    )
+    h12['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h12.time.values], dtype='U10'
+    )
 
-    # datasets' 'time' dimension has changed
-    dataset_dict['h3'] = h3
-    dataset_dict['h12'] = h12
-    dataset_dict['f3'] = f3
-    dataset_dict['f12'] = f12
+    f3['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f3.time.values], dtype='U10'
+    )
+    f12['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f12.time.values], dtype='U10'
+    )
+
+    # redeclare dict since data has changed
+    dataset_dict = {
+        'h3': h3,
+        'h12': h12,
+        'f3': f3,
+        'f12': f12,
+    }
 
     # next, calculate the number of zoom levels to use for the output Zarr
     pixels_per_tile = 128
-    longitute_length = h3.perc.x.shape[0]
-    max_levels = round(np.sqrt(longitute_length / pixels_per_tile)) + 1
+    longitude_length = h3.perc.x.shape[0]
+    max_levels = round(np.sqrt(longitude_length / pixels_per_tile)) + 1
     levels = max_levels
 
     # create pyramids for each dataset, then save the pyramid to zarr
-    for dataset in ['h3', 'h12', 'f3', 'f12']:
-        subprocess.run(['echo', f'    Saving {dataset.upper()} data...'])
-        pyramid_to_zarr(
-            dataset_dict[dataset],
-            levels,
-            f'gs://{BUCKET}/zarr/viz/wb-{dataset}-{year_ic}-{month_ic}-01.zarr',
-        )
-    subprocess.run(['echo', ''])
+    for dataset in dataset_dict.keys():
+        print(f'    Saving {dataset.upper()} data...')
+        save_to = f'gs://{BUCKET}/zarr/viz/wb-{dataset}-{year_ic}-{month_ic}-01.zarr'
+        pyramid_to_zarr(dataset_dict[dataset], levels, save_to)
+    print()
 
-    subprocess.run(['echo', 'Done!'])
-    subprocess.run(['echo', ''])
+    print('Done!')
+    print()
 
     # ---------------------------------------------------------------------------
     end = timeit.default_timer()
-    subprocess.run(['echo', f'Time to complete: {(end - start) / 3600 :.5f} hours.'])
+    print(f"Time to complete: {(end - start) / 3600 :.5f} hours")
 
 
 if __name__ == '__main__':

@@ -2,12 +2,12 @@ name: Run Python script on a schedule
 
 on:
   workflow_dispatch:
-  schedule:
+  # schedule:
     # runs at 7:15am UTC-7
     # - cron: "15 14 * * *"
     # more explicit: 7:15am LA local time
-    - cron: "15 7 * * *"
-      timezone: "America/Los_Angeles"
+    # - cron: "15 7 * * *"
+    #   timezone: "America/Los_Angeles"
 
 jobs:
   test-scheduled-script-run:
