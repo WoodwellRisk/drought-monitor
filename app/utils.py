@@ -14,17 +14,26 @@ import xarray as xr
 
 today = datetime.today()
 
-# Determine how many months to go back
-months_back = 1 if today.day >= 15 else 2
+# # Determine how many months to go back
+# months_back = 1 if today.day >= 15 else 2
 
-# Calculate the target month and year
-target_month = today.month - months_back
-target_year = today.year
+# # Calculate the target month and year
+# target_month = today.month - months_back
+# target_year = today.year
 
-# Handle year rollover (handles both going back to previous December and beyond)
-while target_month <= 0:
-    target_month += 12
-    target_year -= 1
+# # Handle year rollover (handles both going back to previous December and beyond)
+# while target_month <= 0:
+#     target_month += 12
+#     target_year -= 1
+
+target_year = 2026
+target_month = 8
+
+if target_month == 1:
+    target_month = 12
+    target_year = target_year - 1
+else:
+    target_month -= 1
 
 year_ic = str(target_year)
 month_ic = str(target_month).zfill(2)
