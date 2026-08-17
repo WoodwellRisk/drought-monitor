@@ -51,12 +51,8 @@ function Layers() {
 
   const [sliderIndex, setSliderIndex] = useState(historicalDates.length - 1);
   const [maxSliderIndex, setMaxSliderIndex] = useState(historicalDates.length - 1);
-  const [minSliderYear, setMinSliderYear] = useState(
-    new Date(historicalDates.at(0) + 'T00:00:00').getFullYear()
-  );
-  const [maxSliderYear, setMaxSliderYear] = useState(
-    new Date(historicalDates.at(-1) + 'T00:00:00').getFullYear()
-  );
+  const [minSliderYear, setMinSliderYear] = useState(Number(historicalDates.at(0).split('-')[0]));
+  const [maxSliderYear, setMaxSliderYear] = useState(Number(historicalDates.at(-1).split('-')[0]));
 
   const [defaultSkipYear, defaultSkipMonth, _] = maxHistoricalDate.split('-');
   const [skipMonth, setSkipMonth] = useState(defaultSkipMonth);
@@ -97,12 +93,14 @@ function Layers() {
     let index = timePeriod == 'historical' ? historicalDates.length - 1 : 0;
     let t = timePeriod == 'historical' ? historicalDates.at(index) : forecastDates.at(index);
     let maxIndex = timePeriod == 'historical' ? historicalDates.length - 1 : 5;
-    let minYear = new Date(
-      timePeriod == 'historical' ? historicalDates.at(0) : forecastDates.at(0) + 'T00:00:00'
-    ).getFullYear();
-    let maxYear = new Date(
-      timePeriod == 'historical' ? historicalDates.at(-1) : forecastDates.at(-1) + 'T00:00:00'
-    ).getFullYear();
+    let minYear =
+      timePeriod == 'historical'
+        ? Number(historicalDates.at(0).split('-')[0])
+        : Number(forecastDates.at(0).split('-')[0]);
+    let maxYear =
+      timePeriod == 'historical'
+        ? Number(historicalDates.at(-1).split('-')[0])
+        : Number(forecastDates.at(-1).split('-')[0]);
 
     setSliderIndex(index);
     setMaxSliderIndex(maxIndex);
