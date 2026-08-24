@@ -18,19 +18,30 @@ export default function PointQuery({ key, id }) {
 
   const historicalDates = useStore((state) => state.historicalDates);
   const forecastDates = useStore((state) => state.forecastDates);
+  const variable = useStore((state) => state.variable);
   const window = useStore((state) => state.window);
   const timePeriod = useStore((state) => state.timePeriod);
 
-  const queryPoint = map.getCenter();
-  const [coords, setCoords] = useState([queryPoint['lng'], queryPoint['lat']]);
+  const setQueryData = useStore((state) => state.setQueryData);
 
-  function toFourDecimalPlaces(num) {
-    return parseFloat(num.toFixed(4));
+  const roundToNearest025 = (num) => {
+    return Math.round(num * 4) / 4;
+  };
+
+  function toTwoDecimalPlaces(num) {
+    return parseFloat(roundToNearest025(num).toFixed(2));
   }
 
+  const queryPoint = map.getCenter();
+  const [coords, setCoords] = useState([
+    toTwoDecimalPlaces(queryPoint['lng']),
+    toTwoDecimalPlaces(queryPoint['lat']),
+  ]);
+  const setPlotData = useStore((state) => state.setPlotData);
+
   const [coordinates, setCoordinates] = useState([
-    `Longitude: ${toFourDecimalPlaces(coords[0])}`,
-    `Latitude: ${toFourDecimalPlaces(coords[1])}`,
+    `Longitude: ${coords[0]}`,
+    `Latitude: ${coords[1]}`,
   ]);
 
   // https://docs.mapbox.com/mapbox-gl-js/example/drag-a-point/
@@ -98,11 +109,11 @@ export default function PointQuery({ key, id }) {
 
     function onUp(e) {
       const coords = e.lngLat;
-      setCoords([coords.lng, coords.lat]);
+      setCoords([toTwoDecimalPlaces(coords.lng), toTwoDecimalPlaces(coords.lat)]);
 
       setCoordinates([
-        `Longitude: ${toFourDecimalPlaces(coords.lng)}`,
-        `Latitude:   ${toFourDecimalPlaces(coords.lat)}`,
+        `Longitude: ${toTwoDecimalPlaces(coords.lng)}`,
+        `Latitude:   ${toTwoDecimalPlaces(coords.lat)}`,
       ]);
 
       map.getCanvas().style.cursor = '';
@@ -154,34 +165,30 @@ export default function PointQuery({ key, id }) {
   }, []);
 
   useEffect(() => {
-    (async () => {
-      if (!historicalRaster && !forecastRaster) return;
+    if (!historicalRaster && !forecastRaster) return;
 
-      // give the rasters time to load
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    let raster = timePeriod == 'forecast' ? forecastRaster : historicalRaster;
+    let dates = timePeriod == 'forecast' ? forecastDates : historicalDates;
 
+    let rasterQuery = () => {
       try {
-        const historicalResult = await historicalRaster.queryData(
-          { type: 'Point', coordinates: coords },
-          { time: historicalDates }
-        );
-        console.log(historicalResult);
+        const rasterQuery = raster
+          .queryData(
+            { type: 'Point', coordinates: coords },
+            {
+              time: dates,
+            }
+          )
+          .then((result) => {
+            // console.log(result)
+            setQueryData(result);
+          });
       } catch (error) {
-        console.error('Error querying historical raster:', error);
+        console.error('Error querying raster:', error);
       }
-
-      try {
-        const forecastResult = await forecastRaster.queryData(
-          { type: 'Point', coordinates: coords },
-          { time: forecastDates }
-        );
-        console.log(forecastResult);
-        console.log();
-      } catch (error) {
-        console.error('Error querying forecast raster:', error);
-      }
-    })();
-  }, [historicalRaster, window, coords]);
+    };
+    setTimeout(rasterQuery, 150);
+  }, [historicalRaster, forecastRaster, window, coords, timePeriod]);
 
   return (
     <Box

@@ -21,6 +21,7 @@ import * as d3 from 'd3';
 const TimeBar = ({ data, colormap }) => {
   const sliding = useStore((state) => state.sliding);
   const time = useStore((state) => state.time);
+  const timePeriod = useStore((state) => state.timePeriod);
 
   const sx = {
     chart: {
@@ -77,13 +78,15 @@ const TimeBar = ({ data, colormap }) => {
 
             <Line data={plotMean} width={1.5} color={'black'} />
 
-            <Bar
-              data={plotMean.map(([x, y]) => [x, 0.5, y])}
-              color={plotMean.map((val, idx) =>
-                val[1] > 0.5 ? '#64bac5' : val[1] == 0.5 ? '#0a0a0a' : '#ef7071'
-              )}
-              strokeWidth={0.0}
-            />
+            {timePeriod == 'historical' && (
+              <Bar
+                data={plotMean.map(([x, y]) => [x, 0.5, y])}
+                color={plotMean.map((val, idx) =>
+                  val[1] > 0.5 ? '#64bac5' : val[1] == 0.5 ? '#0a0a0a' : '#ef7071'
+                )}
+                strokeWidth={0.0}
+              />
+            )}
 
             <Circle
               x={timeIndex}

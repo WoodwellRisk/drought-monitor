@@ -178,14 +178,11 @@ export const useStore = create((set, get) => ({
   forecastRaster: { current: null },
   setForecastRaster: (ref) => set((state) => ({ forecastRaster: ref })),
 
-  regionData: { loading: true },
-  setRegionData: (regionData) => set({ regionData }),
+  queryData: {},
+  setQueryData: (queryData) => set({ queryData }),
 
-  regionLoadingData: true,
-  setRegionDataLoading: (regionLoadingData) => set({ regionLoadingData }),
-
-  showRegionPicker: false,
-  setShowRegionPicker: (showRegionPicker) => set({ showRegionPicker }),
+  showCharts: false,
+  setShowCharts: (showCharts) => set({ showCharts }),
 
   // crop-specific state variables
   crops: ['barley', 'cocoa', 'coffee', 'cotton', 'maize', 'rice', 'soybean', 'sugarcane', 'wheat'],

@@ -14,8 +14,8 @@ import { useStore } from '../store/index';
 const Sidebar = () => {
   const isWide = useBreakpointIndex() > 0;
 
-  const showRegionPicker = useStore((state) => state.showRegionPicker);
-  const setShowRegionPicker = useStore((state) => state.setShowRegionPicker);
+  const showCharts = useStore((state) => state.showCharts);
+  const setShowCharts = useStore((state) => state.setShowCharts);
   const showAbout = useStore((state) => state.showAbout);
   const setShowAbout = useStore((state) => state.setShowAbout);
   const showMenu = useStore((state) => state.showMenu);
@@ -88,28 +88,24 @@ const Sidebar = () => {
         <Box onClick={() => setShowAbout(!showAbout)} sx={sx['about-section']}>
           How to use this site <Text sx={sx.arrow}>→</Text>
         </Box>
-        <SidebarDivider sx={{ width: '100%', my: 3 }} />
+        <SidebarDivider sx={{ width: '100%', ml: 0, my: 3 }} />
 
         <Layers />
-        <SidebarDivider sx={{ width: '100%', my: 4 }} />
+        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
-        <ExpandingSection
-          label="Charts"
-          expanded={showRegionPicker}
-          setExpanded={setShowRegionPicker}
-        >
-          {/* {showRegionPicker && isWide && (
+        <ExpandingSection label="Charts" expanded={showCharts} setExpanded={setShowCharts}>
+          {showCharts && isWide && (
             <Box sx={{ ...sx.stats }}>
               <Charts />
             </Box>
-          )} */}
+          )}
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', my: 4 }} />
+        <SidebarDivider sx={{ width: '100%', ml: 0, my: 4 }} />
 
         <ExpandingSection label="Overlays" expanded={showOverlays} setExpanded={setShowOverlays}>
           <Overlays />
         </ExpandingSection>
-        <SidebarDivider sx={{ width: '100%', mt: 4 }} />
+        <SidebarDivider sx={{ width: '100%', ml: 0, mt: 4 }} />
       </Box>
     </Box>
   );

@@ -17,13 +17,11 @@ const StatsDisplay = (props) => {
   let result;
 
   console.log(data);
-  console.log();
-
   // https://github.com/carbonplan/forest-carbon-web/blob/9012c0fd99a952b68a08a6a25ba645af736bb8fb/components/regional-emissions.js
   let chartData = useMemo(() => {
     let avgData = {};
 
-    if (!data) return {};
+    if (!data || !data[variable] || Object.keys(data[variable]).length == 0) return {};
     data.coordinates.time.forEach((t) => {
       let filteredData = data[variable][t].filter((d) => d !== 9.969209968386869e36);
       const average = filteredData.reduce((a, b) => a + b, 0) / filteredData.length;
@@ -60,9 +58,9 @@ const StatsDisplay = (props) => {
         {result}
       </Box>
 
-      <BarChart data={data} colormap={hexmapBar} />
+      {/* <BarChart data={data} colormap={hexmapBar} /> */}
 
-      {/* <TimeSeries data={chartData} colormap={hexmapTime} /> */}
+      <TimeSeries data={chartData} colormap={hexmapTime} />
 
       {/* <DensityPlot data={data} colormap={hexmapBar} /> */}
     </>
@@ -70,9 +68,9 @@ const StatsDisplay = (props) => {
 };
 
 const Charts = () => {
-  const regionData = useStore((state) => state.regionData);
-  const showRegionPicker = useStore((state) => state.showRegionPicker);
+  const showCharts = useStore((state) => state.showCharts);
   const variable = useStore((state) => state.variable);
+  const queryData = useStore((state) => state.queryData);
 
   const colormapName = useStore((state) => state.colormapName);
   const colormap = useThemedColormap(colormapName);
@@ -89,10 +87,10 @@ const Charts = () => {
 
   return (
     <Box>
-      {showRegionPicker && regionData[variable] && (
+      {showCharts && queryData[variable] && (
         <>
           <StatsDisplay
-            data={regionData}
+            data={queryData}
             variable={variable}
             colormap={colormap}
             hexmapBar={hexmapBar}

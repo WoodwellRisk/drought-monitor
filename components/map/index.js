@@ -35,7 +35,7 @@ const Map = ({ mobile }) => {
   const setHistoricalRaster = useStore((state) => state.setHistoricalRaster);
   const setForecastRaster = useStore((state) => state.setForecastRaster);
 
-  const showRegionPicker = useStore((state) => state.showRegionPicker);
+  const showCharts = useStore((state) => state.showCharts);
   const cropLayer = useStore((state) => state.cropLayer);
   const showCropLayer = useStore((state) => state.showCropLayer);
   const showCountriesLayer = useStore((state) => state.showCountriesLayer);
@@ -150,18 +150,7 @@ const Map = ({ mobile }) => {
           width={1}
         />
 
-        {/* {showRegionPicker && isWide && (
-            <RegionPicker
-              color={theme.colors.primary}
-              backgroundColor={theme.rawColors.background}
-              fontFamily={theme.fonts.mono}
-              fontSize={'14px'}
-              minRadius={1}
-              maxRadius={1500}
-            />
-          )} */}
-
-        {showRegionPicker && isWide && <PointQuery id={'point-query'} />}
+        {showCharts && isWide && <PointQuery id={'point-query'} />}
 
         {/* {!mobile && <Ruler />} */}
 
