@@ -27,7 +27,7 @@ today = datetime.today()
 #     target_year -= 1
 
 target_year = 2026
-target_month = 8
+target_month = 9
 
 if target_month == 1:
     target_month = 12
