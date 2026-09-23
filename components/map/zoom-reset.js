@@ -1,17 +1,23 @@
-import { IconButton } from 'theme-ui';
+import { useCallback, useState } from 'react';
 import { keyframes } from '@emotion/react';
-import { useCallback, useRef } from 'react';
+import { IconButton } from 'theme-ui';
+import { useBreakpointIndex } from '@theme-ui/match-media';
 import { Reset } from '@carbonplan/icons';
 
 import { useMap } from './map-provider';
+import { useMapView } from './use-map-view';
 import { useStore } from '../store/index';
 
 const ZoomReset = () => {
+  const isWide = useBreakpointIndex() > 0;
   const { map } = useMap();
-  const zoom = useStore((state) => state.zoom);
-  const initialZoom = 1.3;
-  const center = useStore((state) => state.center);
-  const resetButton = useRef(null);
+
+  const initialZoom = useStore((state) => state.initialZoom);
+  const initialCenter = useStore((state) => state.initialCenter);
+  const { zoom, center } = useMapView();
+  const atInitialConditions =
+    zoom === initialZoom && center[0] === initialCenter[0] && center[1] === initialCenter[1];
+  const [spinning, setSpinning] = useState(false);
 
   const spin = keyframes({
     from: {
@@ -22,43 +28,38 @@ const ZoomReset = () => {
     },
   });
 
-  const handleResetClick = useCallback((event) => {
-    // reset map
-    resetButton.current = event.target;
-    resetButton.current.classList.add('spin');
+  const handleResetClick = useCallback(() => {
+    if (atInitialConditions) return;
 
-    if (zoom != initialZoom) {
-      // map.flyTo() is having trouble going to the right lat / lon center because the map has maxBounds
-      // so we need to instead fit the map to the original zoom, but we can't do the same for the center
-      map.flyTo({
-        // center: [-40, 40],
-        zoom: initialZoom,
-      });
-    }
+    setSpinning(true);
+    map.flyTo({
+      center: initialCenter,
+      zoom: initialZoom,
+    });
+    [map, atInitialConditions, initialCenter, initialZoom];
   });
 
-  const handleAnimationEnd = useCallback(() => {
-    resetButton.current.classList.remove('spin');
-  });
+  if (!map) return null;
 
   return (
     <IconButton
       aria-label="Reset map extent"
       onClick={handleResetClick}
-      onAnimationEnd={handleAnimationEnd}
-      disabled={zoom == initialZoom}
+      onAnimationEnd={() => setSpinning(false)}
+      disabled={atInitialConditions}
       sx={{
+        display: isWide ? 'initial' : 'none',
+        svg: spinning ? { animation: `${spin.toString()} 1s` } : {},
         stroke: 'primary',
+        color: atInitialConditions ? 'muted' : 'primary',
         cursor: 'pointer',
-        ml: [2],
-        display: ['initial', 'initial', 'initial', 'initial'],
         position: 'absolute',
-        color: zoom == initialZoom ? 'muted' : 'primary',
-        left: [2],
-        bottom: [20, 20, 20, 20],
-        '.spin': {
-          animation: `${spin.toString()} 1s`,
-        },
+        right: '0.5rem',
+        bottom: '0.5rem',
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: atInitialConditions ? 'muted' : 'primary',
+        bg: 'background',
       }}
     >
       <Reset sx={{ strokeWidth: 1.75, width: 20, height: 20 }} />
