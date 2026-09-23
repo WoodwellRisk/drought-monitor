@@ -123,10 +123,8 @@ export const useStore = create((set, get) => ({
 
   // https://github.com/mapbox/mapbox-gl-js/blob/2b6915c8004a5b759338f3a7d92fb2882db9dd5c/src/geo/lng_lat.js#L192-L201
   // https://docs.mapbox.com/mapbox-gl-js/example/restrict-bounds/
-  bounds: [
-    [-360, -60.5], // southwest
-    [360, 85], // northeast
-  ],
+  // [west, south, east, north]
+  bounds: [-360, -60.5, 360, 85],
 
   // doesn't work, this needs to be placed in the router component
   // mapReady: false,
