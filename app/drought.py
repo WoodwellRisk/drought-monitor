@@ -443,6 +443,9 @@ def server(input: Inputs, output: Outputs, session: Session):
             if cname == 'USA':
                 slist = [state for state in slist if state != 'CONUS']
                 new_options = ['All', 'CONUS'] + slist
+            elif cname == 'France':
+                slist = [state for state in slist if state != 'Mainland']
+                new_options = ['All', 'Mainland'] + slist
             else:
                 new_options = ['All'] + slist
 
@@ -1246,7 +1249,9 @@ def server(input: Inputs, output: Outputs, session: Session):
 
     @render.ui
     @reactive.event(unweighted_forecast_wb)
-    def forecast_map(alt='a map showing the borders of a country of interest'):
+    def forecast_map(
+        alt='A map showing how water balance is expected to change within a given country\'s borders',
+    ):
         forecast = unweighted_forecast_wb()
         if not forecast:
             return
@@ -1274,9 +1279,6 @@ def server(input: Inputs, output: Outputs, session: Session):
             'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'],
         }
 
-        max_bounds = max(abs(xmin - xmax), abs(ymin - ymax)) * 111
-        zoom = 11 - np.log(max_bounds)
-
         country_forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
         df = country_forecast['perc'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
         df.columns = ['time', 'y', 'x', 'Percentile']
@@ -1294,7 +1296,6 @@ def server(input: Inputs, output: Outputs, session: Session):
             hover_data={'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
             map_style='carto-positron-nolabels',
             # map_style = 'carto-darkmatter-nolabels',
-            zoom=zoom,
             height=495,
             animation_frame='time',
         )
@@ -1352,7 +1353,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         # to save individual images later: https://github.com/plotly/plotly.py/issues/664
         return ui.HTML(fig.to_html(config=config, auto_play=False))
 
-    @render.download(
+    @render.download_link(
         filename=lambda: f'drought-timeseries-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.png'.replace(
             ' ', '-'
         )
@@ -1428,7 +1429,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             editable=False,
         )
 
-    @render.download(
+    @render.download_link(
         filename=lambda: f'drought-table-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.csv'.replace(
             ' ', '-'
         )
