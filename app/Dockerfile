@@ -1,10 +1,10 @@
 # 1. Containerize app to create Dockerfile (done)
 # 2. Build Docker image: docker build -t shiny-app:latest --platform linux/amd64 .
-# 3. Run Docker container: docker run --platform linux/amd64 -p 8080:8080 shiny-app:latest
-
-# If you run into errors testing the container locally, you may need to set up your gcloud credentials first:
-# 3a. gcloud auth application-default login
-# 3b. docker run -v ~/.config/gcloud:/root/.config/gcloud -p 8080:8080 shiny-app:latest
+# 3. Run Docker container:
+# docker run --platform linux/amd64 \
+#   -e BUCKET_NAME=BUCKET_NAME \
+#   -v ~/.config/gcloud:/root/.config/gcloud \
+#   -p 8080:8080 shiny-app:latest
 
 # https://hub.docker.com/_/python/
 FROM python:3.12
@@ -15,19 +15,8 @@ ENV PIP_ROOT_USER_ACTION=ignore
 
 # make the app available by listening on general host and exposing the right port
 ENV HOST=0.0.0.0
+ENV PORT=8080
 EXPOSE 8080
-
-# install curl so that we can install google cloud sdk
-RUN apt-get -y update; apt-get -y install curl git
-
-# downloads the gCloud package
-# https://stackoverflow.com/questions/70902923/unable-to-start-a-cloud-run-container-on-m1-macbook/71072262#71072262
-RUN curl https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.tar.gz > /tmp/google-cloud-sdk.tar.gz
-
-# install google cloud sdk
-# https://stackoverflow.com/questions/28372328/how-to-install-the-google-cloud-sdk-in-a-docker-image
-RUN curl -sSL https://sdk.cloud.google.com | bash
-ENV PATH=$PATH:/root/google-cloud-sdk/bin
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

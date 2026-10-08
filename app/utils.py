@@ -89,13 +89,13 @@ def load_forecast_wb(window: str) -> xr.Dataset:
     ).compute()[['5%', '20%', 'perc', '80%', '95%']]
 
 
-# lazy load country boundary layer
+# lazy load country layer
 @functools.lru_cache(maxsize=1)
 def load_countries() -> gpd.GeoDataFrame:
     return gpd.read_parquet(f'gs://{BUCKET}/vector/countries.parquet')
 
 
-# lazy load country boundary layer
+# lazy load states layer
 @functools.lru_cache(maxsize=1)
 def load_states() -> gpd.GeoDataFrame:
     return gpd.read_parquet(f'gs://{BUCKET}/vector/states.parquet')

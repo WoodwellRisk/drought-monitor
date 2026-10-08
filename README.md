@@ -1,6 +1,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/WoodwellRisk/drought-monitor/blob/main/LICENSE)
 
-# Woodwell Risk Drought Monitor and Forecast
+# Woodwell Climate drought monitor and forecast
 This site displays near real-time moisture anomalies along with an experimental 6-month forecast. Anomalies are measured as water balance percentiles relative to levels from 1991 to 2020. Values close to 0.5 represent normal conditions. Values below and above that mid-value indicate dryer- and wetter-than-normal conditions, respectively. Moisture anomalies are monitored on a monthly basis, from 2001 to present.
 
 ## Data sources and processing steps

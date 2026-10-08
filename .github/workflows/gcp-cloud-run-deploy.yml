@@ -20,9 +20,7 @@ jobs:
       # constants
       REGION: us-central1
       SERVICE_NAME: ${{ secrets.CLOUD_RUN_SERVICE_NAME }}
-      CONTAINER_NAME: drought-monitor-container
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
-      LOGS_BUCKET_NAME: ${{ secrets.LOGS_BUCKET_NAME }}
       ARTIFACT_REPO: ${{ secrets.ARTIFACT_REPO }}
       PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -48,33 +46,46 @@ jobs:
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
 
-      # Install the cloud sdk (gcloud)
+      # Install the gcloud sdk
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      # make sure gcloud has the right project id
-      - name: Set gcloud project
-        run: gcloud config set project "${PROJECT_ID}"
+      # authenticate docker to the artifact registry
+      - name: Configure Docker auth for Artifact Registry
+        run: gcloud auth configure-docker "${{ env.REGION }}-docker.pkg.dev"
 
-      # build the docker image with cloud build
-      - name: build docker image (cloud build)
-        id: build
+      # compute the image tag name, reuse later
+      - name: Compute Docker image tag name
         run: |
-          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          IMAGE_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
 
-          echo "Building image → $IMAGE_TAG"
-
-          # https://docs.cloud.google.com/sdk/gcloud/reference/builds/submit#--gcs-log-dir
-          gcloud builds submit app/ \
-            --project="${{ env.PROJECT_ID }}" \
-            --tag="${IMAGE_TAG}" \
-            --gcs-log-dir="gs://${LOGS_BUCKET_NAME}" \
-            --quiet
-
-          # Export the tag for the next step
+          # export the tag for next steps
           echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+      # create a buildx builder that supports cache backends
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # build the docker image locally, cache between runs
+      - name: Build Docker image
+        # run: |
+        #   echo "Building image → $IMAGE_TAG"
+        #   docker build app/ --tag "${IMAGE_TAG}"
+        uses: docker/build-push-action@v6
+        with:
+          context: app/
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # authenticate docker to the artifact registry and push the image
+      - name: Push Docker image to Artifact Registry
+        run: docker push "${IMAGE_TAG}"
 
       # deploy (or update) the cloud run service
       - name: Deploy to Cloud Run
@@ -98,7 +109,7 @@ jobs:
             --min-instances 0 \
             --max-instances 100 \
             --cpu-boost \
-            --startup-probe tcpSocket.port=8080,initialDelaySeconds=0,failureThreshold=3,timeoutSeconds=10,periodSeconds=30 \
+            --startup-probe tcpSocket.port=8080,initialDelaySeconds=0,failureThreshold=10,timeoutSeconds=10,periodSeconds=10 \
             --quiet
 
       # print the URL of the newly‑deployed service

@@ -19,7 +19,6 @@ import xarray as xr
 from matplotlib.lines import Line2D
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shinywidgets import output_widget, render_plotly, render_widget
-
 from utils import (
     create_bbox_from_coords,
     forecast_dates,
@@ -420,10 +419,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         new_country = input.country_select()
         country_name.set(new_country)
         state_name.set('')
-
-    @render.text
-    def country_name_text():
-        return country_name()
 
     @reactive.effect
     @reactive.event(country_name)
