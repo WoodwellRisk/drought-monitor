@@ -430,15 +430,6 @@ select option:active, select option:checked, select option:focus, select option:
     display: none;
 }
 
-#about-container {
-    border: 1px solid var(--border-color);
-    display: flex;
-    position: absolute;
-    background-color: var(--background-color);
-    inset: 1rem;
-    z-index: 10;
-}
-
 #main {
     background-color: var(--background-color);
     width: 90%;
@@ -447,18 +438,44 @@ select option:active, select option:checked, select option:focus, select option:
     padding-bottom: 10px;
 }
 
+body:has(#about-container) #about_button {
+    color: var(--white);
+    background-color: var(--black);
+}
+
+#about_button {
+    margin-right: 0.25rem;
+}
+
+#about-container {
+    border: 1px solid var(--border-color);
+    border-top: 0;
+    display: flex;
+    position: absolute;
+    background-color: var(--background-color);
+    inset: 0;
+    z-index: 10;
+}
+
 #about-inner-container {
     position: relative;
     width: 100%;
+    margin: 0 3rem;
 }
 
-#close_about_button {
+#about-body {
     position: absolute;
-    top: 0;
-    right: 0;
-    padding: 0.25rem 0.5rem;
-    border: 0;
-    border-radius: 0;
+    inset: 30px 10px 10px 10px;
+    overflow-y: auto;
+}
+
+#about-body > h2 {
+    font-size: 1.5rem;
+}
+
+#about-body > h3 {
+    font-size: 1.25rem;
+    font-weight: bold;
 }
 
 .action-button{
@@ -480,16 +497,6 @@ select option:active, select option:checked, select option:focus, select option:
     color: var(--white);
     background-color: var(--black);
     opacity: 1;
-}
-
-#about-body {
-    position: absolute;
-    inset: 30px 10px 10px 10px;
-    overflow-y: auto;
-}
-
-#about-body > h2 {
-    font-size: 1.5rem;
 }
 
 #country_filter_text, #country_name_text, #country_bbox_text, #crop_name_text {
