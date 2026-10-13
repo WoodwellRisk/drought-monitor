@@ -103,7 +103,7 @@ def drought_pipeline():
     # year = today.year
     # month = today.month
     year = 2026
-    month = 9
+    month = 10
 
     if month == 1:
         month = 12
