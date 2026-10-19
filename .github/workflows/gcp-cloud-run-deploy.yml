@@ -100,7 +100,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --service-account "${{ env.SERVICE_ACCOUNT }}" \
-            --set-env-vars BUCKET_NAME="${BUCKET_NAME}" \
+            --set-env-vars DM_BUCKET="${BUCKET_NAME}" \
             --port 8080 \
             --memory 32Gi \
             --cpu 8 \

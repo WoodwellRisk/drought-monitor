@@ -1,6 +1,5 @@
 import io
 import json
-from datetime import datetime
 from pathlib import Path
 
 import gcsfs
@@ -23,6 +22,8 @@ from utils import (
     create_bbox_from_coords,
     forecast_dates,
     historical_dates,
+    load_clipped_production,
+    load_clipped_wb,
     load_countries,
     load_crop_extent_vector,
     load_crop_production_raster,
@@ -30,8 +31,6 @@ from utils import (
     load_historical_wb,
     load_states,
 )
-
-# shiny run --reload drought.py
 
 explorer_tab_name = 'Global view'
 timeseries_tab_name = 'Figures and tables'
@@ -192,7 +191,7 @@ def server(input: Inputs, output: Outputs, session: Session):
     table_to_save = reactive.value(None)
     add_download_links = reactive.value(True)
 
-    display_bounds_error = reactive.value(False)
+    bounds_error_dict = reactive.value(None)
     data_has_loaded = reactive.value(False)
     show_about = reactive.value(False)
 
@@ -223,6 +222,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 ),
                 ui.div(
                     {'id': 'timeseries-container'},
+                    ui.output_ui('timeseries_bounds_error'),
                     ui.div(
                         {'id': 'timeseries-toggle-container'},
                         ui.input_checkbox('historical_checkbox', 'Historical', True),
@@ -249,6 +249,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 f"input.tab_menu == '{forecast_tab_name}'",
                 ui.div(
                     {'id': 'forecast-map-container'},
+                    ui.output_ui('forecast_bounds_error'),
                     ui.output_ui('forecast_map'),
                 ),
             ),
@@ -689,27 +690,17 @@ def server(input: Inputs, output: Outputs, session: Session):
             raise ValueError('The integration window should be either 3 or 12 months.')
 
         # on app start or page reload, these variables will be empty
-        if cname == '' or sname == '' or crop == '' or historical is None or forecast is None:
+        if cname == '' or sname == '' or crop == '':
             return
-
-        xmin, ymin, xmax, ymax = bounds.get()
-        country = countries.query(" name == @cname ")
-        state = states.query(" name == @sname and country == @cname ")
 
         # we have already filtered countries where we don't have data, so clipping by country extent
         # should never produce a rioxarray.exceptions.NoDataInBounds error at this step
-        if sname == 'All':
-            historical = historical.rio.clip(country.geometry, all_touched=True, drop=True)
-            forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
-        else:
-            historical = historical.rio.clip(state.geometry, all_touched=True, drop=True)
-            forecast = forecast.rio.clip(state.geometry, all_touched=True, drop=True)
-
+        historical, forecast = load_clipped_wb(window_size, cname, sname)
         historical = historical.assign_attrs({'crop': crop})
         forecast = forecast.assign_attrs({'crop': crop})
 
         if crop == 'none':
-            display_bounds_error.set(False)
+            bounds_error_dict.set(None)
             historical_wb.set(historical)
             forecast_wb.set(forecast)
             unweighted_historical_wb.set(historical)
@@ -724,7 +715,13 @@ def server(input: Inputs, output: Outputs, session: Session):
                 # sometimes, this is silently failing when there is no data to show, but instead returns an empty dataset
                 if historical.perc.isnull().all() or forecast.perc.isnull().all():
                     print('No data in bounds, but silently failing!')
-                    display_bounds_error.set(True)
+                    bounds_error_dict.set(
+                        {
+                            'country': cname,
+                            'state': sname,
+                            'crop': crop,
+                        }
+                    )
                     historical_wb.set(None)
                     forecast_wb.set(None)
                     unweighted_historical_wb.set(None)
@@ -736,16 +733,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 unweighted_forecast_wb.set(forecast)
 
                 # clip production data to country extent, then standardize
-                production = crop_production()
-                production = production.rio.write_crs(4236)
-                if sname == 'All':
-                    clipped_production = production.rio.clip(
-                        country.geometry, all_touched=True, drop=True
-                    )
-                else:
-                    clipped_production = production.rio.clip(
-                        state.geometry, all_touched=True, drop=True
-                    )
+                clipped_production = load_clipped_production(cname, sname, crop)
                 standardized_production = clipped_production / clipped_production.sum(skipna=True)
                 standardized_production = standardized_production[['x', 'y', 'production']]
 
@@ -777,7 +765,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                     .shape[0]
                 )
 
-                historical *= nrows_historical
+                historical = historical * nrows_historical
 
                 forecast['5%'] = forecast['5%'] * nrows_forecast
                 forecast['20%'] = forecast['20%'] * nrows_forecast
@@ -787,13 +775,17 @@ def server(input: Inputs, output: Outputs, session: Session):
 
                 # lastly, drop the production row from the dataframes
                 historical = historical[['time', 'x', 'y', 'perc']]
-
-                # forecast = forecast[['time', 'x', 'y', 'agree', '5%', '20%', 'perc', '80%', '95%']]
                 forecast = forecast[['time', 'x', 'y', '5%', '20%', 'perc', '80%', '95%']]
 
             except rioxarray.exceptions.NoDataInBounds:
                 print('No data in bounds!')
-                display_bounds_error.set(True)
+                bounds_error_dict.set(
+                    {
+                        'country': cname,
+                        'state': sname,
+                        'crop': crop,
+                    }
+                )
                 historical_wb.set(None)
                 forecast_wb.set(None)
                 unweighted_historical_wb.set(None)
@@ -803,49 +795,102 @@ def server(input: Inputs, output: Outputs, session: Session):
             except Exception as error:
                 print(error)
 
-            display_bounds_error.set(False)
+            bounds_error_dict.set(None)
             historical_wb.set(historical)
             forecast_wb.set(forecast)
 
-    @reactive.effect
-    @reactive.event(display_bounds_error)
-    def update_bounds_error():
-        crop = crop_name()
-        cname = country_name()
+    def bounds_error():
+        error_dict = bounds_error_dict()
+        if error_dict is None:
+            return None
 
-        if crop == '' or cname == '':
-            return
+        # the display name for the bounds error message
+        cname = error_dict['country']
+        sname = error_dict['state']
+        crop = error_dict['crop']
 
-        show_error = display_bounds_error()
-
-        if show_error:
-            ui.insert_ui(
-                ui.div(
-                    {'class': 'bounds-error-container'},
-                    ui.div(
-                        {'class': 'bounds-error'},
-                        # f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
-                        'No water balance data to show. This is likely because the crop you chose is not grown in the country / state in question or the data resoultion is too low.',
-                    ),
-                ),
-                selector='#forecast-map-container',
-                where='beforeEnd',
-            )
-
-            ui.insert_ui(
-                ui.div(
-                    {'class': 'bounds-error-container'},
-                    ui.div(
-                        {'class': 'bounds-error'},
-                        # f'No water balance data to show. This is likely because {crop} is not grown in {name} or the data resoultion is too low.'
-                        'No water balance data to show. This is likely because the crop you chose is not grown in the country / state in question or the data resoultion is too low.',
-                    ),
-                ),
-                selector='#timeseries-inner-container',
-                where='beforeEnd',
-            )
+        plurals_list = [
+            'British Virgin Islands',
+            'Cayman Islands',
+            'Democratic Republic of the Congo',
+            'Dominican Republic',
+            'EU',
+            'Falkland Islands',
+            'Faroe Islands',
+            'Heard Island and McDonald Islands',
+            'Isle of Man',
+            'Ivory Coast',
+            'Marshall Islands',
+            'Netherlands',
+            'Northern Mariana Islands',
+            'Philippines',
+            'Republic of the Congo',
+            'Seychelles',
+            'Solomon Islands',
+            'South Georgia and the South Sandwich Islands',
+            'Turks and Caicos Islands',
+            'United Arab Emirates',
+            'United Kingdom',
+            'USA',
+        ]
+        if sname == 'All':
+            if cname in plurals_list:
+                display_region_name = f'the {cname}'
+            else:
+                display_region_name = cname
         else:
-            ui.remove_ui('.bounds-error-container', multiple=True)
+            if sname == 'CONUS':
+                display_region_name = sname
+            else:
+                display_region_name = f'{sname}, {cname}'
+
+        error_message = (
+            f'No water balance data to show. This is likely because {crop} '
+            f'is not grown in {display_region_name} or the climate data resolution is too low.'
+        )
+
+        return ui.div(
+            {'class': 'bounds-error-container'}, ui.div({'class': 'bounds-error'}, error_message)
+        )
+
+    @render.ui
+    def timeseries_bounds_error():
+        return bounds_error()
+
+    @render.ui
+    def forecast_bounds_error():
+        return bounds_error()
+
+    # @reactive.effect
+    # @reactive.event(bounds_message_error)
+    # def update_bounds_error():
+    #     error_token = bounds_message_error()
+
+    #     if error_token is not None:
+    #         ui.remove_ui('.bounds-error-container', multiple=True, immediate=True)
+
+    #         # error_message = 'No water balance data to show. This is likely because the crop you chose is not grown in the country / state in question or the climate data resoultion is too low.'
+
+    #         # the display name for the bounds error message
+    #         cname = country_name()
+    #         sname = state_name()
+    #         crop = crop_name()
+    #         display_region_name = cname if sname == 'All' else f'{sname}, {cname}'
+    #         error_message = f'No water balance data to show. This is likely because {crop} ' \
+    #                         f'is not grown in {display_region_name} or the climate data resolution is too low.'
+
+    #         # clear stale copies of bounds error message
+    #         for selector in ['#forecast-map-container', '#timeseries-inner-container']:
+    #             ui.insert_ui(
+    #                 ui.div(
+    #                     {'class': 'bounds-error-container'},
+    #                     ui.div({'class': 'bounds-error'}, error_message),
+    #                 ),
+    #                 selector=selector,
+    #                 where='beforeEnd',
+    #             )
+    #     else:
+    #         ui.remove_ui('.bounds-error-container', multiple=True, immediate=True)
 
     @reactive.effect
     @reactive.event(historical_wb, forecast_wb, input.historical_checkbox, input.forecast_checkbox)
@@ -865,10 +910,6 @@ def server(input: Inputs, output: Outputs, session: Session):
         if (forecast is None and historical is None) or (
             show_forecast is False and show_historical is False
         ):
-            # df = pd.DataFrame({
-            #     'country': [], 'states': [], 'type': [], 'crop': [], 'time': [], 'percentile': [], 'agreement': [],
-            #     '5%': [], '20%': [], '80%': [], '95%': [],
-            # })
             df = pd.DataFrame(
                 {
                     'country': [],
@@ -894,9 +935,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                     .reset_index()
                 )
                 df['perc'] = df['perc'].astype(float).round(4)
-                # df['agree'] = np.nan
                 df['time'] = df['time'].dt.date
-                # df.columns = ['time', 'percentile', 'agreement']
                 df.columns = ['time', 'percentile']
                 df['country'] = cname
                 df['states'] = sname
@@ -908,7 +947,6 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['80%'] = np.nan
                 df['95%'] = np.nan
 
-                # df = df[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
                 df = (
                     df[
                         [
@@ -936,13 +974,11 @@ def server(input: Inputs, output: Outputs, session: Session):
                 )
                 # this is the 50% line in the forecast data
                 df['perc'] = df['perc'].astype(float).round(4)
-                # df['agree'] = df['agree'].astype(float).round(4)
                 df['5%'] = df['5%'].astype(float).round(4)
                 df['20%'] = df['20%'].astype(float).round(4)
                 df['80%'] = df['80%'].astype(float).round(4)
                 df['95%'] = df['95%'].astype(float).round(4)
                 df['time'] = df['time'].dt.date
-                # df.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
                 df.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df['country'] = cname
                 df['states'] = sname
@@ -950,7 +986,6 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df['type'] = 'forecast'
                 df['window'] = int(window_size)
 
-                # df = df[['country', 'states', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']].sort_values('time', ascending=False).reset_index(drop=True)
                 df = (
                     df[
                         [
@@ -980,9 +1015,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                     .reset_index()
                 )
                 df_historical['perc'] = df_historical['perc'].astype(float).round(4)
-                # df_historical['agree'] = np.nan
                 df_historical['time'] = df_historical['time'].dt.date
-                # df_historical.columns = ['time', 'percentile', 'agreement']
                 df_historical.columns = ['time', 'percentile']
                 df_historical['country'] = cname
                 df_historical['states'] = sname
@@ -993,7 +1026,6 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_historical['20%'] = np.nan
                 df_historical['80%'] = np.nan
                 df_historical['95%'] = np.nan
-                # df_historical = df_historical[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
                 df_historical = df_historical[
                     [
                         'country',
@@ -1014,20 +1046,17 @@ def server(input: Inputs, output: Outputs, session: Session):
                     forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 )
                 df_forecast['perc'] = df_forecast['perc'].astype(float).round(4)
-                # df_forecast['agree'] = df_forecast['agree'].astype(float).round(4)
                 df_forecast['5%'] = df_forecast['5%'].astype(float).round(4)
                 df_forecast['20%'] = df_forecast['20%'].astype(float).round(4)
                 df_forecast['80%'] = df_forecast['80%'].astype(float).round(4)
                 df_forecast['95%'] = df_forecast['95%'].astype(float).round(4)
                 df_forecast['time'] = df_forecast['time'].dt.date
-                # df_forecast.columns = ['time', 'agreement', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast['country'] = cname
                 df_forecast['states'] = sname
                 df_forecast['crop'] = crop
                 df_forecast['type'] = 'forecast'
                 df_forecast['window'] = int(window_size)
-                # df_forecast = df_forecast[['country', 'state', 'crop', 'type', 'window', 'time', 'percentile', 'agreement', '5%', '20%', '80%', '95%']]
                 df_forecast = df_forecast[
                     [
                         'country',
@@ -1248,21 +1277,7 @@ def server(input: Inputs, output: Outputs, session: Session):
         alt='A map showing how water balance is expected to change within a given country\'s borders',
     ):
         forecast = unweighted_forecast_wb()
-        if not forecast:
-            return
-
-        cname = country_name()
-        sname = state_name()
-        country = countries.query(" name == @cname ")
-        # state = states.query(" name == @sname and country == @cname ")
-
-        bbox = bounds()
-        xmin, ymin, xmax, ymax = bbox
-
-        if cname == '' or sname == '' or forecast is None:
-            return
-
-        if any(x is None for x in (xmin, ymin, xmax, ymax)):
+        if forecast is None:
             return
 
         config = {
@@ -1274,8 +1289,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             'modeBarButtonsToRemove': ['pan', 'select', 'lasso2d', 'toImage'],
         }
 
-        country_forecast = forecast.rio.clip(country.geometry, all_touched=True, drop=True)
-        df = country_forecast['perc'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
+        df = forecast['perc'].drop_vars('spatial_ref').to_dataframe().dropna().reset_index()
         df.columns = ['time', 'y', 'x', 'Percentile']
 
         formatted_dates = [pd.to_datetime(date).strftime('%b-%Y') for date in forecast_dates]

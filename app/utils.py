@@ -11,21 +11,6 @@ import xarray as xr
 # calculate the initial conditions from today's day, month, and year
 # in general, the month (and potentially year) roll back one month
 # however, right before the update occurs, there are times when the month looks back two months
-
-today = datetime.today()
-
-# # Determine how many months to go back
-# months_back = 1 if today.day >= 15 else 2
-
-# # Calculate the target month and year
-# target_month = today.month - months_back
-# target_year = today.year
-
-# # Handle year rollover (handles both going back to previous December and beyond)
-# while target_month <= 0:
-#     target_month += 12
-#     target_year -= 1
-
 target_year = 2026
 target_month = 10
 
@@ -48,7 +33,7 @@ forecast_dates = [
     for date in pd.date_range(start=f'{year_ic}-{month_ic}-01', freq='MS', periods=7)
 ][1:]
 
-BUCKET = os.getenv('BUCKET_NAME')
+BUCKET = os.getenv('DM_BUCKET')
 
 
 def create_bbox_from_coords(
@@ -71,22 +56,26 @@ def create_bbox_from_coords(
 # open historical and forecast data for both integration windows
 @functools.lru_cache(maxsize=2)
 def load_historical_wb(window: str) -> xr.Dataset:
-    return xr.open_dataset(
+    ds = xr.open_dataset(
         f'gs://{BUCKET}/zarr/analysis/wb-h{window}-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
         decode_coords='all',
-    ).compute()
+    )
+
+    return ds
 
 
 @functools.lru_cache(maxsize=2)
 def load_forecast_wb(window: str) -> xr.Dataset:
-    return xr.open_dataset(
+    ds = xr.open_dataset(
         f'gs://{BUCKET}/zarr/analysis/wb-f{window}-{year_ic}-{month_ic}-01.zarr',
         engine='zarr',
         consolidated=True,
         decode_coords='all',
-    ).compute()[['5%', '20%', 'perc', '80%', '95%']]
+    )[['5%', '20%', 'perc', '80%', '95%']]
+
+    return ds
 
 
 # lazy load country layer
@@ -123,5 +112,38 @@ def load_crop_production_raster(crop_name: str) -> None | xr.Dataset:
             consolidated=True,
         )
         .sel(crop=crop_name)
-        .production.compute()
+        .production
     )
+
+
+@functools.lru_cache(maxsize=20)
+def load_clipped_wb(window: str, cname: str, sname: str) -> tuple:
+    """
+    Compute and cache the historical and forecast water balance,
+    clipped to a country or state's extext.
+    """
+    historical = load_historical_wb(window)
+    forecast = load_forecast_wb(window)
+
+    country = load_countries().query(" name == @cname ")
+    state = load_states().query(" name == @sname and country == @cname ")
+    boundary = country if sname == 'All' else state
+
+    historical = historical.rio.clip(boundary.geometry, all_touched=True, drop=True).compute()
+    forecast = forecast.rio.clip(boundary.geometry, all_touched=True, drop=True).compute()
+
+    return historical, forecast
+
+
+@functools.lru_cache(maxsize=50)
+def load_clipped_production(cname: str, sname: str, crop: str) -> xr.DataArray:
+    """
+    Compute and cache the crop production raster, clipped to a
+    country or state's extent.
+    """
+    country = load_countries().query(" name == @cname ")
+    state = load_states().query(" name == @sname and country == @cname ")
+    boundary = country if sname == 'All' else state
+
+    production = load_crop_production_raster(crop).rio.write_crs(4326)
+    return production.rio.clip(boundary.geometry, all_touched=True, drop=True).compute()
