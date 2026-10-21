@@ -129,10 +129,12 @@ def load_clipped_wb(window: str, cname: str, sname: str) -> tuple:
     state = load_states().query(" name == @sname and country == @cname ")
     boundary = country if sname == 'All' else state
 
-    historical = historical.rio.clip(boundary.geometry, all_touched=True, drop=True).compute()
-    forecast = forecast.rio.clip(boundary.geometry, all_touched=True, drop=True).compute()
+    clipped_historical = historical.rio.clip(
+        boundary.geometry, all_touched=True, drop=True
+    ).compute()
+    clipped_forecast = forecast.rio.clip(boundary.geometry, all_touched=True, drop=True).compute()
 
-    return historical, forecast
+    return clipped_historical, clipped_forecast
 
 
 @functools.lru_cache(maxsize=50)
@@ -146,4 +148,8 @@ def load_clipped_production(cname: str, sname: str, crop: str) -> xr.DataArray:
     boundary = country if sname == 'All' else state
 
     production = load_crop_production_raster(crop).rio.write_crs(4326)
-    return production.rio.clip(boundary.geometry, all_touched=True, drop=True).compute()
+    clipped_production = production.rio.clip(
+        boundary.geometry, all_touched=True, drop=True
+    ).compute()
+
+    return clipped_production

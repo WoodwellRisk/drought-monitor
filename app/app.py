@@ -19,7 +19,6 @@ from matplotlib.lines import Line2D
 from shiny import App, Inputs, Outputs, Session, reactive, render, ui
 from shinywidgets import output_widget, render_plotly, render_widget
 from utils import (
-    create_bbox_from_coords,
     forecast_dates,
     historical_dates,
     load_clipped_production,
@@ -170,8 +169,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     crop_name = reactive.value('')
     country_filter_text = reactive.value('')
     # state_filter_text = reactive.value('')
-    bounds = reactive.value([])
-    bounding_box = reactive.value([])
 
     slider_date = reactive.value(min_slider_date)
 
@@ -189,7 +186,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     # values for quickly storing and downloading figures and tables
     timeseries_to_save = reactive.value(None)
     table_to_save = reactive.value(None)
-    add_download_links = reactive.value(True)
 
     bounds_error_dict = reactive.value(None)
     data_has_loaded = reactive.value(False)
@@ -218,7 +214,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                         'id': 'download-timeseries-container',
                         'class': 'download-container',
                     },
-                    ui.download_link('download_timeseries_link', 'Download timeseries'),
+                    ui.output_ui('download_figure_as_png'),
                 ),
                 ui.div(
                     {'id': 'timeseries-container'},
@@ -236,7 +232,7 @@ def server(input: Inputs, output: Outputs, session: Session):
                 ui.output_ui('show_time_slider'),
                 ui.div(
                     {'id': 'download-csv-container', 'class': 'download-container'},
-                    ui.download_link('download_csv_link', 'Download CSV'),
+                    ui.output_ui('download_table_as_csv'),
                 ),
                 ui.div(
                     {'id': 'timeseries-table-container'},
@@ -453,36 +449,14 @@ def server(input: Inputs, output: Outputs, session: Session):
     @reactive.event(state_options)
     def update_state_select():
         new_options = state_options()
-        ui.update_select('state_select', label=None, choices=new_options, selected=None)
+        ui.update_select('state_select', label=None, choices=new_options, selected='All')
+        state_name.set('All')
 
     @reactive.effect
     @reactive.event(input.state_select)
     def update_state_name():
         new_state = input.state_select()
         state_name.set(new_state)
-
-    @reactive.effect
-    @reactive.event(country_name, state_name)
-    def update_bounds():
-        cname = country_name()
-        sname = state_name()
-
-        # on app start or page reload, these variables will be empty
-        if cname == '' or sname == '':
-            return
-
-        # https://stackoverflow.com/questions/1894269/how-to-convert-string-representation-of-list-to-a-list#1894296
-        if sname == 'All':
-            new_bounds = json.loads(countries.query(" name == @cname ").bbox.values[0])
-        else:
-            new_bounds = json.loads(
-                states.query(" name == @sname and country == @cname ").bbox.values[0]
-            )
-        bounds.set(new_bounds)
-
-        xmin, ymin, xmax, ymax = new_bounds
-        new_bbox = create_bbox_from_coords(xmin, xmax, ymin, ymax)
-        bounding_box.set(new_bbox)
 
     # @reactive.effect
     # @reactive.event(input.state_filter)
@@ -713,7 +687,10 @@ def server(input: Inputs, output: Outputs, session: Session):
                 forecast = forecast.rio.clip(crop_extent.geometry, all_touched=True, drop=True)
 
                 # sometimes, this is silently failing when there is no data to show, but instead returns an empty dataset
-                if historical.perc.isnull().all() or forecast.perc.isnull().all():
+                if (
+                    historical.isel(time=0).perc.isnull().all()
+                    or forecast.isel(time=0).perc.isnull().all()
+                ):
                     print('No data in bounds, but silently failing!')
                     bounds_error_dict.set(
                         {
@@ -861,37 +838,6 @@ def server(input: Inputs, output: Outputs, session: Session):
     def forecast_bounds_error():
         return bounds_error()
 
-    # @reactive.effect
-    # @reactive.event(bounds_message_error)
-    # def update_bounds_error():
-    #     error_token = bounds_message_error()
-
-    #     if error_token is not None:
-    #         ui.remove_ui('.bounds-error-container', multiple=True, immediate=True)
-
-    #         # error_message = 'No water balance data to show. This is likely because the crop you chose is not grown in the country / state in question or the climate data resoultion is too low.'
-
-    #         # the display name for the bounds error message
-    #         cname = country_name()
-    #         sname = state_name()
-    #         crop = crop_name()
-    #         display_region_name = cname if sname == 'All' else f'{sname}, {cname}'
-    #         error_message = f'No water balance data to show. This is likely because {crop} ' \
-    #                         f'is not grown in {display_region_name} or the climate data resolution is too low.'
-
-    #         # clear stale copies of bounds error message
-    #         for selector in ['#forecast-map-container', '#timeseries-inner-container']:
-    #             ui.insert_ui(
-    #                 ui.div(
-    #                     {'class': 'bounds-error-container'},
-    #                     ui.div({'class': 'bounds-error'}, error_message),
-    #                 ),
-    #                 selector=selector,
-    #                 where='beforeEnd',
-    #             )
-    #     else:
-    #         ui.remove_ui('.bounds-error-container', multiple=True, immediate=True)
-
     @reactive.effect
     @reactive.event(historical_wb, forecast_wb, input.historical_checkbox, input.forecast_checkbox)
     def update_dataframe():
@@ -913,101 +859,21 @@ def server(input: Inputs, output: Outputs, session: Session):
             df = pd.DataFrame(
                 {
                     'country': [],
-                    'states': [],
-                    'type': [],
+                    'state': [],
                     'crop': [],
                     'window': [],
+                    'type': [],
                     'time': [],
-                    'percentile': [],
+                    'variable': [],
                     '5%': [],
                     '20%': [],
+                    'percentile': [],
                     '80%': [],
                     '95%': [],
                 }
             )
         else:
-            # include just historical
-            if show_historical is True and show_forecast is False:
-                df = (
-                    historical.mean(dim=['x', 'y'])
-                    .drop_vars('spatial_ref')
-                    .to_pandas()
-                    .reset_index()
-                )
-                df['perc'] = df['perc'].astype(float).round(4)
-                df['time'] = df['time'].dt.date
-                df.columns = ['time', 'percentile']
-                df['country'] = cname
-                df['states'] = sname
-                df['crop'] = crop
-                df['type'] = 'historical'
-                df['window'] = int(window_size)
-                df['5%'] = np.nan
-                df['20%'] = np.nan
-                df['80%'] = np.nan
-                df['95%'] = np.nan
-
-                df = (
-                    df[
-                        [
-                            'country',
-                            'states',
-                            'crop',
-                            'type',
-                            'window',
-                            'time',
-                            'percentile',
-                            '5%',
-                            '20%',
-                            '80%',
-                            '95%',
-                        ]
-                    ]
-                    .sort_values('time', ascending=False)
-                    .reset_index(drop=True)
-                )
-
-            # include just forecast
-            elif show_historical is False and show_forecast is True:
-                df = (
-                    forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
-                )
-                # this is the 50% line in the forecast data
-                df['perc'] = df['perc'].astype(float).round(4)
-                df['5%'] = df['5%'].astype(float).round(4)
-                df['20%'] = df['20%'].astype(float).round(4)
-                df['80%'] = df['80%'].astype(float).round(4)
-                df['95%'] = df['95%'].astype(float).round(4)
-                df['time'] = df['time'].dt.date
-                df.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
-                df['country'] = cname
-                df['states'] = sname
-                df['crop'] = crop
-                df['type'] = 'forecast'
-                df['window'] = int(window_size)
-
-                df = (
-                    df[
-                        [
-                            'country',
-                            'states',
-                            'crop',
-                            'type',
-                            'window',
-                            'time',
-                            'percentile',
-                            '5%',
-                            '20%',
-                            '80%',
-                            '95%',
-                        ]
-                    ]
-                    .sort_values('time', ascending=False)
-                    .reset_index(drop=True)
-                )
-
-            # else both are active, include both
-            else:
+            if show_historical is True:
                 df_historical = (
                     historical.mean(dim=['x', 'y'])
                     .drop_vars('spatial_ref')
@@ -1018,33 +884,38 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_historical['time'] = df_historical['time'].dt.date
                 df_historical.columns = ['time', 'percentile']
                 df_historical['country'] = cname
-                df_historical['states'] = sname
+                df_historical['state'] = sname
                 df_historical['crop'] = crop
-                df_historical['type'] = 'historical'
                 df_historical['window'] = int(window_size)
+                df_historical['type'] = 'historical'
+                df_historical['variable'] = 'water balance'
                 df_historical['5%'] = np.nan
                 df_historical['20%'] = np.nan
                 df_historical['80%'] = np.nan
                 df_historical['95%'] = np.nan
-                df_historical = df_historical[
-                    [
-                        'country',
-                        'states',
-                        'crop',
-                        'type',
-                        'window',
-                        'time',
-                        'percentile',
-                        '5%',
-                        '20%',
-                        '80%',
-                        '95%',
-                    ]
-                ]
+            else:
+                df_historical = pd.DataFrame(
+                    {
+                        'country': [],
+                        'state': [],
+                        'crop': [],
+                        'window': [],
+                        'type': [],
+                        'time': [],
+                        'variable': [],
+                        '5%': [],
+                        '20%': [],
+                        'percentile': [],
+                        '80%': [],
+                        '95%': [],
+                    }
+                )
 
+            if show_forecast is True:
                 df_forecast = (
                     forecast.mean(dim=['x', 'y']).drop_vars('spatial_ref').to_pandas().reset_index()
                 )
+                # this is the 50% line in the forecast data
                 df_forecast['perc'] = df_forecast['perc'].astype(float).round(4)
                 df_forecast['5%'] = df_forecast['5%'].astype(float).round(4)
                 df_forecast['20%'] = df_forecast['20%'].astype(float).round(4)
@@ -1053,64 +924,56 @@ def server(input: Inputs, output: Outputs, session: Session):
                 df_forecast['time'] = df_forecast['time'].dt.date
                 df_forecast.columns = ['time', '5%', '20%', 'percentile', '80%', '95%']
                 df_forecast['country'] = cname
-                df_forecast['states'] = sname
+                df_forecast['state'] = sname
                 df_forecast['crop'] = crop
-                df_forecast['type'] = 'forecast'
                 df_forecast['window'] = int(window_size)
-                df_forecast = df_forecast[
-                    [
-                        'country',
-                        'states',
-                        'crop',
-                        'type',
-                        'window',
-                        'time',
-                        'percentile',
-                        '5%',
-                        '20%',
-                        '80%',
-                        '95%',
-                    ]
-                ]
-
-                df = (
-                    pd.concat([df_historical, df_forecast])
-                    .sort_values('time', ascending=False)
-                    .reset_index(drop=True)
+                df_forecast['type'] = 'forecast'
+                df_forecast['variable'] = 'water balance'
+            else:
+                df_forecast = pd.DataFrame(
+                    {
+                        'country': [],
+                        'state': [],
+                        'crop': [],
+                        'window': [],
+                        'type': [],
+                        'time': [],
+                        'variable': [],
+                        '5%': [],
+                        '20%': [],
+                        'percentile': [],
+                        '80%': [],
+                        '95%': [],
+                    }
                 )
+
+            df = (
+                pd.concat([df_historical, df_forecast])
+                .sort_values('time', ascending=False)
+                .reset_index(drop=True)
+            )[
+                [
+                    'country',
+                    'state',
+                    'crop',
+                    'window',
+                    'type',
+                    'time',
+                    'variable',
+                    '5%',
+                    '20%',
+                    'percentile',
+                    '80%',
+                    '95%',
+                ]
+            ]
 
         table_to_save.set(df)
         return df
 
-    @reactive.effect
-    @reactive.event(table_to_save)
-    def set_download_button_states():
-        """
-        If there is nothing to download, then we want to disable the user's ability to download empty figures and tables.
-        """
-        df = table_to_save()
-
-        if df.empty:
-            ui.remove_ui(selector='#download_timeseries_link')
-            ui.remove_ui(selector='#download_csv_link')
-            add_download_links.set(True)
-        else:
-            if add_download_links():
-                ui.insert_ui(
-                    ui.download_link('download_timeseries_link', 'Download timeseries'),
-                    selector='#download-timeseries-container',
-                    where='beforeEnd',
-                ),
-                ui.insert_ui(
-                    ui.download_link('download_csv_link', 'Download CSV'),
-                    selector='#download-csv-container',
-                    where='beforeEnd',
-                ),
-                add_download_links.set(False)
-
     @render.plot
     @reactive.event(table_to_save, slider_date)
-    def timeseries(alt='A graph showing a timeseries of historical and forecasted water balance'):
+    def timeseries():
         # later if we want to make it so that we can dynamically change the timeframe:
         # https://plotly.com/python/range-slider/
         historical = historical_wb()
@@ -1271,11 +1134,21 @@ def server(input: Inputs, output: Outputs, session: Session):
         timeseries_to_save.set(fig)
         return fig
 
+    @render.data_frame
+    @reactive.event(table_to_save)
+    def timeseries_table():
+        df = table_to_save()
+
+        return render.DataTable(
+            df.drop(['variable', '5%', '20%', '80%', '95%'], axis=1),
+            width='100%',
+            height='375px',
+            editable=False,
+        )
+
     @render.ui
     @reactive.event(unweighted_forecast_wb)
-    def forecast_map(
-        alt='A map showing how water balance is expected to change within a given country\'s borders',
-    ):
+    def forecast_map():
         forecast = unweighted_forecast_wb()
         if forecast is None:
             return
@@ -1362,14 +1235,49 @@ def server(input: Inputs, output: Outputs, session: Session):
         # to save individual images later: https://github.com/plotly/plotly.py/issues/664
         return ui.HTML(fig.to_html(config=config, auto_play=False))
 
-    @render.download_link(
-        filename=lambda: f'drought-timeseries-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.png'.replace(
-            ' ', '-'
-        )
-        .replace('--', '-')
-        .replace('--', '-')
-    )
-    def download_timeseries_link():
+    @render.ui
+    def download_figure_as_png():
+        df = table_to_save()
+        if df.empty:
+            return None
+
+        return ui.download_link("download_png_link", "Download figure")
+
+    @render.ui
+    def download_table_as_csv():
+        df = table_to_save()
+        if df.empty:
+            return None
+
+        return ui.download_link("download_csv_link", "Download CSV")
+
+    @reactive.calc
+    def end_of_filename():
+        """
+        Create a shared end of filename string shared between the
+        timeseries figure PNG and table CSV when they are downloaded.
+        """
+        cname = country_name()
+        sname = state_name()
+        window_size = integration_window()
+        crop = crop_name()
+        show_historical = input.historical_checkbox()
+        show_forecast = input.forecast_checkbox()
+
+        country_label = cname.lower()
+        state_label = "" if sname == "" else sname.lower()
+        crop_label = "" if crop == "none" else crop
+        window_label = str(window_size) + "month"
+        historical_label = "historical" if show_historical else ""
+        forecast_label = "forecast" if show_forecast else ""
+
+        filename = f'{country_label}-{state_label}-{historical_label}-{forecast_label}-{crop_label}-{window_label}-{forecast_date}'
+        filename = filename.replace(' ', '-').replace('--', '-')
+
+        return filename
+
+    @render.download_link(filename=lambda: f'drought-timeseries-{end_of_filename()}.png')
+    def download_png_link():
 
         cname = country_name()
         sname = state_name()
@@ -1426,27 +1334,10 @@ def server(input: Inputs, output: Outputs, session: Session):
             plt.savefig(buffer, format='png', dpi=300)
             yield buffer.getvalue()
 
-    @render.data_frame
-    @reactive.event(table_to_save)
-    def timeseries_table():
-        df = table_to_save()
-
-        return render.DataTable(
-            df.drop(['5%', '20%', '80%', '95%'], axis=1),
-            width='100%',
-            height='375px',
-            editable=False,
-        )
-
-    @render.download_link(
-        filename=lambda: f'drought-table-{country_name().lower()}-{"" if state_name() == "" else state_name().lower()}-{"historical" if input.historical_checkbox() else ""}-{"forecast" if input.forecast_checkbox() else ""}-{"" if crop_name() == "none" else crop_name()}-{str(integration_window())+"month"}-{forecast_date}.csv'.replace(
-            ' ', '-'
-        )
-        .replace('--', '-')
-        .replace('--', '-')
-    )
+    @render.download_link(filename=lambda: f'drought-table-{end_of_filename()}.csv')
     def download_csv_link():
         df = table_to_save()
+        df.rename(columns={'percentile': '50%'}, inplace=True)
 
         with io.BytesIO() as buffer:
             df.to_csv(buffer)
