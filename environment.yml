@@ -1,14 +1,14 @@
 name: shiny
 channels:
   - conda-forge
-  - defaults
 dependencies:
-  - python=3.12
+  - python=3.14
   - anywidget
-  - fiona
+  - dask
   - folium
+  - gcsfs
   - geocube
-  - geopandas
+  - geopandas>=1
   - h5netcdf
   - matplotlib
   - ndpyramid
@@ -17,11 +17,12 @@ dependencies:
   - pandas
   - pip
   - plotly>=7.0
-  - pre-commit
-  - proj
+  - pre_commit
   - pyarrow
+  - pydantic
+  - pyogrio
   - pyproj
-  - rasterio
+  - rasterio>=1.4.4
   - rioxarray
   - shapely
   - shiny

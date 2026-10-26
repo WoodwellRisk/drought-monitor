@@ -7,7 +7,7 @@
 #   -p 8080:8080 shiny-app:latest
 
 # https://hub.docker.com/_/python/
-FROM python:3.12
+FROM python:3.14
 
 # set environment variables
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1

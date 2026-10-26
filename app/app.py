@@ -1,5 +1,6 @@
 import io
 import json
+import warnings
 from pathlib import Path
 
 import gcsfs
@@ -30,6 +31,8 @@ from utils import (
     load_historical_wb,
     load_states,
 )
+
+warnings.filterwarnings("ignore", category=FutureWarning, module="google.*")
 
 explorer_tab_name = 'Global view'
 timeseries_tab_name = 'Figures and tables'
