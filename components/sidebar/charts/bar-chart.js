@@ -22,7 +22,7 @@ const BarChart = ({ data, colormap }) => {
   const variable = useStore((state) => state.variable);
 
   const min = 0.0;
-  const max = 1.0;
+  const max = 100.0;
   const variableRange = [min, max];
   let graphData = [];
 
@@ -69,12 +69,9 @@ const BarChart = ({ data, colormap }) => {
 
   // https://stackoverflow.com/questions/22015684/zip-arrays-in-javascript
   const zip = (x, y) => Array.from(Array(x.length), (_, i) => [x[i], y[i]]);
-  let plotData = zip(
-    binEdges.map((edge) => edge * 100),
-    percentages
-  );
-  const xMin = (min - binWidth) * 100;
-  const xMax = (max + binWidth) * 100;
+  let plotData = zip(binEdges, percentages);
+  const xMin = min - binWidth;
+  const xMax = max + binWidth;
 
   return (
     <Box sx={{ ...sx.chart }} className="chart-container">

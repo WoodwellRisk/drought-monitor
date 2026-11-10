@@ -25,7 +25,7 @@ const DensityPlot = ({ data, colormap }) => {
   const year = useStore((state) => state.year);
 
   const min = 0.0;
-  const max = 1.0;
+  const max = 100.0;
   const variableRange = [min, max];
 
   const nBins = 10;
@@ -36,8 +36,8 @@ const DensityPlot = ({ data, colormap }) => {
     .map((_, i) => Number((i * binWidth).toFixed(2)));
   const bin = d3.bin().domain(variableRange).thresholds(binEdges);
 
-  const xMin = (min - binWidth) * 100;
-  const xMax = (max + binWidth) * 100;
+  const xMin = min - binWidth;
+  const xMax = max + binWidth;
 
   if (!data || !data[variable]) {
     // ex: if(!'perc' or Object["perc"]) {...}
@@ -89,10 +89,7 @@ const DensityPlot = ({ data, colormap }) => {
 
     // https://stackoverflow.com/questions/22015684/zip-arrays-in-javascript
     const zip = (x, y) => Array.from(Array(x.length), (_, i) => [x[i], y[i]]);
-    let binnedData = zip(
-      binEdges.map((edge) => edge * 100),
-      percentages
-    );
+    let binnedData = zip(binEdges, percentages);
     return binnedData;
   };
 

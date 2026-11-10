@@ -167,7 +167,7 @@ export const useStore = create((set, get) => ({
   colormapName: 'redteal',
   setColormapName: (colormapName) => set({ colormapName }),
 
-  clim: [0.0, 1.0],
+  clim: [0.0, 100.0],
   setClim: (clim) => set({ clim }),
 
   historicalRaster: { current: null },
