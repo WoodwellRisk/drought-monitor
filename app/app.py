@@ -1110,7 +1110,7 @@ def server(input: Inputs, output: Outputs, session: Session):
             label.set_fontproperties(ginto)
 
         ax.margins(0, 0)
-        ax.set_ylim(-0.05, 1.05)
+        ax.set_ylim(-5, 105)
 
         if not show_forecast and not show_historical:
             ax.set_xticks([0, 1, 2, 3, 4, 5])
@@ -1177,8 +1177,8 @@ def server(input: Inputs, output: Outputs, session: Session):
             color=df['Percentile'],
             color_continuous_scale=px.colors.diverging.RdYlBu,
             # color_continuous_scale = px.colors.sequential.Plasma,
-            range_color=[0, 1],
-            hover_data={'time': False, 'x': False, 'y': False, 'Percentile': ':.3f'},
+            range_color=[0, 100],
+            hover_data={'time': False, 'x': False, 'y': False, 'Percentile': ':.0f'},
             map_style='carto-positron-nolabels',
             # map_style = 'carto-darkmatter-nolabels',
             height=495,

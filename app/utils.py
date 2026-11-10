@@ -12,7 +12,7 @@ import xarray as xr
 # in general, the month (and potentially year) roll back one month
 # however, right before the update occurs, there are times when the month looks back two months
 target_year = 2026
-target_month = 10
+target_month = 11
 
 if target_month == 1:
     target_month = 12

@@ -3,6 +3,8 @@ dask
 folium
 gcsfs
 geopandas>=1
+grpcio>=1.83.0
+grpcio-status>=1.83.0
 h5netcdf
 matplotlib
 netcdf4

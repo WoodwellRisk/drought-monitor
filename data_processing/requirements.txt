@@ -3,8 +3,8 @@ h5py
 gcsfs
 ndpyramid
 numpy
-pandas
+pandas>=3.0
 pathlib
-rioxarray
+rioxarray>=1.4.4
 xarray
 zarr

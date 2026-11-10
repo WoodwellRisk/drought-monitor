@@ -61,6 +61,27 @@ def process_dataset(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
 
+def scale_percentiles(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Scale each data variable in `ds` by 100.
+    This shifts the data from [0, 1] to [0, 100].
+    """
+    with xr.set_options(keep_attrs=True):
+        return ds * 100
+
+
+def format_time_as_dates(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Convert NumPy datetime strings to U10 strings for the 'time' dim in the input `ds`.
+    """
+    ds['time'] = np.array(
+        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in ds.time.values],
+        dtype='U10',
+    )
+
+    return ds
+
+
 def pyramid_to_zarr(ds: xr.Dataset, levels: int, path: str) -> None:
     """
     Convert a Xarray Dataset into a Zarr for visualization using CarbonPlan's `maps` package.
@@ -103,7 +124,7 @@ def drought_pipeline():
     # year = today.year
     # month = today.month
     year = 2026
-    month = 10
+    month = 11
 
     if month == 1:
         month = 12
@@ -115,7 +136,7 @@ def drought_pipeline():
     month_ic = str(month).zfill(2)
 
     # environment variables
-    BUCKET = os.getenv('BUCKET_NAME')
+    BUCKET = os.getenv('DM_BUCKET')
 
     print('Generating input file list.')
     print()
@@ -170,9 +191,13 @@ def drought_pipeline():
         'f12': f12,
     }
 
+    print('Scaling data from [0, 1] to [0, 100].')
+    dataset_dict = {name: scale_percentiles(ds) for name, ds in dataset_dict.items()}
+    print()
+
     print('Saving Zarr stores used for analysis.')
     # save the data as zarr stores that we will use for analysis
-    for dataset in dataset_dict.keys():
+    for dataset in dataset_dict:
         print(f'    Saving {dataset.upper()} data...')
         save_to = f'gs://{BUCKET}/zarr/analysis/wb-{dataset}-{year_ic}-{month_ic}-01.zarr'
         dataset_dict[dataset].to_zarr(
@@ -186,27 +211,7 @@ def drought_pipeline():
     print('Saving Zarr stores used for visualization.')
     # next, save the data as zarr stores that we will use for visualization
     # first, we need to save their time coordinates as object arrays
-    h3['time'] = np.array(
-        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h3.time.values], dtype='U10'
-    )
-    h12['time'] = np.array(
-        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in h12.time.values], dtype='U10'
-    )
-
-    f3['time'] = np.array(
-        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f3.time.values], dtype='U10'
-    )
-    f12['time'] = np.array(
-        [pd.to_datetime(value).strftime('%Y-%m-%d') for value in f12.time.values], dtype='U10'
-    )
-
-    # redeclare dict since data has changed
-    dataset_dict = {
-        'h3': h3,
-        'h12': h12,
-        'f3': f3,
-        'f12': f12,
-    }
+    dataset_dict = {name: format_time_as_dates(ds) for name, ds in dataset_dict.items()}
 
     # next, calculate the number of zoom levels to use for the output Zarr
     pixels_per_tile = 128
@@ -215,7 +220,7 @@ def drought_pipeline():
     levels = max_levels
 
     # create pyramids for each dataset, then save the pyramid to zarr
-    for dataset in dataset_dict.keys():
+    for dataset in dataset_dict:
         print(f'    Saving {dataset.upper()} data...')
         save_to = f'gs://{BUCKET}/zarr/viz/wb-{dataset}-{year_ic}-{month_ic}-01.zarr'
         pyramid_to_zarr(dataset_dict[dataset], levels, save_to)
